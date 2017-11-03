@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.library.stream.upd.UdpRecive;
-import com.library.vd.Player;
+import com.library.Player;
 import com.library.vd.VDDecoder;
 
 public class Recive extends AppCompatActivity {

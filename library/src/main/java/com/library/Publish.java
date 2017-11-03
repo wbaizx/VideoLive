@@ -1,4 +1,4 @@
-package com.library.vd;
+package com.library;
 
 import android.Manifest;
 import android.content.Context;
@@ -29,6 +29,7 @@ import com.library.util.WriteMp4;
 import com.library.util.data.Value;
 import com.library.util.image.ImageUtil;
 import com.library.vc.VoiceRecord;
+import com.library.vd.VDEncoder;
 
 import java.util.ArrayList;
 import java.util.List;

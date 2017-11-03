@@ -1,4 +1,4 @@
-package com.library.vd;
+package com.library;
 
 import android.view.SurfaceView;
 
@@ -7,6 +7,7 @@ import com.library.stream.upd.UdpControlInterface;
 import com.library.util.WriteMp4;
 import com.library.util.data.Value;
 import com.library.vc.VoiceTrack;
+import com.library.vd.VDDecoder;
 
 /**
  * Created by android1 on 2017/10/13.

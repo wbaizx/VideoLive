@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:1.0.0'
+	        compile 'com.github.wbaizx:VideoLive:1.0.1'
 	}
 
 
