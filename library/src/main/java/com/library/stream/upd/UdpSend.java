@@ -3,6 +3,7 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseSend;
+import com.library.util.data.Crc;
 import com.library.util.data.Value;
 
 import java.io.IOException;
@@ -99,7 +100,7 @@ public class UdpSend extends BaseSend {
             public void run() {
                 while (issend) {
                     if (push.size() > 0) {
-                        packetsendPush.setData(push.poll());
+                        packetsendPush.setData(push.poll());//尾部添加CRC校验位2字节
                         try {
                             socket.send(packetsendPush);
                         } catch (IOException e) {
@@ -154,6 +155,7 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) sendUdplength);
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
+            buffvideo.putInt(Crc.getCrcInt(bytes));//CRC校验位
             buffvideo.put(bytes);
 
             pushBytes = new byte[buffvideo.position()];
@@ -181,6 +183,7 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) poll.length);
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
+            buffvideo.putInt(Crc.getCrcInt(poll));//CRC校验位
             buffvideo.put(poll);
 
             pushBytes = new byte[buffvideo.position()];
@@ -205,7 +208,8 @@ public class UdpSend extends BaseSend {
         buffvoice.putShort((short) poll.length);//长度
         buffvoice.putInt(voiceNum++);//序号
         buffvoice.putInt(Value.getTime());//时戳
-        buffvoice.put(poll);//数据'
+        buffvoice.putInt(Crc.getCrcInt(poll));//CRC校验位
+        buffvoice.put(poll);//数据
 
         byte[] pushBytes = new byte[buffvoice.position()];
         System.arraycopy(buffvoice.array(), 0, pushBytes, 0, buffvoice.position());

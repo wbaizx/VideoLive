@@ -81,7 +81,7 @@ public class UDPservice {
 							vc = byte_to_int(new byte[] { b[4], b[5],b[6], b[7] });
 						}
 						
-						bytes = new byte[byte_to_short(b[2], b[3]) + 12];
+						bytes = new byte[byte_to_short(b[2], b[3]) + 16];
 						System.arraycopy(b, 0, bytes, 0, bytes.length);
 						try {
 							sendPacket.setData(bytes);

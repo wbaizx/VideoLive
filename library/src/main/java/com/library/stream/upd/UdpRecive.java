@@ -92,6 +92,9 @@ public class UdpRecive extends BaseRecive {
             bytes = udpControl.Control(bytes);
         }
         UdpBytes udpBytes = new UdpBytes(bytes);
+        if (!udpBytes.isCrcRight()) {
+            Log.d("checkCRC", "--有包错误了");
+        }
         Log.d("UdpPackage_app_size", "--" + videoList.size()
                 + "--" + voiceList.size()
                 + "--" + videoPacket.size()
@@ -281,7 +284,7 @@ public class UdpRecive extends BaseRecive {
 
     //根据包堆积数量控制播放速率
     private int controlTiem(int size) {
-       if (size > 50) {
+        if (size > 50) {
             return Value.getTime() - 15;
         } else if (size > 40) {
             return Value.getTime() - 10;

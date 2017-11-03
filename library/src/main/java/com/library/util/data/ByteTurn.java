@@ -1,7 +1,5 @@
 package com.library.util.data;
 
-import java.math.BigInteger;
-
 /**
  * Created by android1 on 2017/9/25.
  */
@@ -20,10 +18,20 @@ public class ByteTurn {
         return (short) ((b1 & 0xff) << 8 | (b2 & 0xff));
     }
 
-    //bytes转int
-    public static int byte_to_int(byte[] bytes) {
-        return Integer.parseInt(new BigInteger(bytes).toString(10));// 10表示10进制
-//        return Integer.parseInt(new BigInteger(1, bytes).toString(10));// 这里的1好像代表正数,10表示10进制
+    //int转bytes(高位在前)
+    public static byte[] int_to_byte(int value) {
+        byte[] src = new byte[4];
+        src[0] = (byte) ((value >> 24) & 0xFF);
+        src[1] = (byte) ((value >> 16) & 0xFF);
+        src[2] = (byte) ((value >> 8) & 0xFF);
+        src[3] = (byte) (value & 0xFF);
+        return src;
+    }
+
+
+    //bytes转int(高位在前)
+    public static int byte_to_int(byte b1, byte b2, byte b3, byte b4) {
+        return (((b1 & 0xFF) << 24) | ((b2 & 0xFF) << 16) | ((b3 & 0xFF) << 8) | (b4 & 0xFF));
     }
 
     // byte拼接
