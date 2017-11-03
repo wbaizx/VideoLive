@@ -61,15 +61,15 @@ Step 2：
 
       然后在需要推流的地方调用
         
-         mPreview.star();
+         publish.star();
          
       停止推流
          
-         mPreview.stop();
+         publish.stop();
 
       推流过程中可调用以下方法
          
-        mPreview.rotate();//旋转相机
+        publish.rotate();//旋转相机
 
         publish.starRecode();//停止录制
 
@@ -77,7 +77,7 @@ Step 2：
 
       最后销毁资源
          
-         mPreview.destroy();
+         publish.destroy();
 
         /**
          *   上面发送方式为UDP,如果需要自定义发送方式，需要新建类并继承BaseSend。
