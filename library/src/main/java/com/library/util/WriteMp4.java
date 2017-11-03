@@ -19,7 +19,7 @@ public class WriteMp4 {
     public static final int video = 0;
     public static final int voice = 1;
 
-    private final String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoUdp";
+    private final String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive";
     private String path = null;
     private MediaFormat videoFormat = null;
     private MediaFormat voiceFormat = null;

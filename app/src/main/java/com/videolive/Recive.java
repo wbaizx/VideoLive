@@ -47,7 +47,7 @@ public class Recive extends AppCompatActivity {
 //                })
                 .setVideoCode(VDDecoder.H264)//设置解码方式
                 .setVideoSize(320, 480)//分辨率，由于图片旋转过，所以高度宽度需要对调
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoUdp.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
         /**

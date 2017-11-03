@@ -1,4 +1,4 @@
-# VideoUdp
+# VideoLive
 视频直播库，视频H264,H265硬编码，音频AAC编码，使用UDP协议提供实时预览，传输和解码播放以及本地录制。
 
 Add it in your root build.gradle at the end of repositories:
@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoUdp:1.0.0'
+	        compile 'com.github.wbaizx:VideoLive:1.0.0'
 	}
 
 
@@ -56,7 +56,7 @@ Step 2：
                 .setBitrate(600 * 1024)//比特率
                 .setPreviewSize(480, 320)//分辨率，如果系统不支持会自动选取最相近的
                 .setRotate(true)//是否为前置摄像头,默认后置
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoUdp.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
       然后在需要推流的地方调用
@@ -120,7 +120,7 @@ Step 2：
                 })
                 .setVideoCode(VDDecoder.H264)//设置解码方式
                 .setVideoSize(320, 480)//分辨率，由于图片旋转过，所以高度宽度需要对调
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoUdp.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
 

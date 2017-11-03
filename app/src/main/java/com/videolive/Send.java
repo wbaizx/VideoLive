@@ -46,7 +46,7 @@ public class Send extends AppCompatActivity {
                 .setBitrate(600 * 1024)//比特率
                 .setPreviewSize(480, 320)//分辨率，如果系统不支持会自动选取最相近的
                 .setRotate(true)//是否为前置摄像头,默认后置
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoUdp.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
         /**
