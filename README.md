@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:1.0.1'
+	        compile 'com.github.wbaizx:VideoLive:1.1.0'
 	}
 
 
@@ -124,29 +124,32 @@ Step 2：
 	 
          调用getInformation(byte[] important)给解码器（important为包含解码器需要的配置信息的视频帧数据，可以不完整）
     
-  调用播放
-        
-           player.star();
-  停止播放  
-        
-           player.stop();
+   调用播放
+   
+         player.star();
+	   
+   停止播放
+   
+         player.stop();
   
-  播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制）
-      
+   播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制）
+   
+   
         player.starRecode();//停止录制
 	
         player.stopRecode();//开始录制
   
-  销毁资源
+   销毁资源
            
          player.destroy();
 
   最后记住获取相关权限
-	      
+
 	  <uses-permission android:name="android.permission.CAMERA" />
           <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
           <uses-permission android:name="android.permission.RECORD_AUDIO" />
           <uses-permission android:name="android.permission.INTERNET" />
+
 	      
    
 
