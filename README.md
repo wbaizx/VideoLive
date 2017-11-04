@@ -120,7 +120,7 @@ Step 2：
                     }
                 })
 
-    如果需要自定义接收方式，需要新建类并继承BaseRecive。注意在包含解码器需要的配置信息的地方
+   如果需要自定义接收方式，需要新建类并继承BaseRecive。注意在包含解码器需要的配置信息的地方
 	 
          调用getInformation(byte[] important)给解码器（important为包含解码器需要的配置信息的视频帧数据，可以不完整）
     
@@ -134,6 +134,7 @@ Step 2：
   播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制）
       
         player.starRecode();//停止录制
+	
         player.stopRecode();//开始录制
   
   销毁资源
