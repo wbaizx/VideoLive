@@ -51,13 +51,13 @@ public class MainActivity extends AppCompatActivity {
         push.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, Send.class));
+                startActivity(new Intent(MainActivity.this, SendReady.class));
             }
         });
         pull.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, Recive.class));
+                startActivity(new Intent(MainActivity.this, ReciveReady.class));
             }
         });
     }

@@ -138,7 +138,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 if (characteristics.get(CameraCharacteristics.LENS_FACING) == facingFront) {
                     //获取StreamConfigurationMap管理摄像头支持的所有输出格式和尺寸,根据TextureView的尺寸设置预览尺寸
                     StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                    previewSize = map.getOutputSizes(SurfaceTexture.class)[0];//预览分辨率直接设置为最大分辨率
+//                    previewSize = map.getOutputSizes(SurfaceTexture.class)[0];//预览分辨率直接设置为最大分辨率
                     //选取采集分辨率（未必和设置的匹配，由于摄像头不支持设置的分辨率）
                     setPublshSize(map.getOutputSizes(SurfaceTexture.class));
 
@@ -181,6 +181,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         int numh = 10000;
         int num = 0;
         for (int i = 0; i < outputSizes.length; i++) {
+            Log.e("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
             if (Math.abs(outputSizes[i].getWidth() - publishSize.getWidth()) <= numw) {
                 numw = Math.abs(outputSizes[i].getWidth() - publishSize.getWidth());
                 if (Math.abs(outputSizes[i].getHeight() - publishSize.getHeight()) <= numh) {
@@ -190,6 +191,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             }
         }
 
+        previewSize = outputSizes[num];
         publishSize = outputSizes[num];
         Log.d("publishSize", "最佳分辨率  =  " + publishSize.getWidth() + "*" + publishSize.getHeight());
 
@@ -380,7 +382,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         //编码分辨率
-        public Buider setPreviewSize(int publishWidth, int publishHeight) {
+        public Buider setPublishSize(int publishWidth, int publishHeight) {
             publishSize = new Size(publishWidth, publishHeight);
             return this;
         }
@@ -405,15 +407,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
-        public Buider setUrl(String ip) {
-            Value.IP = ip;
-            return this;
-        }
-
-        public Buider setPort(int port) {
-            Value.PORT = port;
-            return this;
-        }
 
         public Buider setVideoPath(String path) {
             this.path = path;

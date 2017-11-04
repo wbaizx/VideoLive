@@ -19,8 +19,6 @@ import java.nio.ByteBuffer;
 public class VDEncoder {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
     public static final String H265 = MediaFormat.MIMETYPE_VIDEO_HEVC;
-    //解码格式
-    private String MIME_TYPE = H264;
     private int TIMEOUT_USEC = 12000;
     private MediaCodec mediaCodec;
     private BaseSend baseSend;
@@ -42,15 +40,14 @@ public class VDEncoder {
         this.writeMp4 = writeMp4;
         //UPD实例
         this.baseSend = baseSend;
-        MIME_TYPE = codetype;
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
         try {
-            mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
+            mediaCodec = MediaCodec.createEncoderByType(codetype);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -30,10 +30,10 @@ public class UdpSend extends BaseSend {
     private ArrayBlockingQueue<byte[]> push = new ArrayBlockingQueue<>(Value.QueueNum);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
-    public UdpSend() {
+    public UdpSend(String ip, int port) {
         try {
-            socket = new DatagramSocket(Value.PORT);
-            packetsendPush = new DatagramPacket(new byte[100], 100, InetAddress.getByName(Value.IP), Value.PORT);
+            socket = new DatagramSocket(port);
+            packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
             ismysocket = true;
         } catch (SocketException e) {
             e.printStackTrace();
@@ -42,10 +42,10 @@ public class UdpSend extends BaseSend {
         }
     }
 
-    public UdpSend(DatagramSocket socket) {
+    public UdpSend(DatagramSocket socket, String ip, int port) {
         this.socket = socket;
         try {
-            packetsendPush = new DatagramPacket(new byte[100], 100, InetAddress.getByName(Value.IP), Value.PORT);
+            packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

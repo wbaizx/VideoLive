@@ -21,7 +21,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     //解码格式
     private String MIME_TYPE = H264;
 
-    private int width, height;
     //解码分辨率
     private SurfaceHolder holder;
     //解码器
@@ -43,14 +42,9 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     /**
      * 初始化解码器
-     *
-     * @param width  surface宽
-     * @param height surface高
      */
-    public VDDecoder(SurfaceView surfaceView, int width, int height, String codetype, BaseRecive baseRecive, WriteMp4 writeMp4) {
+    public VDDecoder(SurfaceView surfaceView, String codetype, BaseRecive baseRecive, WriteMp4 writeMp4) {
         this.holder = surfaceView.getHolder();
-        this.width = width;
-        this.height = height;
         this.writeMp4 = writeMp4;
         MIME_TYPE = codetype;
         try {
@@ -98,19 +92,13 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private void beginCodec() {
         //初始化MediaFormat
         if (mediaFormat == null) {
-            mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
+            mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, 0, 0);//分辨率等信息由sps提供，这里可以随便设置
         }
-        if (MIME_TYPE == H264) {
-            mediaFormat.setInteger(MediaFormat.KEY_WIDTH, width);
-            mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, height);
-
+        if (MIME_TYPE.equals(H264)) {
             mediaFormat.setByteBuffer("csd-0", getH264SPS());
             mediaFormat.setByteBuffer("csd-1", getH264PPS());
 
-        } else if (MIME_TYPE == H265) {
-            mediaFormat.setInteger(MediaFormat.KEY_WIDTH, width);
-            mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, height);
-
+        } else if (MIME_TYPE.equals(H265)) {
             mediaFormat.setByteBuffer("csd-0", getH265information());
         }
 
@@ -273,7 +261,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private void writeFile(byte[] output, int length) {
         bufferInfo.offset = 0;
         bufferInfo.presentationTimeUs = Value.getFPS();
-        if (MIME_TYPE == H264) {
+        if (MIME_TYPE.equals(H264)) {
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
             if (output[4] == (byte) 0x67) {//KEY
                 for (int i = 5; i < length; i++) {
@@ -295,7 +283,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                 bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
                 writeMp4.write(WriteMp4.video, ByteBuffer.wrap(output), bufferInfo);
             }
-        } else if (MIME_TYPE == H265) {
+        } else if (MIME_TYPE.equals(H265)) {
 //        HEVC[00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20]后面00 00 00 01 26为帧数据开始，普通帧为00 00 00 01 02            if (output[4] == (byte) 0x40) {
             if (output[4] == (byte) 0x40) {//KEY
                 for (int i = 5; i < length; i++) {

@@ -28,16 +28,17 @@ public class UdpRecive extends BaseRecive {
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
 
-    public UdpRecive() {
-        if (Value.IP != null) {
-            try {
-                socket = new DatagramSocket(Value.PORT);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
-            byte[] tmpBuf1 = new byte[548];
-            packetreceive = new DatagramPacket(tmpBuf1, tmpBuf1.length);
+    public UdpRecive(int port) {
+        try {
+            socket = new DatagramSocket(port);
+        } catch (SocketException e) {
+            e.printStackTrace();
         }
+        byte[] tmpBuf1 = new byte[548];
+        packetreceive = new DatagramPacket(tmpBuf1, tmpBuf1.length);
+    }
+
+    public UdpRecive() {
     }
 
     @Override

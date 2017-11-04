@@ -5,7 +5,6 @@ import android.view.SurfaceView;
 import com.library.stream.BaseRecive;
 import com.library.stream.upd.UdpControlInterface;
 import com.library.util.WriteMp4;
-import com.library.util.data.Value;
 import com.library.vc.VoiceTrack;
 import com.library.vd.VDDecoder;
 
@@ -19,13 +18,13 @@ public class Player {
     private BaseRecive baseRecive;
     private WriteMp4 writeMp4;
 
-    public Player(SurfaceView surfaceView, int width, int height, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
+    public Player(SurfaceView surfaceView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
         this.baseRecive = baseRecive;
         this.baseRecive.setUdpControl(udpControl);
         //文件录入类
         writeMp4 = new WriteMp4(path);
 
-        vdDecoder = new VDDecoder(surfaceView, width, height, codetype, baseRecive, writeMp4);
+        vdDecoder = new VDDecoder(surfaceView, codetype, baseRecive, writeMp4);
         voiceTrack = new VoiceTrack(baseRecive, writeMp4);
     }
 
@@ -58,9 +57,6 @@ public class Player {
 
     public static class Buider {
         private SurfaceView surfaceView;
-        //解码分辨率
-        private int width = 480;
-        private int height = 720;
         private BaseRecive baseRecive;
         private String codetype = VDDecoder.H264;
         private UdpControlInterface udpControl = null;
@@ -71,27 +67,11 @@ public class Player {
             this.surfaceView = surfaceView;
         }
 
-        //编码分辨率
-        public Buider setVideoSize(int width, int height) {
-            this.width = width;
-            this.height = height;
-            return this;
-        }
-
         public Buider setVideoCode(String codetype) {
             this.codetype = codetype;
             return this;
         }
 
-        public Buider setUrl(String ip) {
-            Value.IP = ip;
-            return this;
-        }
-
-        public Buider setPort(int port) {
-            Value.PORT = port;
-            return this;
-        }
 
         public Buider setPullMode(BaseRecive baseRecive) {
             this.baseRecive = baseRecive;
@@ -109,9 +89,7 @@ public class Player {
         }
 
         public Player build() {
-            return new Player(surfaceView, width, height, codetype, baseRecive, udpControl, path);
+            return new Player(surfaceView, codetype, baseRecive, udpControl, path);
         }
-
-
     }
 }
