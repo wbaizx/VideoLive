@@ -1,7 +1,6 @@
 package com.library.util.image;
 
 import android.graphics.ImageFormat;
-import android.graphics.Rect;
 import android.media.Image;
 
 import java.nio.ByteBuffer;
@@ -19,13 +18,10 @@ public class ImageUtil {
     public static final int COLOR_FormatNV21 = 2;
 
     public static byte[] YUV_420_888toNV21(Image image, int colorFormat) {
-        Rect crop = null;
-        crop = image.getCropRect();
-        int format = image.getFormat();
-        int width = crop.width();
-        int height = crop.height();
+        int width = image.getCropRect().width();
+        int height = image.getCropRect().height();
         Image.Plane[] planes = image.getPlanes();
-        byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(format) / 8];
+        byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(image.getFormat()) / 8];
         byte[] rowData = new byte[planes[0].getRowStride()];
         int channelOffset = 0;
         int outputStride = 1;
@@ -60,7 +56,7 @@ public class ImageUtil {
             int shift = (i == 0) ? 0 : 1;
             int w = width >> shift;
             int h = height >> shift;
-            buffer.position(rowStride * (crop.top >> shift) + pixelStride * (crop.left >> shift));
+            buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
             for (int row = 0; row < h; row++) {
                 int length;
                 if (pixelStride == 1 && outputStride == 1) {

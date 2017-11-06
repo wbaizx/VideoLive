@@ -14,15 +14,19 @@ import com.library.util.data.Crc;
  * length 数据内容
  */
 public class UdpBytes {
-    private byte[] bytes;
     private byte[] data;//纯数据
     private int num;
+    private int CRC;
     private int time;
+    private int frameTag;
+    private int tag;
 
     public UdpBytes(byte[] bytes) {
-        this.bytes = bytes;
+        tag = bytes[0];
+        frameTag = bytes[1];
         num = ByteTurn.byte_to_int(bytes[4], bytes[5], bytes[6], bytes[7]);
         time = ByteTurn.byte_to_int(bytes[8], bytes[9], bytes[10], bytes[11]);
+        CRC = ByteTurn.byte_to_int(bytes[12], bytes[13], bytes[14], bytes[15]);
 
         int length = ByteTurn.byte_to_short(bytes[2], bytes[3]);
         data = new byte[length];
@@ -38,15 +42,15 @@ public class UdpBytes {
     }
 
     public int getFrameTag() {
-        return bytes[1];
+        return frameTag;
     }
 
     public int getTag() {
-        return bytes[0];
+        return tag;
     }
 
     public boolean isCrcRight() {
-        return Crc.isCrcRight(data, ByteTurn.byte_to_int(bytes[12], bytes[13], bytes[14], bytes[15]));
+        return Crc.isCrcRight(data, CRC);
     }
 
     public byte[] getData() {
