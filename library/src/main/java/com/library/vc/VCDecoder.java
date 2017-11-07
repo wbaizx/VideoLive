@@ -62,12 +62,47 @@ public class VCDecoder {
             public void run() {
                 PCMQueue.clear();
                 byte[] poll;
+                ByteBuffer[] codecInputBuffers;
+                ByteBuffer[] codecOutputBuffers;
+                ByteBuffer dstBuf;
+                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                ByteBuffer outputBuffer;
+                byte[] outData;
                 while (isdecoder) {
                     poll = baseRecive.getVoice();
                     if (poll != null) {
                         //写文件
                         writeFile(poll, poll.length);
-                        decode(poll, poll.length);
+
+                        codecInputBuffers = mDecoder.getInputBuffers();
+                        codecOutputBuffers = mDecoder.getOutputBuffers();
+                        try {
+                            //返回一个包含有效数据的input buffer的index,-1->不存在
+                            int inputBufIndex = mDecoder.dequeueInputBuffer(0);
+                            if (inputBufIndex >= 0) {
+                                //获取当前的ByteBuffer
+                                dstBuf = codecInputBuffers[inputBufIndex];
+                                dstBuf.clear();
+                                dstBuf.put(poll, 0, poll.length);
+                                mDecoder.queueInputBuffer(inputBufIndex, 0, poll.length, 0, 0);
+                            }
+                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
+
+                            while (outputBufferIndex >= 0) {
+                                outputBuffer = codecOutputBuffers[outputBufferIndex];
+                                outData = new byte[info.size];
+                                outputBuffer.get(outData);
+                                outputBuffer.clear();
+                                if (PCMQueue.size() >= Value.QueueNum) {
+                                    PCMQueue.poll();
+                                }
+                                PCMQueue.add(outData);
+                                mDecoder.releaseOutputBuffer(outputBufferIndex, false);
+                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         try {
                             Thread.sleep(Value.sleepTime);
@@ -80,59 +115,21 @@ public class VCDecoder {
         }).start();
     }
 
-    /**
-     * aac解码+播放
-     */
-    public void decode(byte[] buf, int length) {
-        //输入ByteBuffer
-        ByteBuffer[] codecInputBuffers = mDecoder.getInputBuffers();
-        //输出ByteBuffer
-        ByteBuffer[] codecOutputBuffers = mDecoder.getOutputBuffers();
-        try {
-            //返回一个包含有效数据的input buffer的index,-1->不存在
-            int inputBufIndex = mDecoder.dequeueInputBuffer(0);
-            if (inputBufIndex >= 0) {
-                //获取当前的ByteBuffer
-                ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-                dstBuf.clear();
-                dstBuf.put(buf, 0, length);
-
-                mDecoder.queueInputBuffer(inputBufIndex, 0, length, 0, 0);
-            }
-            //编解码器缓冲区
-            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
-
-            ByteBuffer outputBuffer;
-            byte[] outData;
-            while (outputBufferIndex >= 0) {
-                outputBuffer = codecOutputBuffers[outputBufferIndex];
-                outData = new byte[info.size];
-                outputBuffer.get(outData);
-                outputBuffer.clear();
-                if (PCMQueue.size() >= Value.QueueNum) {
-                    PCMQueue.poll();
-                }
-                PCMQueue.add(outData);
-                mDecoder.releaseOutputBuffer(outputBufferIndex, false);
-                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+    private ByteBuffer writebuffer = ByteBuffer.allocate(256);
 
     /*
     写入文件
      */
     private void writeFile(byte[] output, int length) {
+        writebuffer.clear();
+        writebuffer.put(output);
         bufferInfo.size = length;
         bufferInfo.offset = 0;
         bufferInfo.presentationTimeUs = Value.getFPS();
         bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
-        writeMp4.write(WriteMp4.voice, ByteBuffer.wrap(output), bufferInfo);
+        writeMp4.write(WriteMp4.voice, writebuffer, bufferInfo);
     }
 
     /*

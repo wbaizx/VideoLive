@@ -3,13 +3,13 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseRecive;
-import com.library.util.data.ByteTurn;
 import com.library.util.data.Value;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -65,16 +65,14 @@ public class UdpRecive extends BaseRecive {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    byte[] bytes;
                     while (isrevice) {
                         try {
                             socket.receive(packetreceive);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        bytes = new byte[548];
-                        System.arraycopy(packetreceive.getData(), 0, bytes, 0, 548);
-                        write(bytes);
+                        //由于后面会使用UdpBytes装下并记录所有数据，所以这里不需要重新拷贝一份也不会造成数据覆盖
+                        write(packetreceive.getData());
                     }
                 }
             }).start();
@@ -160,8 +158,8 @@ public class UdpRecive extends BaseRecive {
             @Override
             public void run() {
                 boolean isFrameBegin = false;
-                byte[] frame = null;
                 UdpBytes udpBytes;
+                ByteBuffer frameBuffer = ByteBuffer.allocate(50000);
                 int oldtime_vd = 0;//记录上一次拼接时间
                 while (isrevice) {
                     if (videoPacket.size() > 0) {
@@ -184,19 +182,22 @@ public class UdpRecive extends BaseRecive {
 
                         if (udpBytes.getFrameTag() == (byte) 0x00) {//帧头
                             isFrameBegin = true;
-                            frame = udpBytes.getData();
+                            frameBuffer.clear();
                             //将帧头（480字节）信息回调给解码器，提取例如SPS，PPS之类的信息
-                            CheckInformation(frame);
+                            CheckInformation(udpBytes.getData());
+                            frameBuffer.put(udpBytes.getData());
                         } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
                             if (isFrameBegin) {
-                                frame = ByteTurn.byte_add(frame, udpBytes.getData());
+                                frameBuffer.put(udpBytes.getData());
                             }
                         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
                             if (isFrameBegin) {
-                                frame = ByteTurn.byte_add(frame, udpBytes.getData());
+                                frameBuffer.put(udpBytes.getData());
                                 if (reciveFrameQueue.size() >= Value.QueueNum) {
                                     reciveFrameQueue.poll();
                                 }
+                                byte[] frame = new byte[frameBuffer.position()];
+                                System.arraycopy(frameBuffer.array(), 0, frame, 0, frameBuffer.position());
                                 reciveFrameQueue.add(frame);
                                 isFrameBegin = false;
                             }
@@ -233,8 +234,8 @@ public class UdpRecive extends BaseRecive {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                UdpBytes udpBytes;
                 int oldtime_vc = 0;//记录上一次拼接时间
+                UdpBytes udpBytes;
                 while (isrevice) {
                     if (voicePacket.size() > 0) {
                         udpBytes = voicePacket.poll();
@@ -269,13 +270,12 @@ public class UdpRecive extends BaseRecive {
 
     //控制音视频同步
     private void controlSynchronization() {
-        int value = oldudptime_vc - oldudptime_vd;
-        if (value > 100) {
+        if ((oldudptime_vc - oldudptime_vd) > 100) {
             //音频快了
             if (videoUdpLength > 40) {
                 videoUdpLength = videoUdpLength - 1;
             }
-        } else if (value < -100) {
+        } else if ((oldudptime_vc - oldudptime_vd) < -100) {
             //视频快了
             if (videoUdpLength < 300) {
                 videoUdpLength = videoUdpLength + 1;

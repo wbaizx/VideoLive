@@ -49,11 +49,13 @@ public class VCEncoder {
             @Override
             public void run() {
                 isencoder = true;
-                byte[] buffer;
                 ByteBuffer[] inputBuffers;
                 ByteBuffer[] outputBuffers;
                 ByteBuffer outputBuffer;
+                ByteBuffer inputBuffer;
                 byte[] outData;
+                byte[] buffer;
+                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isencoder) {
                     if (VoiceRecord.PCMQueue.size() > 0) {
                         buffer = VoiceRecord.PCMQueue.poll();
@@ -61,12 +63,12 @@ public class VCEncoder {
                         outputBuffers = mediaCodec.getOutputBuffers();
                         int inputBufferIndex = mediaCodec.dequeueInputBuffer(-1);
                         if (inputBufferIndex >= 0) {
-                            ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
+                            inputBuffer = inputBuffers[inputBufferIndex];
                             inputBuffer.clear();
                             inputBuffer.put(buffer);
                             mediaCodec.queueInputBuffer(inputBufferIndex, 0, buffer.length, Value.getFPS(), 0);
                         }
-                        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+
                         int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
 
                         if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
@@ -82,10 +84,10 @@ public class VCEncoder {
                             addADTStoPacket(outData, bufferInfo.size + 7);
                             outputBuffer.get(outData, 7, bufferInfo.size);
                             //添加将要发送的音频数据
+                            baseSend.addVoice(outData);
                             //写文件
                             writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
 
-                            baseSend.addVoice(outData);
                             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
                         }
@@ -102,15 +104,11 @@ public class VCEncoder {
     }
 
     private void addADTStoPacket(byte[] packet, int packetLen) {
-        int profile = 2;  //AAC LC
         //39=MediaCodecInfo.CodecProfileLevel.AACObjectELD;
-        int freqIdx = 4;  //44.1KHz
-        int chanCfg = 2;  //CPE
-        // fill in ADTS data
         packet[0] = (byte) 0xFF;
         packet[1] = (byte) 0xF9;
-        packet[2] = (byte) (((profile - 1) << 6) + (freqIdx << 2) + (chanCfg >> 2));
-        packet[3] = (byte) (((chanCfg & 3) << 6) + (packetLen >> 11));
+        packet[2] = (byte) (((2/*profile AAC LC*/ - 1) << 6) + (4/*freqIdx 44.1KHz*/ << 2) + (2/*chanCfgCPE*/ >> 2));
+        packet[3] = (byte) (((2/*chanCfgCPE*/ & 3) << 6) + (packetLen >> 11));
         packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
         packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
         packet[6] = (byte) 0xFC;

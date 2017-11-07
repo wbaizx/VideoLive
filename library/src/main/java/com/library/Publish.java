@@ -181,7 +181,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         int numh = 10000;
         int num = 0;
         for (int i = 0; i < outputSizes.length; i++) {
-            Log.e("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+            Log.d("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
             if (Math.abs(outputSizes[i].getWidth() - publishSize.getWidth()) <= numw) {
                 numw = Math.abs(outputSizes[i].getWidth() - publishSize.getWidth());
                 if (Math.abs(outputSizes[i].getHeight() - publishSize.getHeight()) <= numh) {

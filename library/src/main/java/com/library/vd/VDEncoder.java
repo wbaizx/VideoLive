@@ -73,6 +73,7 @@ public class VDEncoder {
                 byte[] outData;
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
+                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (Publish.YUVQueue.size() > 0) {
                         input = new byte[width * height * 3 / 2];
@@ -89,7 +90,6 @@ public class VDEncoder {
                                     mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, Value.getFPS(), 0);
                                 }
 
-                                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                                 outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
 
                                 if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
@@ -106,18 +106,15 @@ public class VDEncoder {
                                     if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
                                         //sps pps信息
                                         information = outData;
-                                        Log.d("sps_pps", ByteTurn.byte_to_16(information));
+//                                        Log.d("sps_pps", ByteTurn.byte_to_16(information));
 
                                     } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                         //关键帧
-                                        byte[] keyframe = ByteTurn.byte_add(information, outData);
-                                        //添加将要发送的视频数据
-                                        Log.d("frame_length", "帧长度为  --   " + keyframe.length);
-                                        baseSend.addVideo(keyframe);
+                                        baseSend.addVideo(ByteTurn.byte_add(information, outData));
                                     } else {
                                         //普通帧
                                         //添加将要发送的视频数据
-                                        Log.d("frame_length", "帧长度为  --   " + outData.length);
+                                        Log.d("frame_length", "普通帧长度为  --   " + outData.length);
                                         baseSend.addVideo(outData);
                                     }
                                     mediaCodec.releaseOutputBuffer(outputBufferIndex, false);

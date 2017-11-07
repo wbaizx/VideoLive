@@ -6,7 +6,7 @@ package com.library.util.data;
 
 public class Value {
     public static final int QueueNum = 200;
-    public static final int sleepTime = 10;
+    public static final int sleepTime = 5;
 
     public static int getTime() {
         return (int) (System.currentTimeMillis() % (long) 1000000000);

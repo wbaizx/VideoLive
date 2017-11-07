@@ -192,19 +192,47 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         mCodec = null;
     }
 
+    int mCount = 0;
 
     private void startCodec() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 byte[] poll;
+                ByteBuffer[] inputBuffers;
+                ByteBuffer inputBuffer;
+                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (star) {
                     poll = baseRecive.getVideo();
                     if (poll != null) {
                         //写文件
                         writeFile(poll, poll.length);
                         if (isdecoder && isdestroyed) {
-                            onFrame(poll, poll.length);
+                            inputBuffers = mCodec.getInputBuffers();
+                            //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
+                            int inputBufferIndex = mCodec.dequeueInputBuffer(50);
+                            if (inputBufferIndex >= 0) {
+                                inputBuffer = inputBuffers[inputBufferIndex];
+                                //清空buffer
+                                inputBuffer.clear();
+                                //put需要解码的数据
+                                inputBuffer.put(poll, 0, poll.length);
+                                //解码
+                                mCodec.queueInputBuffer(inputBufferIndex, 0, poll.length, mCount++ * TIME_INTERNAL, 0);
+                            } else {
+                                Log.d("encoder_failure", "encoder failure");
+                                continue;
+                            }
+                            // 获取输出buffer index
+                            int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 50);
+
+                            //循环解码，直到数据全部解码完成
+                            while (outputBufferIndex >= 0) {
+                                //logger.d("outputBufferIndex = " + outputBufferIndex);
+                                //true : 将解码的数据显示到surface上
+                                mCodec.releaseOutputBuffer(outputBufferIndex, true);
+                                outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 0);
+                            }
                         }
                     } else {
                         try {
@@ -218,92 +246,59 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         }).start();
     }
 
-
-    int mCount = 0;
-
-    private boolean onFrame(byte[] buf, int length) {
-        // 获取输入buffer index
-        ByteBuffer[] inputBuffers = mCodec.getInputBuffers();
-        //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
-        int inputBufferIndex = mCodec.dequeueInputBuffer(50);
-        if (inputBufferIndex >= 0) {
-            ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
-            //清空buffer
-            inputBuffer.clear();
-            //put需要解码的数据
-            inputBuffer.put(buf, 0, length);
-            //解码
-            mCodec.queueInputBuffer(inputBufferIndex, 0, length, mCount * TIME_INTERNAL, 0);
-            mCount++;
-
-        } else {
-            return false;
-        }
-        // 获取输出buffer index
-        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-        int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 50);
-
-        //循环解码，直到数据全部解码完成
-        while (outputBufferIndex >= 0) {
-            //logger.d("outputBufferIndex = " + outputBufferIndex);
-            //true : 将解码的数据显示到surface上
-            mCodec.releaseOutputBuffer(outputBufferIndex, true);
-            outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 0);
-        }
-        return true;
-    }
-
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+    private ByteBuffer writebuffer = ByteBuffer.allocate(50000);
 
     /*
     写入文件
      */
     private void writeFile(byte[] output, int length) {
+        writebuffer.clear();
         bufferInfo.offset = 0;
         bufferInfo.presentationTimeUs = Value.getFPS();
         if (MIME_TYPE.equals(H264)) {
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
             if (output[4] == (byte) 0x67) {//KEY
+                bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
                 for (int i = 5; i < length; i++) {
                     if (output[i] == (byte) 0x00
                             && output[i + 1] == (byte) 0x00
                             && output[i + 2] == (byte) 0x00
                             && output[i + 3] == (byte) 0x01
                             && output[i + 4] == (byte) 0x65) {
-                        byte[] iframe = new byte[length - i];
-                        System.arraycopy(output, i, iframe, 0, iframe.length);
-                        bufferInfo.size = iframe.length;
-                        bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
-                        writeMp4.write(WriteMp4.video, ByteBuffer.wrap(iframe), bufferInfo);
+                        bufferInfo.size = length - i;
+                        writebuffer.put(output, i, length - i);
+                        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
                         break;
                     }
                 }
             } else {//NO KEY
                 bufferInfo.size = length;
                 bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
-                writeMp4.write(WriteMp4.video, ByteBuffer.wrap(output), bufferInfo);
+                writebuffer.put(output);
+                writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
             }
         } else if (MIME_TYPE.equals(H265)) {
 //        HEVC[00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20]后面00 00 00 01 26为帧数据开始，普通帧为00 00 00 01 02            if (output[4] == (byte) 0x40) {
             if (output[4] == (byte) 0x40) {//KEY
+                bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
                 for (int i = 5; i < length; i++) {
                     if (output[i] == (byte) 0x00
                             && output[i + 1] == (byte) 0x00
                             && output[i + 2] == (byte) 0x00
                             && output[i + 3] == (byte) 0x01
                             && output[i + 4] == (byte) 0x26) {
-                        byte[] iframe = new byte[length - i];
-                        System.arraycopy(output, i, iframe, 0, iframe.length);
-                        bufferInfo.size = iframe.length;
-                        bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
-                        writeMp4.write(WriteMp4.video, ByteBuffer.wrap(iframe), bufferInfo);
+                        bufferInfo.size = length - i;
+                        writebuffer.put(output, i, length - i);
+                        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
                         break;
                     }
                 }
             } else {//NO KEY
                 bufferInfo.size = length;
                 bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
-                writeMp4.write(WriteMp4.video, ByteBuffer.wrap(output), bufferInfo);
+                writebuffer.put(output);
+                writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
             }
         }
     }
