@@ -100,7 +100,7 @@ public class UdpSend extends BaseSend {
             public void run() {
                 while (issend) {
                     if (push.size() > 0) {
-                        packetsendPush.setData(push.poll());//尾部添加CRC校验位2字节
+                        packetsendPush.setData(push.poll());
                         try {
                             socket.send(packetsendPush);
                         } catch (IOException e) {
@@ -132,31 +132,30 @@ public class UdpSend extends BaseSend {
         }
     }
 
-
     /*
     发送视频
      */
     public void writeVideo(byte[] poll) {
-        byte[] bytes;
         byte[] pushBytes;
+        //当前截取位置
+        int nowPosition = 0;
+        //是否首次进入
         boolean isOne = true;
         //记录时间值
         int time_vd_vaule = Value.getTime();
 
-        while (poll.length >= sendUdplength) {
-            bytes = new byte[sendUdplength];
-            System.arraycopy(poll, 0, bytes, 0, sendUdplength);
+        while ((poll.length - nowPosition) >= sendUdplength) {
             buffvideo.put((byte) 1);//视频TAG
             if (isOne) {
                 buffvideo.put((byte) 0);//起始帧
             } else {
                 buffvideo.put((byte) 1);//中间帧
             }
-            buffvideo.putShort((short) sendUdplength);
+            buffvideo.putShort((short) sendUdplength);//长度
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(Crc.getCrcInt(bytes));//CRC校验位
-            buffvideo.put(bytes);
+            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, sendUdplength));//CRC校验位
+            buffvideo.put(poll, nowPosition, sendUdplength);
 
             pushBytes = new byte[buffvideo.position()];
             System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
@@ -169,26 +168,23 @@ public class UdpSend extends BaseSend {
             }
             isOne = false;
             buffvideo.clear();
-            bytes = new byte[poll.length - sendUdplength];
-            System.arraycopy(poll, sendUdplength, bytes, 0, poll.length - sendUdplength);
-            poll = bytes;
+            nowPosition += sendUdplength;
         }
-        if (poll.length > 0) {
+        if ((poll.length - nowPosition) > 0) {
             buffvideo.put((byte) 1);//视频TAG
             if (isOne) {
                 buffvideo.put((byte) 3);//完整帧
             } else {
                 buffvideo.put((byte) 2);//结束帧
             }
-            buffvideo.putShort((short) poll.length);
+            buffvideo.putShort((short) (poll.length - nowPosition));
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(Crc.getCrcInt(poll));//CRC校验位
-            buffvideo.put(poll);
+            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, poll.length - nowPosition));//CRC校验位
+            buffvideo.put(poll, nowPosition, poll.length - nowPosition);
 
             pushBytes = new byte[buffvideo.position()];
             System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
-
             if (udpControl != null) {
                 //如果自定义UPD发送
                 pushAdd(udpControl.Control(pushBytes));
@@ -208,7 +204,7 @@ public class UdpSend extends BaseSend {
         buffvoice.putShort((short) poll.length);//长度
         buffvoice.putInt(voiceNum++);//序号
         buffvoice.putInt(Value.getTime());//时戳
-        buffvoice.putInt(Crc.getCrcInt(poll));//CRC校验位
+        buffvoice.putInt(Crc.getCrcInt(poll, 0, poll.length));//CRC校验位
         buffvoice.put(poll);//数据
 
         byte[] pushBytes = new byte[buffvoice.position()];

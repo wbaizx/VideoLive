@@ -50,7 +50,7 @@ public class UdpBytes {
     }
 
     public boolean isCrcRight() {
-        return Crc.isCrcRight(data, CRC);
+        return Crc.getCrcInt(data, 0, data.length) == CRC;
     }
 
     public byte[] getData() {
