@@ -301,7 +301,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
                         //后置
                         YUVQueue.add(ImageUtil.rotateYUVDegree90(frameRateControlQueue.poll(), publishSize.getWidth(), publishSize.getHeight()));
                     }
-                    Log.d("app_CameraPreview", "正在预览--");
                 }
             }
         };
@@ -311,6 +310,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private void releaseCamera() {
         //释放相机
         cameraDevice.close();
+        cameraDevice = null;
     }
 
 
@@ -348,6 +348,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         imageReader.close();
         vdEncoder.destroy();
         voiceRecord.destroy();
+
         baseSend.destroy();
         writeMp4.destroy();
     }

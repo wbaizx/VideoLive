@@ -19,8 +19,8 @@ public class VoiceRecord {
     private AudioRecord audioRecord;
     private boolean isrecord = false;
     private int recBufSize;
-    private int samplerate = 44100;
-    private int bitrate = 32000;
+    private int samplerate = 44100;//44100 32000 22050 16000 8000
+    private int bitrate = 32000;//96000 80000 48000 32000 20000
     //音频编码
     private VCEncoder vencoder;
 

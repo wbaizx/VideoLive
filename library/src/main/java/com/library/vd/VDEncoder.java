@@ -8,7 +8,6 @@ import android.util.Log;
 import com.library.Publish;
 import com.library.stream.BaseSend;
 import com.library.util.WriteMp4;
-import com.library.util.data.ByteTurn;
 import com.library.util.data.Value;
 import com.library.util.image.ImageUtil;
 
@@ -19,7 +18,6 @@ import java.nio.ByteBuffer;
 public class VDEncoder {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
     public static final String H265 = MediaFormat.MIMETYPE_VIDEO_HEVC;
-    private int TIMEOUT_USEC = 12000;
     private MediaCodec mediaCodec;
     private BaseSend baseSend;
 
@@ -68,61 +66,59 @@ public class VDEncoder {
             public void run() {
                 isRuning = true;
                 byte[] input;
-                ByteBuffer[] inputBuffers;
-                ByteBuffer[] outputBuffers;
                 byte[] outData;
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (Publish.YUVQueue.size() > 0) {
-                        input = new byte[width * height * 3 / 2];
-                        ImageUtil.NV21ToNV12(Publish.YUVQueue.poll(), input, width, height);
-                        if (input != null) {
-                            try {
-                                inputBuffers = mediaCodec.getInputBuffers();
-                                outputBuffers = mediaCodec.getOutputBuffers();
-                                int inputBufferIndex = mediaCodec.dequeueInputBuffer(50);
-                                if (inputBufferIndex >= 0) {
-                                    ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
-                                    inputBuffer.clear();
-                                    inputBuffer.put(input);
-                                    mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, Value.getFPS(), 0);
-                                }
+                        input = ImageUtil.NV21ToNV12(Publish.YUVQueue.poll(), width, height);
+                        try {
+                            int inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
+                            if (inputBufferIndex >= 0) {
+                                ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+                                inputBuffer.clear();
+                                inputBuffer.put(input);
+                                mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, Value.getFPS(), 0);
+                            }
 
-                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
 
-                                if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-                                    writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
-                                }
-                                while (outputBufferIndex >= 0) {
-                                    outputBuffer = outputBuffers[outputBufferIndex];
+                            if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
+                                writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
+                            }
+                            while (outputBufferIndex >= 0) {
+                                outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
+
+                                //写文件
+                                writeMp4.write(WriteMp4.video, outputBuffer, bufferInfo);
+
+                                if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
+                                    //sps pps信息
                                     outData = new byte[bufferInfo.size];
-
-                                    //写文件
-                                    writeMp4.write(WriteMp4.video, outputBuffer, bufferInfo);
-
                                     outputBuffer.get(outData);
-                                    if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
-                                        //sps pps信息
-                                        information = outData;
+                                    information = outData;
 //                                        Log.d("sps_pps", ByteTurn.byte_to_16(information));
 
-                                    } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-                                        //关键帧
-                                        baseSend.addVideo(ByteTurn.byte_add(information, outData));
-                                    } else {
-                                        //普通帧
-                                        //添加将要发送的视频数据
-                                        Log.d("frame_length", "普通帧长度为  --   " + outData.length);
-                                        baseSend.addVideo(outData);
-                                    }
-                                    mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                                    outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC);
+                                } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
+                                    //关键帧
+                                    outData = new byte[bufferInfo.size + information.length];
+                                    System.arraycopy(information, 0, outData, 0, information.length);
+                                    outputBuffer.get(outData, information.length, bufferInfo.size);
+                                    baseSend.addVideo(outData);
+                                } else {
+                                    //普通帧
+                                    //添加将要发送的视频数据
+                                    outData = new byte[bufferInfo.size];
+                                    outputBuffer.get(outData);
+                                    Log.d("frame_length", "普通帧长度为  --   " + outData.length);
+                                    baseSend.addVideo(outData);
                                 }
-                            } catch (Throwable t) {
-                                t.printStackTrace();
+                                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
                             }
+                        } catch (Throwable t) {
+                            t.printStackTrace();
                         }
                     } else {
                         try {

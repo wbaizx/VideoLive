@@ -26,7 +26,7 @@ public class UdpSend extends BaseSend {
     private int videoNum = 0;
     private final int sendUdplength = 480;//视频包长度固定480
     private ByteBuffer buffvideo = ByteBuffer.allocate(548);
-    private ByteBuffer buffvoice = ByteBuffer.allocate(256);
+    private ByteBuffer buffvoice = ByteBuffer.allocate(548);
     private ArrayBlockingQueue<byte[]> push = new ArrayBlockingQueue<>(Value.QueueNum);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
@@ -199,6 +199,7 @@ public class UdpSend extends BaseSend {
     发送音频
      */
     public void writeVoice(byte[] poll) {
+
         buffvoice.put((byte) 0);//音频TAG
         buffvoice.put((byte) 3);//完整帧
         buffvoice.putShort((short) poll.length);//长度
@@ -209,7 +210,6 @@ public class UdpSend extends BaseSend {
 
         byte[] pushBytes = new byte[buffvoice.position()];
         System.arraycopy(buffvoice.array(), 0, pushBytes, 0, buffvoice.position());
-
         if (udpControl != null) {
             //如果自定义UPD发送
             pushAdd(udpControl.Control(pushBytes));

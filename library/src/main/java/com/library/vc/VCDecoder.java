@@ -3,6 +3,7 @@ package com.library.vc;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.util.Log;
 
 import com.library.stream.BaseRecive;
 import com.library.util.WriteMp4;
@@ -62,8 +63,6 @@ public class VCDecoder {
             public void run() {
                 PCMQueue.clear();
                 byte[] poll;
-                ByteBuffer[] codecInputBuffers;
-                ByteBuffer[] codecOutputBuffers;
                 ByteBuffer dstBuf;
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                 ByteBuffer outputBuffer;
@@ -73,23 +72,23 @@ public class VCDecoder {
                     if (poll != null) {
                         //写文件
                         writeFile(poll, poll.length);
-
-                        codecInputBuffers = mDecoder.getInputBuffers();
-                        codecOutputBuffers = mDecoder.getOutputBuffers();
                         try {
                             //返回一个包含有效数据的input buffer的index,-1->不存在
-                            int inputBufIndex = mDecoder.dequeueInputBuffer(0);
+                            int inputBufIndex = mDecoder.dequeueInputBuffer(Value.waitTime);
                             if (inputBufIndex >= 0) {
                                 //获取当前的ByteBuffer
-                                dstBuf = codecInputBuffers[inputBufIndex];
+                                dstBuf = mDecoder.getInputBuffer(inputBufIndex);
                                 dstBuf.clear();
                                 dstBuf.put(poll, 0, poll.length);
                                 mDecoder.queueInputBuffer(inputBufIndex, 0, poll.length, 0, 0);
+                            } else {
+                                Log.e("dcoder_failure", "dcoder failure_VC");
+                                continue;
                             }
-                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
+                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, Value.waitTime);
 
                             while (outputBufferIndex >= 0) {
-                                outputBuffer = codecOutputBuffers[outputBufferIndex];
+                                outputBuffer = mDecoder.getOutputBuffer(outputBufferIndex);
                                 outData = new byte[info.size];
                                 outputBuffer.get(outData);
                                 outputBuffer.clear();
@@ -98,7 +97,7 @@ public class VCDecoder {
                                 }
                                 PCMQueue.add(outData);
                                 mDecoder.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, 0);
+                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, Value.waitTime);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -117,7 +116,7 @@ public class VCDecoder {
 
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-    private ByteBuffer writebuffer = ByteBuffer.allocate(256);
+    private ByteBuffer writebuffer = ByteBuffer.allocate(548);
 
     /*
     写入文件

@@ -49,8 +49,6 @@ public class VCEncoder {
             @Override
             public void run() {
                 isencoder = true;
-                ByteBuffer[] inputBuffers;
-                ByteBuffer[] outputBuffers;
                 ByteBuffer outputBuffer;
                 ByteBuffer inputBuffer;
                 byte[] outData;
@@ -59,24 +57,22 @@ public class VCEncoder {
                 while (isencoder) {
                     if (VoiceRecord.PCMQueue.size() > 0) {
                         buffer = VoiceRecord.PCMQueue.poll();
-                        inputBuffers = mediaCodec.getInputBuffers();
-                        outputBuffers = mediaCodec.getOutputBuffers();
-                        int inputBufferIndex = mediaCodec.dequeueInputBuffer(-1);
+                        int inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
                         if (inputBufferIndex >= 0) {
-                            inputBuffer = inputBuffers[inputBufferIndex];
+                            inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
                             inputBuffer.clear();
                             inputBuffer.put(buffer);
                             mediaCodec.queueInputBuffer(inputBufferIndex, 0, buffer.length, Value.getFPS(), 0);
                         }
 
-                        int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+                        int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
 
                         if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
                             writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
                         }
 
                         while (outputBufferIndex >= 0) {
-                            outputBuffer = outputBuffers[outputBufferIndex];
+                            outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
                             outputBuffer.position(bufferInfo.offset);
                             outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
 
@@ -89,7 +85,7 @@ public class VCEncoder {
                             writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
 
                             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
                         }
                     } else {
                         try {
@@ -104,11 +100,15 @@ public class VCEncoder {
     }
 
     private void addADTStoPacket(byte[] packet, int packetLen) {
-        //39=MediaCodecInfo.CodecProfileLevel.AACObjectELD;
+//        4: 44100 Hz
+//        5: 32000 Hz
+//        7: 22050 Hz
+//        8: 16000 Hz
+//        11: 8000 Hz
         packet[0] = (byte) 0xFF;
         packet[1] = (byte) 0xF9;
-        packet[2] = (byte) (((2/*profile AAC LC*/ - 1) << 6) + (4/*freqIdx 44.1KHz*/ << 2) + (2/*chanCfgCPE*/ >> 2));
-        packet[3] = (byte) (((2/*chanCfgCPE*/ & 3) << 6) + (packetLen >> 11));
+        packet[2] = (byte) (((2/*profile AAC LC*/ - 1) << 6) + (4/*freqIdx 44.1KHz*/ << 2) + (3/*chanCfgCPE*/ >> 2));
+        packet[3] = (byte) (((3/*chanCfgCPE*/ & 3) << 6) + (packetLen >> 11));
         packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
         packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
         packet[6] = (byte) 0xFC;

@@ -80,10 +80,10 @@ public class UdpRecive extends BaseRecive {
     }
 
     //丢包率计算
-    int vd = 0;
-    int vdnum = 0;
-    int vc = 0;
-    int vcnum = 0;
+//    int vd = 0;
+//    int vdnum = 0;
+//    int vc = 0;
+//    int vcnum = 0;
 
     //添加解码数据
     public void write(byte[] bytes) {
@@ -91,9 +91,9 @@ public class UdpRecive extends BaseRecive {
             bytes = udpControl.Control(bytes);
         }
         UdpBytes udpBytes = new UdpBytes(bytes);
-        if (!udpBytes.isCrcRight()) {
-            Log.d("checkCRC", "--有包错误了");
-        }
+//        if (!udpBytes.isCrcRight()) {
+//            Log.d("checkCRC", "--有包错误了");
+//        }
         Log.d("UdpPackage_app_size", "--" + videoList.size()
                 + "--" + voiceList.size()
                 + "--" + videoPacket.size()
@@ -106,13 +106,13 @@ public class UdpRecive extends BaseRecive {
             addudp(videoList, udpBytes);
 
             //计算丢包率--------------------------------
-            if (videoList.size() > 80) {
-                if ((udpBytes.getNum() - vd) != 1) {
-                    vdnum += udpBytes.getNum() - vd;
-                    Log.d("UdpLoss", "视频丢包率 :  " + (float) vdnum * (float) 100 / (float) udpBytes.getNum() + "%");
-                }
-                vd = udpBytes.getNum();
-            }
+//            if (videoList.size() > 80) {
+//                if ((udpBytes.getNum() - vd) != 1) {
+//                    vdnum += udpBytes.getNum() - vd;
+//                    Log.d("UdpLoss", "视频丢包率 :  " + (float) vdnum * (float) 100 / (float) udpBytes.getNum() + "%");
+//                }
+//                vd = udpBytes.getNum();
+//            }
             //--------------------------------
 
             //添加到待拼接队列
@@ -128,13 +128,13 @@ public class UdpRecive extends BaseRecive {
             addudp(voiceList, udpBytes);
 
             //计算丢包率--------------------------------
-            if (voiceList.size() > 30) {
-                if ((udpBytes.getNum() - vc) != 1) {
-                    vcnum += udpBytes.getNum() - vc;
-                    Log.d("UdpLoss", "音频丢包率 :  " + (float) vcnum * (float) 100 / (float) udpBytes.getNum() + "%");
-                }
-                vc = udpBytes.getNum();
-            }
+//            if (voiceList.size() > 30) {
+//                if ((udpBytes.getNum() - vc) != 1) {
+//                    vcnum += udpBytes.getNum() - vc;
+//                    Log.d("UdpLoss", "音频丢包率 :  " + (float) vcnum * (float) 100 / (float) udpBytes.getNum() + "%");
+//                }
+//                vc = udpBytes.getNum();
+//            }
             //--------------------------------
 
             //添加到待拼接队列
@@ -159,22 +159,14 @@ public class UdpRecive extends BaseRecive {
             public void run() {
                 boolean isFrameBegin = false;
                 UdpBytes udpBytes;
-                ByteBuffer frameBuffer = ByteBuffer.allocate(50000);
+                ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 80);
                 int oldtime_vd = 0;//记录上一次拼接时间
                 while (isrevice) {
                     if (videoPacket.size() > 0) {
                         //获取并移除数据
                         udpBytes = videoPacket.poll();
                         if (udpBytes.getFrameTag() == (byte) 0x00 || udpBytes.getFrameTag() == (byte) 0x03) {
-                            if ((Value.getTime() - oldtime_vd) < (udpBytes.getTime() - oldudptime_vd)) {
-                                try {
-                                    Thread.sleep(Math.min(70,
-                                            Math.max(0,
-                                                    (udpBytes.getTime() - oldudptime_vd) - (Value.getTime() - oldtime_vd))));
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                            sleepTime(udpBytes.getTime(), oldtime_vd, oldudptime_vd);
                             //根据包堆积数量控制播放速率
                             oldtime_vd = controlTiem(videoPacket.size());
                             oldudptime_vd = udpBytes.getTime();
@@ -214,12 +206,21 @@ public class UdpRecive extends BaseRecive {
         }).start();
     }
 
+    private void sleepTime(int time, int oldtime, int oldudptime) {
+        try {
+            //控制睡眠时间在0-70之间
+            Thread.sleep(Math.min(70, Math.max(0, (time - oldudptime) - (Value.getTime() - oldtime))));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     /*
     检测关键帧，回调配置信息
      */
     private void CheckInformation(byte[] frame) {
-//        HEVC[00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20]后面00 00 00 01 26为帧数据开始，普通帧为00 00 00 01 02
-//        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
+//        HEVC 00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20 后面 00 00 00 01 26 为帧数据开始，普通帧为 00 00 00 01 02
+//        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2 后面 00 00 00 01 65 为帧数据开始，普通帧为 41
         if (frame[4] == (byte) 0x67 || frame[4] == (byte) 0x40) {
             getInformation(frame);
         }
@@ -241,14 +242,7 @@ public class UdpRecive extends BaseRecive {
                         udpBytes = voicePacket.poll();
                         //计算时间戳
                         if ((Value.getTime() - oldtime_vc) < (udpBytes.getTime() - oldudptime_vc)) {
-                            try {
-                                //使用绝对值防止偶尔因线程问题导致时间增加而变成负数，如果出现问题一般误差1ms左右
-                                Thread.sleep(Math.min(70,
-                                        Math.max(0,
-                                                (udpBytes.getTime() - oldudptime_vc) - (Value.getTime() - oldtime_vc))));
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            sleepTime(udpBytes.getTime(), oldtime_vc, oldudptime_vc);
                         }
                         //根据包堆积数量控制播放速率
                         oldtime_vc = controlTiem(voicePacket.size());

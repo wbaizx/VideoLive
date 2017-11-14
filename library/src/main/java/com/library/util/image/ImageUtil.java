@@ -82,15 +82,16 @@ public class ImageUtil {
     /*
     NV21转换为NV12
      */
-    public static void NV21ToNV12(byte[] nv21, byte[] nv12, int width, int height) {
-        if (nv21 == null || nv12 == null) return;
-        System.arraycopy(nv21, 0, nv12, 0, width * height);
+    public static byte[] NV21ToNV12(byte[] nv21, int width, int height) {
+        byte[] input = new byte[width * height * 3 / 2];
+        System.arraycopy(nv21, 0, input, 0, width * height);
         for (int j = 0; j < width * height / 2; j += 2) {
-            nv12[width * height + j - 1] = nv21[j + width * height];
+            input[width * height + j - 1] = nv21[j + width * height];
         }
         for (int j = 0; j < width * height / 2; j += 2) {
-            nv12[width * height + j] = nv21[j + width * height - 1];
+            input[width * height + j] = nv21[j + width * height - 1];
         }
+        return input;
     }
 
     /*
