@@ -8,6 +8,7 @@ import android.view.SurfaceView;
 
 import com.library.stream.BaseRecive;
 import com.library.util.WriteMp4;
+import com.library.util.data.ByteTurn;
 import com.library.util.data.Value;
 
 import java.io.IOException;
@@ -115,9 +116,10 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 2] == (byte) 0x00
                     && information[i + 3] == (byte) 0x01
                     && information[i + 4] == (byte) 0x68) {
-                ByteBuffer in = ByteBuffer.allocate(i);
-                in.put(information, 0, i);
-                return in;
+                byte[] bytes = new byte[i];
+                System.arraycopy(information, 0, bytes, 0, i);
+                Log.d("VDDecoder_information", "h264 sps" + ByteTurn.byte_to_16(bytes));
+                return ByteBuffer.wrap(bytes);
             }
         }
         return null;
@@ -136,9 +138,10 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                             && information[j + 2] == (byte) 0x00
                             && information[j + 3] == (byte) 0x01
                             && information[j + 4] == (byte) 0x65) {
-                        ByteBuffer in = ByteBuffer.allocate(j - i);
-                        in.put(information, i, j - i);
-                        return in;
+                        byte[] bytes = new byte[j - i];
+                        System.arraycopy(information, i, bytes, 0, j - i);
+                        Log.d("VDDecoder_information", "h264 pps" + ByteTurn.byte_to_16(bytes));
+                        return ByteBuffer.wrap(bytes);
                     }
                 }
             }
@@ -153,9 +156,10 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 2] == (byte) 0x00
                     && information[i + 3] == (byte) 0x01
                     && information[i + 4] == (byte) 0x26) {
-                ByteBuffer in = ByteBuffer.allocate(i);
-                in.put(information, 0, i);
-                return in;
+                byte[] bytes = new byte[i];
+                System.arraycopy(information, 0, bytes, 0, i);
+                Log.d("VDDecoder_information", "h265信息" + ByteTurn.byte_to_16(bytes));
+                return ByteBuffer.wrap(bytes);
             }
         }
         return null;

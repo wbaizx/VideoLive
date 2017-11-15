@@ -19,15 +19,14 @@ public class VoiceRecord {
     private AudioRecord audioRecord;
     private boolean isrecord = false;
     private int recBufSize;
-    private int samplerate = 44100;//44100 32000 22050 16000 8000
-    private int bitrate = 32000;//96000 80000 48000 32000 20000
+    private int samplerate = 44100;
     //音频编码
     private VCEncoder vencoder;
 
     /*
      *初始化
      */
-    public VoiceRecord(BaseSend baseSend, WriteMp4 writeMp4) {
+    public VoiceRecord(BaseSend baseSend, int bitrate_vc, WriteMp4 writeMp4) {
         recBufSize = AudioRecord.getMinBufferSize(
                 samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -38,7 +37,7 @@ public class VoiceRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
-        vencoder = new VCEncoder(samplerate, bitrate, recBufSize, baseSend, writeMp4);
+        vencoder = new VCEncoder(samplerate, bitrate_vc, recBufSize, baseSend, writeMp4);
     }
 
     /*

@@ -3,7 +3,6 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseSend;
-import com.library.util.data.Crc;
 import com.library.util.data.Value;
 
 import java.io.IOException;
@@ -154,7 +153,8 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) sendUdplength);//长度
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, sendUdplength));//CRC校验位
+//            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, sendUdplength));//CRC校验位
+            buffvideo.putInt(0);//CRC校验位暂时关闭，用0填充
             buffvideo.put(poll, nowPosition, sendUdplength);
 
             pushBytes = new byte[buffvideo.position()];
@@ -180,7 +180,8 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) (poll.length - nowPosition));
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, poll.length - nowPosition));//CRC校验位
+//            buffvideo.putInt(Crc.getCrcInt(poll, nowPosition, poll.length - nowPosition));//CRC校验位
+            buffvideo.putInt(0);//CRC校验位暂时关闭，用0填充
             buffvideo.put(poll, nowPosition, poll.length - nowPosition);
 
             pushBytes = new byte[buffvideo.position()];
@@ -199,13 +200,13 @@ public class UdpSend extends BaseSend {
     发送音频
      */
     public void writeVoice(byte[] poll) {
-
         buffvoice.put((byte) 0);//音频TAG
         buffvoice.put((byte) 3);//完整帧
         buffvoice.putShort((short) poll.length);//长度
         buffvoice.putInt(voiceNum++);//序号
         buffvoice.putInt(Value.getTime());//时戳
-        buffvoice.putInt(Crc.getCrcInt(poll, 0, poll.length));//CRC校验位
+//        buffvoice.putInt(Crc.getCrcInt(poll, 0, poll.length));//CRC校验位
+        buffvoice.putInt(0);//CRC校验位暂时关闭，用0填充
         buffvoice.put(poll);//数据
 
         byte[] pushBytes = new byte[buffvoice.position()];

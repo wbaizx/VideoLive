@@ -14,16 +14,14 @@ import com.library.util.data.Value;
 
 public class VoiceTrack {
 
-    private int recBufSize;
-    private int samplerate = 44100;//44100 32000 22050 16000 8000
-    private int bitrate = 32000;//96000 80000 48000 32000 20000
+    private int samplerate = 44100;
     private VCDecoder vdecoder;
 
     private AudioTrack audioTrack;
     private boolean isTrack = false;
 
     public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
-        recBufSize = AudioTrack.getMinBufferSize(
+        int recBufSize = AudioTrack.getMinBufferSize(
                 samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
@@ -36,7 +34,7 @@ public class VoiceTrack {
                 recBufSize,
                 AudioTrack.MODE_STREAM);
 
-        vdecoder = new VCDecoder(samplerate, bitrate, recBufSize, baseRecive, writeMp4);
+        vdecoder = new VCDecoder(samplerate, baseRecive, writeMp4);
 
         if (audioTrack != null) {
             audioTrack.play();

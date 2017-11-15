@@ -17,6 +17,7 @@ public class SendReady extends AppCompatActivity {
     private EditText bitrate;
     private EditText width;
     private EditText height;
+    private EditText bitrate_vc;
     private RadioGroup videoCode;
     private RadioGroup preview;
     private RadioGroup rotate;
@@ -31,6 +32,7 @@ public class SendReady extends AppCompatActivity {
         port = findViewById(R.id.port);
         framerate = findViewById(R.id.framerate);
         bitrate = findViewById(R.id.bitrate);
+        bitrate_vc = findViewById(R.id.bitrate_vc);
         width = findViewById(R.id.width);
         height = findViewById(R.id.height);
         videoCode = findViewById(R.id.svideoCode);
@@ -53,6 +55,7 @@ public class SendReady extends AppCompatActivity {
         bundle.putInt("port", Integer.parseInt(port.getText().toString()));
         bundle.putInt("framerate", Integer.parseInt(framerate.getText().toString()));
         bundle.putInt("bitrate", Integer.parseInt(bitrate.getText().toString()) * 1024);
+        bundle.putInt("bitrate_vc", Integer.parseInt(bitrate_vc.getText().toString()) * 1024);
         bundle.putInt("width", Integer.parseInt(width.getText().toString()));
         bundle.putInt("height", Integer.parseInt(height.getText().toString()));
 

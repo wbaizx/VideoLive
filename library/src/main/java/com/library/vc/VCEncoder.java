@@ -100,11 +100,6 @@ public class VCEncoder {
     }
 
     private void addADTStoPacket(byte[] packet, int packetLen) {
-//        4: 44100 Hz
-//        5: 32000 Hz
-//        7: 22050 Hz
-//        8: 16000 Hz
-//        11: 8000 Hz
         packet[0] = (byte) 0xFF;
         packet[1] = (byte) 0xF9;
         packet[2] = (byte) (((2/*profile AAC LC*/ - 1) << 6) + (4/*freqIdx 44.1KHz*/ << 2) + (3/*chanCfgCPE*/ >> 2));

@@ -53,6 +53,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //帧率控制时间
     private int frameRate = 66;
     private int bitrate;
+    private int bitrate_vc;
     private String codetype;
     //相机设备
     private CameraDevice cameraDevice;
@@ -75,12 +76,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private WriteMp4 writeMp4;
 
 
-    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, int frameRate, int bitrate, String codetype, boolean rotate,
+    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, int frameRate, int bitrate, int bitrate_vc, String codetype, boolean rotate,
                    String path, BaseSend baseSend, UdpControlInterface udpControl) {
         this.context = context;
         this.publishSize = publishSize;
         this.bitrate = bitrate;
         this.frameRate = frameRate;
+        this.bitrate_vc = bitrate_vc;
         this.codetype = codetype;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
@@ -199,7 +201,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             //初始化视频编码,由于图片旋转过，所以高度宽度需要对调
             vdEncoder = new VDEncoder(publishSize.getHeight(), publishSize.getWidth(), frameRate, bitrate, writeMp4, codetype, baseSend);
             //初始化音频编码
-            voiceRecord = new VoiceRecord(baseSend, writeMp4);
+            voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
 
             vdEncoder.StartEncoderThread();
             voiceRecord.star();
@@ -359,6 +361,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         //编码参数
         private int frameRate = 15;
         private int bitrate = 600 * 1024;
+        private int bitrate_vc = 32 * 1024;
         //推流分辨率
         private Size publishSize = new Size(480, 320);
 
@@ -429,8 +432,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
+        public Buider setBitrateVC(int bitrate_vc) {
+            this.bitrate_vc = bitrate_vc;
+            return this;
+        }
+
         public Publish build() {
-            return new Publish(context, textureView, ispreview, publishSize, frameRate, bitrate, codetype, rotate, path, baseSend, udpControl);
+            return new Publish(context, textureView, ispreview, publishSize, frameRate, bitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
         }
     }
 }

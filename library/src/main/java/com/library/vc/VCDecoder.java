@@ -26,7 +26,7 @@ public class VCDecoder {
     private WriteMp4 writeMp4;
     private boolean isdecoder = false;
 
-    public VCDecoder(int samplerate, int bitrate, int recBufSize, BaseRecive baseRecive, WriteMp4 writeMp4) {
+    public VCDecoder(int samplerate, BaseRecive baseRecive, WriteMp4 writeMp4) {
         this.baseRecive = baseRecive;
         this.writeMp4 = writeMp4;
         try {
@@ -37,7 +37,6 @@ public class VCDecoder {
             mediaFormat.setString(MediaFormat.KEY_MIME, AAC_MIME);
             mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
             mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, samplerate);
-            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
             mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
             //用来标记AAC是否有adts头，1->有
             mediaFormat.setInteger(MediaFormat.KEY_IS_ADTS, 1);

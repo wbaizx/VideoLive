@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:1.1.2'
+	        compile 'com.github.wbaizx:VideoLive:1.1.3'
 	}
 
 
@@ -40,7 +40,8 @@ Step 2：
                 .setFrameRate(15)//帧率
                 .setVideoCode(VDEncoder.H264)//编码方式
                 .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
-                .setBitrate(600 * 1024)//比特率
+                .setBitrate(600 * 1024)//视频采样率
+                .setBitrateVC(32 * 1024)//音频采样率
                 .setPublishSize(480, 320)//分辨率，如果系统不支持会自动选取最相近的
                 .setRotate(true)//是否为前置摄像头,默认后置
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
