@@ -36,11 +36,9 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class Publish implements TextureView.SurfaceTextureListener {
-
     private Context context;
-    public static ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(Value.QueueNum);
     //帧率控制队列
-    private ArrayBlockingQueue<byte[]> frameRateControlQueue = new ArrayBlockingQueue<>(Value.QueueNum);
+    private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(Value.QueueNum);
     //视频编码
     private VDEncoder vdEncoder = null;
     //音频采集
@@ -166,7 +164,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                             public void onError(@NonNull CameraDevice cameraDevice, int i) {
 
                             }
-                        }, camearHandler);//创建在线程
+                        }, null);//创建在线程
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -235,7 +233,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                             public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
                                 super.onCaptureStarted(session, request, timestamp, frameNumber);
                             }
-                        }, null);
+                        }, camearHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -246,7 +244,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 public void onConfigureFailed(CameraCaptureSession session) {
 
                 }
-            }, camearHandler);
+            }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -266,14 +264,17 @@ public class Publish implements TextureView.SurfaceTextureListener {
      */
     private Surface getImageReaderSurface() {
         //最后一个参数代表每次最多获取几帧数据
-        imageReader = ImageReader.newInstance(publishSize.getWidth(), publishSize.getHeight(), ImageFormat.YUV_420_888, 2);
+        imageReader = ImageReader.newInstance(publishSize.getWidth(), publishSize.getHeight(), ImageFormat.YUV_420_888, 4);
         //监听ImageReader的事件，它的参数就是预览帧数据，可以对这帧数据进行处理,类似于Camera1的PreviewCallback回调的预览帧数据
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Image image = reader.acquireNextImage();
-                frameRateControlQueue.add(ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21));
-                image.close();
+                if (frameRateControlQueue.size() < 3) {
+                    frameRateControlQueue.add(reader.acquireNextImage());
+                } else {
+                    //超出限制丢弃
+                    reader.acquireNextImage().close();
+                }
             }
         }, camearHandler);
         return imageReader.getSurface();
@@ -291,18 +292,23 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     handler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 }
                 while (frameRateControlQueue.size() > 1) {
-                    frameRateControlQueue.poll();
+                    //多余的帧数直接丢弃不做处理
+                    frameRateControlQueue.poll().close();
                 }
                 if (frameRateControlQueue.size() > 0) {
-                    if (YUVQueue.size() >= Value.QueueNum) {
-                        YUVQueue.poll();
-                    }
+                    Image image = frameRateControlQueue.poll();
                     if (rotate) {
-                        YUVQueue.add(ImageUtil.rotateYUVDegree270AndMirror(frameRateControlQueue.poll(), publishSize.getWidth(), publishSize.getHeight()));
+                        //先转成NV21再旋转图片然后交给编码器等待编码
+                        vdEncoder.addFrame(ImageUtil.rotateYUVDegree270AndMirror(
+                                ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
                     } else {
                         //后置
-                        YUVQueue.add(ImageUtil.rotateYUVDegree90(frameRateControlQueue.poll(), publishSize.getWidth(), publishSize.getHeight()));
+                        vdEncoder.addFrame(ImageUtil.rotateYUVDegree90(
+                                ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
                     }
+                    image.close();
+                } else {
+                    Log.d("Frame_loss", "可能是图像处理速度过慢也可能是采集速率不够导致掉帧了");
                 }
             }
         };

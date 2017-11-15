@@ -105,12 +105,6 @@ public class UdpSend extends BaseSend {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    } else {
-                        try {
-                            Thread.sleep(Value.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }
                 }
             }

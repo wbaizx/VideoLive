@@ -5,7 +5,6 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import com.library.Publish;
 import com.library.stream.BaseSend;
 import com.library.util.WriteMp4;
 import com.library.util.data.Value;
@@ -13,6 +12,7 @@ import com.library.util.image.ImageUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ArrayBlockingQueue;
 
 
 public class VDEncoder {
@@ -27,7 +27,7 @@ public class VDEncoder {
     private int framerate;
     private byte[] information;
     private boolean isRuning = false;
-
+    protected ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(Value.QueueNum);
     //文件录入类
     private WriteMp4 writeMp4;
 
@@ -60,19 +60,30 @@ public class VDEncoder {
         mediaCodec = null;
     }
 
+    /*
+    视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
+     */
+    public void addFrame(byte[] bytes) {
+        if (YUVQueue.size() >= Value.QueueNum) {
+            YUVQueue.poll();
+        }
+        YUVQueue.add(bytes);
+    }
+
     public void StartEncoderThread() {
+        YUVQueue.clear();
+        isRuning = true;
         new Thread(new Runnable() {
             @Override
             public void run() {
-                isRuning = true;
                 byte[] input;
                 byte[] outData;
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
-                    if (Publish.YUVQueue.size() > 0) {
-                        input = ImageUtil.NV21ToNV12(Publish.YUVQueue.poll(), width, height);
+                    if (YUVQueue.size() > 0) {
+                        input = ImageUtil.NV21ToNV12(YUVQueue.poll(), width, height);
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
                             if (inputBufferIndex >= 0) {
@@ -98,13 +109,14 @@ public class VDEncoder {
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
                                     information = outData;
-//                                        Log.d("sps_pps", ByteTurn.byte_to_16(information));
+//                                    Log.d("sps_pps", ByteTurn.byte_to_16(information));
 
                                 } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                     //关键帧
                                     outData = new byte[bufferInfo.size + information.length];
                                     System.arraycopy(information, 0, outData, 0, information.length);
                                     outputBuffer.get(outData, information.length, bufferInfo.size);
+                                    //交给发送器等待发送
                                     baseSend.addVideo(outData);
                                 } else {
                                     //普通帧
@@ -131,4 +143,6 @@ public class VDEncoder {
             }
         }).start();
     }
+
+
 }

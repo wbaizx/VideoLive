@@ -6,19 +6,17 @@ import android.media.AudioTrack;
 
 import com.library.stream.BaseRecive;
 import com.library.util.WriteMp4;
-import com.library.util.data.Value;
 
 /**
  * Created by android1 on 2017/9/23.
  */
 
-public class VoiceTrack {
+public class VoiceTrack implements VoicePlayer {
 
     private int samplerate = 44100;
     private VCDecoder vdecoder;
 
     private AudioTrack audioTrack;
-    private boolean isTrack = false;
 
     public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
         int recBufSize = AudioTrack.getMinBufferSize(
@@ -35,6 +33,8 @@ public class VoiceTrack {
                 AudioTrack.MODE_STREAM);
 
         vdecoder = new VCDecoder(samplerate, baseRecive, writeMp4);
+        //注册回调接口
+        vdecoder.register(this);
 
         if (audioTrack != null) {
             audioTrack.play();
@@ -43,34 +43,18 @@ public class VoiceTrack {
 
     public void star() {
         vdecoder.star();
-        isTrack = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                byte[] poll;
-                while (isTrack) {
-                    if (VCDecoder.PCMQueue.size() > 0) {
-                        poll = VCDecoder.PCMQueue.poll();
-                        audioTrack.write(poll, 0, poll.length);
-                    } else {
-                        try {
-                            Thread.sleep(Value.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }).start();
+    }
+
+    @Override
+    public void voicePlayer(byte[] voicebyte) {
+        audioTrack.write(voicebyte, 0, voicebyte.length);
     }
 
     public void stop() {
-        isTrack = false;
         vdecoder.stop();
     }
 
     public void destroy() {
-        isTrack = false;
         audioTrack.stop();
         audioTrack.release();
         audioTrack = null;

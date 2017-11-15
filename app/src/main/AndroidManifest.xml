@@ -26,7 +26,7 @@
             android:hardwareAccelerated="true" />
         <activity android:name=".Recive" />
         <activity android:name=".SendReady" />
-        <activity android:name=".ReciveReady"></activity>
+        <activity android:name=".ReciveReady" />
     </application>
 
 </manifest>

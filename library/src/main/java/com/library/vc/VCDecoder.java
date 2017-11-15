@@ -11,7 +11,6 @@ import com.library.util.data.Value;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created by android1 on 2017/9/23.
@@ -19,12 +18,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class VCDecoder {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
-    public static ArrayBlockingQueue<byte[]> PCMQueue = new ArrayBlockingQueue<>(Value.QueueNum);
 
     private MediaCodec mDecoder;
     private BaseRecive baseRecive;
     private WriteMp4 writeMp4;
     private boolean isdecoder = false;
+    private VoicePlayer voicePlayer;
 
     public VCDecoder(int samplerate, BaseRecive baseRecive, WriteMp4 writeMp4) {
         this.baseRecive = baseRecive;
@@ -55,12 +54,15 @@ public class VCDecoder {
         mDecoder.start();
     }
 
+    public void register(VoicePlayer voicePlayer) {
+        this.voicePlayer = voicePlayer;
+    }
+
     public void star() {
         isdecoder = true;
         new Thread(new Runnable() {
             @Override
             public void run() {
-                PCMQueue.clear();
                 byte[] poll;
                 ByteBuffer dstBuf;
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
@@ -91,10 +93,10 @@ public class VCDecoder {
                                 outData = new byte[info.size];
                                 outputBuffer.get(outData);
                                 outputBuffer.clear();
-                                if (PCMQueue.size() >= Value.QueueNum) {
-                                    PCMQueue.poll();
+                                if (voicePlayer != null) {
+                                    //通过接口回调播放
+                                    voicePlayer.voicePlayer(outData);
                                 }
-                                PCMQueue.add(outData);
                                 mDecoder.releaseOutputBuffer(outputBufferIndex, false);
                                 outputBufferIndex = mDecoder.dequeueOutputBuffer(info, Value.waitTime);
                             }

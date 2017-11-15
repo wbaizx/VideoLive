@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 public class VCEncoder {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
     private MediaCodec mediaCodec;
-    private boolean isencoder = false;
     private BaseSend baseSend;
     //文件录入类
     private WriteMp4 writeMp4;
@@ -44,59 +43,44 @@ public class VCEncoder {
         mediaCodec.start();
     }
 
-    public void star() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                isencoder = true;
-                ByteBuffer outputBuffer;
-                ByteBuffer inputBuffer;
-                byte[] outData;
-                byte[] buffer;
-                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-                while (isencoder) {
-                    if (VoiceRecord.PCMQueue.size() > 0) {
-                        buffer = VoiceRecord.PCMQueue.poll();
-                        int inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
-                        if (inputBufferIndex >= 0) {
-                            inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
-                            inputBuffer.clear();
-                            inputBuffer.put(buffer);
-                            mediaCodec.queueInputBuffer(inputBufferIndex, 0, buffer.length, Value.getFPS(), 0);
-                        }
+    private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+    private int outputBufferIndex;
+    private int inputBufferIndex;
 
-                        int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+    /*
+    音频数据编码，音频数据处理较少，直接编码
+     */
+    public void encode(byte[] result) {
+        inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
+        if (inputBufferIndex >= 0) {
+            ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+            inputBuffer.clear();
+            inputBuffer.put(result);
+            mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, Value.getFPS(), 0);
+        }
 
-                        if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-                            writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
-                        }
+        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
 
-                        while (outputBufferIndex >= 0) {
-                            outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
-                            outputBuffer.position(bufferInfo.offset);
-                            outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
+        if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
+            writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
+        }
 
-                            outData = new byte[bufferInfo.size + 7];
-                            addADTStoPacket(outData, bufferInfo.size + 7);
-                            outputBuffer.get(outData, 7, bufferInfo.size);
-                            //添加将要发送的音频数据
-                            baseSend.addVoice(outData);
-                            //写文件
-                            writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
+        while (outputBufferIndex >= 0) {
+            ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
+            outputBuffer.position(bufferInfo.offset);
+            outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
 
-                            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
-                        }
-                    } else {
-                        try {
-                            Thread.sleep(Value.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }).start();
+            byte[] outData = new byte[bufferInfo.size + 7];
+            addADTStoPacket(outData, bufferInfo.size + 7);
+            outputBuffer.get(outData, 7, bufferInfo.size);
+            //添加将要发送的音频数据
+            baseSend.addVoice(outData);
+            //写文件
+            writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
+
+            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+        }
     }
 
     private void addADTStoPacket(byte[] packet, int packetLen) {
@@ -110,10 +94,8 @@ public class VCEncoder {
     }
 
     public void destroy() {
-        isencoder = false;
         mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
     }
-
 }
