@@ -1,4 +1,4 @@
-package com.library.util.image;
+package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;

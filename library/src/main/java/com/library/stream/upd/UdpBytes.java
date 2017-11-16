@@ -1,7 +1,7 @@
 package com.library.stream.upd;
 
-import com.library.util.data.ByteTurn;
-import com.library.util.data.Crc;
+import com.library.util.ByteUtil;
+import com.library.nativec.Crc;
 
 /**
  * UDP协议内容：
@@ -24,11 +24,11 @@ public class UdpBytes {
     public UdpBytes(byte[] bytes) {
         tag = bytes[0];
         frameTag = bytes[1];
-        num = ByteTurn.byte_to_int(bytes[4], bytes[5], bytes[6], bytes[7]);
-        time = ByteTurn.byte_to_int(bytes[8], bytes[9], bytes[10], bytes[11]);
-        CRC = ByteTurn.byte_to_int(bytes[12], bytes[13], bytes[14], bytes[15]);
+        num = ByteUtil.byte_to_int(bytes[4], bytes[5], bytes[6], bytes[7]);
+        time = ByteUtil.byte_to_int(bytes[8], bytes[9], bytes[10], bytes[11]);
+        CRC = ByteUtil.byte_to_int(bytes[12], bytes[13], bytes[14], bytes[15]);
 
-        int length = ByteTurn.byte_to_short(bytes[2], bytes[3]);
+        int length = ByteUtil.byte_to_short(bytes[2], bytes[3]);
         data = new byte[length];
         System.arraycopy(bytes, 16, data, 0, length);//16是数据前面协议字节长度
     }

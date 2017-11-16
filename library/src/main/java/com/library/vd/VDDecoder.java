@@ -7,9 +7,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.library.stream.BaseRecive;
-import com.library.util.WriteMp4;
-import com.library.util.data.ByteTurn;
-import com.library.util.data.Value;
+import com.library.file.WriteMp4;
+import com.library.util.ByteUtil;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -118,7 +118,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 4] == (byte) 0x68) {
                 byte[] bytes = new byte[i];
                 System.arraycopy(information, 0, bytes, 0, i);
-                Log.d("VDDecoder_information", "h264 sps" + ByteTurn.byte_to_16(bytes));
+                Log.d("VDDecoder_information", "h264 sps" + ByteUtil.byte_to_16(bytes));
                 return ByteBuffer.wrap(bytes);
             }
         }
@@ -140,7 +140,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                             && information[j + 4] == (byte) 0x65) {
                         byte[] bytes = new byte[j - i];
                         System.arraycopy(information, i, bytes, 0, j - i);
-                        Log.d("VDDecoder_information", "h264 pps" + ByteTurn.byte_to_16(bytes));
+                        Log.d("VDDecoder_information", "h264 pps" + ByteUtil.byte_to_16(bytes));
                         return ByteBuffer.wrap(bytes);
                     }
                 }
@@ -158,7 +158,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 4] == (byte) 0x26) {
                 byte[] bytes = new byte[i];
                 System.arraycopy(information, 0, bytes, 0, i);
-                Log.d("VDDecoder_information", "h265信息" + ByteTurn.byte_to_16(bytes));
+                Log.d("VDDecoder_information", "h265信息" + ByteUtil.byte_to_16(bytes));
                 return ByteBuffer.wrap(bytes);
             }
         }
@@ -206,7 +206,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                         writeFile(poll, poll.length);
                         if (isdecoder && isdestroyed) {
                             //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
-                            int inputBufferIndex = mCodec.dequeueInputBuffer(Value.waitTime);
+                            int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {
                                 inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
                                 //清空buffer
@@ -220,19 +220,19 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                                 continue;
                             }
                             // 获取输出buffer index
-                            int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+                            int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
 
                             //循环解码，直到数据全部解码完成
                             while (outputBufferIndex >= 0) {
                                 //logger.d("outputBufferIndex = " + outputBufferIndex);
                                 //true : 将解码的数据显示到surface上
                                 mCodec.releaseOutputBuffer(outputBufferIndex, true);
-                                outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+                                outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
                             }
                         }
                     } else {
                         try {
-                            Thread.sleep(Value.sleepTime);
+                            Thread.sleep(OtherUtil.sleepTime);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -251,7 +251,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private void writeFile(byte[] output, int length) {
         writebuffer.clear();
         bufferInfo.offset = 0;
-        bufferInfo.presentationTimeUs = Value.getFPS();
+        bufferInfo.presentationTimeUs = OtherUtil.getFPS();
         if (MIME_TYPE.equals(H264)) {
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
             if (output[4] == (byte) 0x67) {//KEY

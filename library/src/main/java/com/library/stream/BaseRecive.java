@@ -1,7 +1,6 @@
 package com.library.stream;
 
-import com.library.stream.upd.UdpControlInterface;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 import com.library.vd.VideoInformationInterface;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -11,8 +10,8 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public abstract class BaseRecive {
-    protected ArrayBlockingQueue<byte[]> reciveFrameQueue = new ArrayBlockingQueue<>(Value.QueueNum);
-    protected ArrayBlockingQueue<byte[]> reciveAACQueue = new ArrayBlockingQueue<>(Value.QueueNum);
+    protected ArrayBlockingQueue<byte[]> reciveFrameQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    protected ArrayBlockingQueue<byte[]> reciveAACQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     protected boolean isrevice = false;
     protected VideoInformationInterface informaitonInterface;
     protected UdpControlInterface udpControl = null;

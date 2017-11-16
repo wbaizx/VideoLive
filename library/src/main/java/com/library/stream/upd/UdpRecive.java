@@ -3,7 +3,7 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseRecive;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -22,8 +22,8 @@ public class UdpRecive extends BaseRecive {
     private DatagramPacket packetreceive;
     private int videoUdpLength = 80;
 
-    private ArrayBlockingQueue<UdpBytes> videoPacket = new ArrayBlockingQueue<>(Value.QueueNum);
-    private ArrayBlockingQueue<UdpBytes> voicePacket = new ArrayBlockingQueue<>(Value.QueueNum);
+    private ArrayBlockingQueue<UdpBytes> videoPacket = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private ArrayBlockingQueue<UdpBytes> voicePacket = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
@@ -118,7 +118,7 @@ public class UdpRecive extends BaseRecive {
             //添加到待拼接队列
             while (videoList.size() > videoUdpLength) {
                 //由于与读取的并发操作存在问题,所以只能在建一个列表
-                if (videoPacket.size() >= Value.QueueNum) {
+                if (videoPacket.size() >= OtherUtil.QueueNum) {
                     videoPacket.poll();
                 }
                 videoPacket.add(videoList.removeFirst());
@@ -140,7 +140,7 @@ public class UdpRecive extends BaseRecive {
             //添加到待拼接队列
             if (voiceList.size() > 30) {
                 //由于与读取的并发操作存在问题,所以只能在建一个列表
-                if (voicePacket.size() >= Value.QueueNum) {
+                if (voicePacket.size() >= OtherUtil.QueueNum) {
                     voicePacket.poll();
                 }
                 voicePacket.add(voiceList.removeFirst());
@@ -185,7 +185,7 @@ public class UdpRecive extends BaseRecive {
                         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
                             if (isFrameBegin) {
                                 frameBuffer.put(udpBytes.getData());
-                                if (reciveFrameQueue.size() >= Value.QueueNum) {
+                                if (reciveFrameQueue.size() >= OtherUtil.QueueNum) {
                                     reciveFrameQueue.poll();
                                 }
                                 byte[] frame = new byte[frameBuffer.position()];
@@ -194,7 +194,7 @@ public class UdpRecive extends BaseRecive {
                                 isFrameBegin = false;
                             }
                         } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
-                            if (reciveFrameQueue.size() >= Value.QueueNum) {
+                            if (reciveFrameQueue.size() >= OtherUtil.QueueNum) {
                                 reciveFrameQueue.poll();
                             }
                             reciveFrameQueue.add(udpBytes.getData());
@@ -209,7 +209,7 @@ public class UdpRecive extends BaseRecive {
     private void sleepTime(int time, int oldtime, int oldudptime) {
         try {
             //控制睡眠时间在0-70之间
-            Thread.sleep(Math.min(70, Math.max(0, (time - oldudptime) - (Value.getTime() - oldtime))));
+            Thread.sleep(Math.min(70, Math.max(0, (time - oldudptime) - (OtherUtil.getTime() - oldtime))));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -241,7 +241,7 @@ public class UdpRecive extends BaseRecive {
                     if (voicePacket.size() > 0) {
                         udpBytes = voicePacket.poll();
                         //计算时间戳
-                        if ((Value.getTime() - oldtime_vc) < (udpBytes.getTime() - oldudptime_vc)) {
+                        if ((OtherUtil.getTime() - oldtime_vc) < (udpBytes.getTime() - oldudptime_vc)) {
                             sleepTime(udpBytes.getTime(), oldtime_vc, oldudptime_vc);
                         }
                         //根据包堆积数量控制播放速率
@@ -251,7 +251,7 @@ public class UdpRecive extends BaseRecive {
                         controlSynchronization();
 
                         if (udpBytes.getFrameTag() == (byte) 0x03) {//独立音频帧
-                            if (reciveAACQueue.size() >= Value.QueueNum) {
+                            if (reciveAACQueue.size() >= OtherUtil.QueueNum) {
                                 reciveAACQueue.poll();
                             }
                             reciveAACQueue.add(udpBytes.getData());
@@ -280,17 +280,17 @@ public class UdpRecive extends BaseRecive {
     //根据包堆积数量控制播放速率
     private int controlTiem(int size) {
         if (size > 50) {
-            return Value.getTime() - 15;
+            return OtherUtil.getTime() - 15;
         } else if (size > 40) {
-            return Value.getTime() - 10;
+            return OtherUtil.getTime() - 10;
         } else if (size > 30) {
-            return Value.getTime() - 5;
+            return OtherUtil.getTime() - 5;
         } else if (size > 20) {
-            return Value.getTime();
+            return OtherUtil.getTime();
         } else if (size > 10) {
-            return Value.getTime() + 5;
+            return OtherUtil.getTime() + 5;
         } else {
-            return Value.getTime() + 10;
+            return OtherUtil.getTime() + 10;
         }
     }
 

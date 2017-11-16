@@ -1,10 +1,10 @@
-package com.library.util.data;
+package com.library.util;
 
 /**
  * Created by android1 on 2017/9/25.
  */
 
-public class ByteTurn {
+public class ByteUtil {
     //short转bytes
     public static byte[] short_to_byte(short num) {
         byte[] result = new byte[2];

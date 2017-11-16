@@ -6,9 +6,9 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.library.stream.BaseSend;
-import com.library.util.WriteMp4;
-import com.library.util.data.Value;
-import com.library.util.image.ImageUtil;
+import com.library.file.WriteMp4;
+import com.library.util.OtherUtil;
+import com.library.util.ImageUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,7 +27,7 @@ public class VDEncoder {
     private int framerate;
     private byte[] information;
     private boolean isRuning = false;
-    protected ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(Value.QueueNum);
+    protected ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     //文件录入类
     private WriteMp4 writeMp4;
 
@@ -64,7 +64,7 @@ public class VDEncoder {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        if (YUVQueue.size() >= Value.QueueNum) {
+        if (YUVQueue.size() >= OtherUtil.QueueNum) {
             YUVQueue.poll();
         }
         YUVQueue.add(bytes);
@@ -85,15 +85,15 @@ public class VDEncoder {
                     if (YUVQueue.size() > 0) {
                         input = ImageUtil.NV21ToNV12(YUVQueue.poll(), width, height);
                         try {
-                            int inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
+                            int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {
                                 ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
                                 inputBuffer.clear();
                                 inputBuffer.put(input);
-                                mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, Value.getFPS(), 0);
+                                mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, OtherUtil.getFPS(), 0);
                             }
 
-                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
 
                             if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
                                 writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
@@ -109,7 +109,7 @@ public class VDEncoder {
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
                                     information = outData;
-//                                    Log.d("sps_pps", ByteTurn.byte_to_16(information));
+//                                    Log.d("sps_pps", ByteUtil.byte_to_16(information));
 
                                 } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                     //关键帧
@@ -127,14 +127,14 @@ public class VDEncoder {
                                     baseSend.addVideo(outData);
                                 }
                                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
                             }
                         } catch (Throwable t) {
                             t.printStackTrace();
                         }
                     } else {
                         try {
-                            Thread.sleep(Value.sleepTime);
+                            Thread.sleep(OtherUtil.sleepTime);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }

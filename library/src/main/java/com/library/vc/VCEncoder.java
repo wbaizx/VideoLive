@@ -4,9 +4,9 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
+import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
-import com.library.util.WriteMp4;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,15 +51,15 @@ public class VCEncoder {
     音频数据编码，音频数据处理较少，直接编码
      */
     public void encode(byte[] result) {
-        inputBufferIndex = mediaCodec.dequeueInputBuffer(Value.waitTime);
+        inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
         if (inputBufferIndex >= 0) {
             ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
             inputBuffer.clear();
             inputBuffer.put(result);
-            mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, Value.getFPS(), 0);
+            mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, OtherUtil.getFPS(), 0);
         }
 
-        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
 
         if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
             writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
@@ -79,7 +79,7 @@ public class VCEncoder {
             writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
 
             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, Value.waitTime);
+            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
         }
     }
 

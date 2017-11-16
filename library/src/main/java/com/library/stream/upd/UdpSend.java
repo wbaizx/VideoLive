@@ -3,7 +3,7 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseSend;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -26,7 +26,7 @@ public class UdpSend extends BaseSend {
     private final int sendUdplength = 480;//视频包长度固定480
     private ByteBuffer buffvideo = ByteBuffer.allocate(548);
     private ByteBuffer buffvoice = ByteBuffer.allocate(548);
-    private ArrayBlockingQueue<byte[]> push = new ArrayBlockingQueue<>(Value.QueueNum);
+    private ArrayBlockingQueue<byte[]> push = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
     public UdpSend(String ip, int port) {
@@ -66,7 +66,7 @@ public class UdpSend extends BaseSend {
                         writeVideo(sendFrameQueue.poll());
                     } else {
                         try {
-                            Thread.sleep(Value.sleepTime);
+                            Thread.sleep(OtherUtil.sleepTime);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -84,7 +84,7 @@ public class UdpSend extends BaseSend {
                         writeVoice(sendAACQueue.poll());
                     } else {
                         try {
-                            Thread.sleep(Value.sleepTime);
+                            Thread.sleep(OtherUtil.sleepTime);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -135,7 +135,7 @@ public class UdpSend extends BaseSend {
         //是否首次进入
         boolean isOne = true;
         //记录时间值
-        int time_vd_vaule = Value.getTime();
+        int time_vd_vaule = OtherUtil.getTime();
 
         while ((poll.length - nowPosition) >= sendUdplength) {
             buffvideo.put((byte) 1);//视频TAG
@@ -198,7 +198,7 @@ public class UdpSend extends BaseSend {
         buffvoice.put((byte) 3);//完整帧
         buffvoice.putShort((short) poll.length);//长度
         buffvoice.putInt(voiceNum++);//序号
-        buffvoice.putInt(Value.getTime());//时戳
+        buffvoice.putInt(OtherUtil.getTime());//时戳
 //        buffvoice.putInt(Crc.getCrcInt(poll, 0, poll.length));//CRC校验位
         buffvoice.putInt(0);//CRC校验位暂时关闭，用0填充
         buffvoice.put(poll);//数据
@@ -216,7 +216,7 @@ public class UdpSend extends BaseSend {
 
     private void pushAdd(byte[] pushBytes) {
         Log.d("UdpPackage_app_size", "--" + push.size());
-        if (push.size() >= Value.QueueNum - 1) {
+        if (push.size() >= OtherUtil.QueueNum - 1) {
             push.poll();
         }
         push.add(pushBytes);

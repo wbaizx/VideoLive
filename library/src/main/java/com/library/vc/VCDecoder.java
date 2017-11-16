@@ -5,9 +5,9 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
-import com.library.util.WriteMp4;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,9 +40,8 @@ public class VCDecoder {
             //用来标记AAC是否有adts头，1->有
             mediaFormat.setInteger(MediaFormat.KEY_IS_ADTS, 1);
 
-            byte[] data = new byte[]{(byte) 0x11, (byte) 0x90};
-            ByteBuffer csd_0 = ByteBuffer.wrap(data);
-            mediaFormat.setByteBuffer("csd-0", csd_0);
+            byte[] data = new byte[]{(byte) 0x12, (byte) 0x10};
+            mediaFormat.setByteBuffer("csd-0", ByteBuffer.wrap(data));
 
             writeMp4.addTrack(mediaFormat, WriteMp4.voice);
 
@@ -75,7 +74,7 @@ public class VCDecoder {
                         writeFile(poll, poll.length);
                         try {
                             //返回一个包含有效数据的input buffer的index,-1->不存在
-                            int inputBufIndex = mDecoder.dequeueInputBuffer(Value.waitTime);
+                            int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufIndex >= 0) {
                                 //获取当前的ByteBuffer
                                 dstBuf = mDecoder.getInputBuffer(inputBufIndex);
@@ -86,7 +85,7 @@ public class VCDecoder {
                                 Log.e("dcoder_failure", "dcoder failure_VC");
                                 continue;
                             }
-                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, Value.waitTime);
+                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
 
                             while (outputBufferIndex >= 0) {
                                 outputBuffer = mDecoder.getOutputBuffer(outputBufferIndex);
@@ -98,14 +97,14 @@ public class VCDecoder {
                                     voicePlayer.voicePlayer(outData);
                                 }
                                 mDecoder.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, Value.waitTime);
+                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     } else {
                         try {
-                            Thread.sleep(Value.sleepTime);
+                            Thread.sleep(OtherUtil.sleepTime);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -127,7 +126,7 @@ public class VCDecoder {
         writebuffer.put(output);
         bufferInfo.size = length;
         bufferInfo.offset = 0;
-        bufferInfo.presentationTimeUs = Value.getFPS();
+        bufferInfo.presentationTimeUs = OtherUtil.getFPS();
         bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
         writeMp4.write(WriteMp4.voice, writebuffer, bufferInfo);
     }

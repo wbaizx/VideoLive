@@ -5,7 +5,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 
 import com.library.stream.BaseRecive;
-import com.library.util.WriteMp4;
+import com.library.file.WriteMp4;
 
 /**
  * Created by android1 on 2017/9/23.

@@ -24,10 +24,10 @@ import android.view.Surface;
 import android.view.TextureView;
 
 import com.library.stream.BaseSend;
-import com.library.stream.upd.UdpControlInterface;
-import com.library.util.WriteMp4;
-import com.library.util.data.Value;
-import com.library.util.image.ImageUtil;
+import com.library.stream.UdpControlInterface;
+import com.library.file.WriteMp4;
+import com.library.util.OtherUtil;
+import com.library.util.ImageUtil;
 import com.library.vc.VoiceRecord;
 import com.library.vd.VDEncoder;
 
@@ -38,7 +38,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class Publish implements TextureView.SurfaceTextureListener {
     private Context context;
     //帧率控制队列
-    private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(Value.QueueNum);
+    private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     //视频编码
     private VDEncoder vdEncoder = null;
     //音频采集

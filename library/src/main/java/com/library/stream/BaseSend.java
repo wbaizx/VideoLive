@@ -1,7 +1,6 @@
 package com.library.stream;
 
-import com.library.stream.upd.UdpControlInterface;
-import com.library.util.data.Value;
+import com.library.util.OtherUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -10,8 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public abstract class BaseSend {
-    protected ArrayBlockingQueue<byte[]> sendFrameQueue = new ArrayBlockingQueue<>(Value.QueueNum);
-    protected ArrayBlockingQueue<byte[]> sendAACQueue = new ArrayBlockingQueue<>(Value.QueueNum);
+    protected ArrayBlockingQueue<byte[]> sendFrameQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    protected ArrayBlockingQueue<byte[]> sendAACQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     protected boolean issend = false;
     protected UdpControlInterface udpControl = null;
 
@@ -22,14 +21,14 @@ public abstract class BaseSend {
     public abstract void destroy();
 
     public void addVideo(byte[] video) {
-        if (sendFrameQueue.size() >= Value.QueueNum) {
+        if (sendFrameQueue.size() >= OtherUtil.QueueNum) {
             sendFrameQueue.poll();
         }
         sendFrameQueue.add(video);
     }
 
     public void addVoice(byte[] voice) {
-        if (sendAACQueue.size() >= Value.QueueNum) {
+        if (sendAACQueue.size() >= OtherUtil.QueueNum) {
             sendAACQueue.poll();
         }
         sendAACQueue.add(voice);

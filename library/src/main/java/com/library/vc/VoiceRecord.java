@@ -5,7 +5,7 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
 import com.library.stream.BaseSend;
-import com.library.util.WriteMp4;
+import com.library.file.WriteMp4;
 
 /**
  * Created by android1 on 2017/9/22.
