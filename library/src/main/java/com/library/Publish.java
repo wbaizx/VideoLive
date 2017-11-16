@@ -269,7 +269,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                if (frameRateControlQueue.size() >= frameMax) {
+                if (frameRateControlQueue.size() >= (frameMax - 1)) {
                     //超出限制丢弃
                     frameRateControlQueue.poll().close();
                 }
@@ -278,6 +278,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }, camearHandler);
         return imageReader.getSurface();
     }
+
+    //耗时检测
+    private long time = 0;
 
     //帧率控制策略
     private void startControlFrameRate() {
@@ -290,12 +293,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 if (controlFrameRateThread.isAlive()) {
                     handler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 }
-                while (frameRateControlQueue.size() > 1) {
-                    //多余的帧数直接丢弃不做处理
-                    frameRateControlQueue.poll().close();
-                }
                 if (frameRateControlQueue.size() > 0) {
+                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
+                    /*
+                    480*320图像处理大概14ms，1280*720大概48ms
+                     */
                     if (rotate) {
                         //先转成NV21再旋转图片然后交给编码器等待编码
                         vdEncoder.addFrame(ImageUtil.rotateYUVDegree270AndMirror(
@@ -306,8 +309,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
                                 ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
                     }
                     image.close();
+                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
+                        Log.d("Frame_slow", "图像处理速度过慢");
+                    }
                 } else {
-                    Log.d("Frame_loss", "可能是图像处理速度过慢也可能是采集速率不够导致掉帧了");
+                    Log.d("Frame_loss", "图像采集速率不够");
                 }
             }
         };
@@ -353,11 +359,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
         handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
         imageReader.close();
+        writeMp4.destroy();
         vdEncoder.destroy();
         voiceRecord.destroy();
-
         baseSend.destroy();
-        writeMp4.destroy();
     }
 
     public static class Buider {

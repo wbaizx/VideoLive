@@ -8,7 +8,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class OtherUtil {
     public static final int QueueNum = 200;
-    public static final int sleepTime = 10;
     public static final int waitTime = 0;
 
     public static int getTime() {
@@ -17,6 +16,22 @@ public class OtherUtil {
 
     public static long getFPS() {
         return System.nanoTime() / 1000;
+    }
+
+    public static void sleepLongTime() {
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sleepShortTime() {
+        try {
+            Thread.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void addQueue(ArrayBlockingQueue queue, Object obj) {

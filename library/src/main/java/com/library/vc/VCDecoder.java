@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
+import com.library.stream.VoiceCallback;
 import com.library.util.OtherUtil;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.nio.ByteBuffer;
  * Created by android1 on 2017/9/23.
  */
 
-public class VCDecoder {
+public class VCDecoder implements VoiceCallback {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
 
     private MediaCodec mDecoder;
@@ -27,6 +28,7 @@ public class VCDecoder {
 
     public VCDecoder(int samplerate, BaseRecive baseRecive, WriteMp4 writeMp4) {
         this.baseRecive = baseRecive;
+        baseRecive.setVoiceCallback(this);
         this.writeMp4 = writeMp4;
         try {
             //需要解码数据的类型
@@ -57,61 +59,54 @@ public class VCDecoder {
         this.voicePlayer = voicePlayer;
     }
 
+    @Override
+    public void voiceCallback(byte[] voice) {
+        if (isdecoder) {
+            //音频解码耗时较少，直接单线程顺序执行解码
+            decoder(voice);
+        }
+    }
+
+    private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+    private int outputBufferIndex;
+
+    public void decoder(byte[] voice) {
+        //写文件
+        writeFile(voice, voice.length);
+        try {
+            //返回一个包含有效数据的input buffer的index,-1->不存在
+            int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
+            if (inputBufIndex >= 0) {
+                //获取当前的ByteBuffer
+                ByteBuffer dstBuf = mDecoder.getInputBuffer(inputBufIndex);
+                dstBuf.clear();
+                dstBuf.put(voice, 0, voice.length);
+                mDecoder.queueInputBuffer(inputBufIndex, 0, voice.length, 0, 0);
+            } else {
+                Log.e("dcoder_failure", "dcoder failure_VC");
+                return;
+            }
+            outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
+
+            while (outputBufferIndex >= 0) {
+                ByteBuffer outputBuffer = mDecoder.getOutputBuffer(outputBufferIndex);
+                byte[] outData = new byte[info.size];
+                outputBuffer.get(outData);
+                outputBuffer.clear();
+                if (voicePlayer != null) {
+                    //通过接口回调播放
+                    voicePlayer.voicePlayer(outData);
+                }
+                mDecoder.releaseOutputBuffer(outputBufferIndex, false);
+                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void star() {
         isdecoder = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                byte[] poll;
-                ByteBuffer dstBuf;
-                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                ByteBuffer outputBuffer;
-                byte[] outData;
-                while (isdecoder) {
-                    poll = baseRecive.getVoice();
-                    if (poll != null) {
-                        //写文件
-                        writeFile(poll, poll.length);
-                        try {
-                            //返回一个包含有效数据的input buffer的index,-1->不存在
-                            int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
-                            if (inputBufIndex >= 0) {
-                                //获取当前的ByteBuffer
-                                dstBuf = mDecoder.getInputBuffer(inputBufIndex);
-                                dstBuf.clear();
-                                dstBuf.put(poll, 0, poll.length);
-                                mDecoder.queueInputBuffer(inputBufIndex, 0, poll.length, 0, 0);
-                            } else {
-                                Log.e("dcoder_failure", "dcoder failure_VC");
-                                continue;
-                            }
-                            int outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
-
-                            while (outputBufferIndex >= 0) {
-                                outputBuffer = mDecoder.getOutputBuffer(outputBufferIndex);
-                                outData = new byte[info.size];
-                                outputBuffer.get(outData);
-                                outputBuffer.clear();
-                                if (voicePlayer != null) {
-                                    //通过接口回调播放
-                                    voicePlayer.voicePlayer(outData);
-                                }
-                                mDecoder.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        try {
-                            Thread.sleep(OtherUtil.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }).start();
     }
 
 

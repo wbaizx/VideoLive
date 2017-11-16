@@ -29,22 +29,22 @@ public class Player {
     }
 
     public void star() {
-        vdDecoder.star();
         voiceTrack.star();
+        vdDecoder.star();
         baseRecive.starRevice();
     }
 
     public void stop() {
-        voiceTrack.stop();
-        vdDecoder.stop();
         baseRecive.stopRevice();
+        vdDecoder.stop();
+        voiceTrack.stop();
     }
 
     public void destroy() {
-        voiceTrack.destroy();
-        vdDecoder.destroy();
-        baseRecive.destroy();
         writeMp4.destroy();
+        baseRecive.destroy();
+        vdDecoder.destroy();
+        voiceTrack.destroy();
     }
 
     public void starRecode() {

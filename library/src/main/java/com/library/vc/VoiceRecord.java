@@ -4,8 +4,8 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
-import com.library.stream.BaseSend;
 import com.library.file.WriteMp4;
+import com.library.stream.BaseSend;
 
 /**
  * Created by android1 on 2017/9/22.
@@ -50,6 +50,9 @@ public class VoiceRecord {
                     int bufferReadResult;
                     audioRecord.startRecording();//开始录制
                     while (isrecord) {
+                        /*
+                        两针间采集大概40ms，编码发送大概4ms，单线程顺序执行没有问题
+                         */
                         bufferReadResult = audioRecord.read(buffer, 0, recBufSize);
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;

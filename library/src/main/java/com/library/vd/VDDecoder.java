@@ -6,8 +6,9 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.library.stream.BaseRecive;
 import com.library.file.WriteMp4;
+import com.library.stream.BaseRecive;
+import com.library.stream.VideoCallback;
 import com.library.util.ByteUtil;
 import com.library.util.OtherUtil;
 
@@ -15,7 +16,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterface {
+public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterface, VideoCallback {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
     public static final String H265 = MediaFormat.MIMETYPE_VIDEO_HEVC;
     //解码格式
@@ -30,10 +31,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private boolean isdecoder = false;
     //控制标志
     private boolean isdestroyed = false;
-    //销毁标志
-    private boolean star = true;
 
-    private BaseRecive baseRecive;
     //解码器配置信息
     private byte[] information = null;
 
@@ -52,12 +50,11 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         } catch (IOException e) {
             e.printStackTrace();
         }
+        baseRecive.setVideoCallback(this);
+        baseRecive.setInformaitonInterface(this);
         holder.addCallback(this);
         // 设置该组件让屏幕不会自动关闭
         holder.setKeepScreenOn(true);
-        this.baseRecive = baseRecive;
-        baseRecive.setInformaitonInterface(this);
-        startCodec();
     }
 
     /*
@@ -183,7 +180,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     }
 
     public void destroy() {
-        star = false;
         isdestroyed = false;
         isdecoder = false;
         mCodec.stop();
@@ -191,56 +187,44 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         mCodec = null;
     }
 
-
-    private void startCodec() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                byte[] poll;
-                ByteBuffer inputBuffer;
-                MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-                while (star) {
-                    poll = baseRecive.getVideo();
-                    if (poll != null) {
-                        //写文件
-                        writeFile(poll, poll.length);
-                        if (isdecoder && isdestroyed) {
-                            //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
-                            int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
-                            if (inputBufferIndex >= 0) {
-                                inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
-                                //清空buffer
-                                inputBuffer.clear();
-                                //put需要解码的数据
-                                inputBuffer.put(poll, 0, poll.length);
-                                //解码
-                                mCodec.queueInputBuffer(inputBufferIndex, 0, poll.length, 0, 0);
-                            } else {
-                                Log.e("dcoder_failure", "dcoder failure_VD");
-                                continue;
-                            }
-                            // 获取输出buffer index
-                            int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-
-                            //循环解码，直到数据全部解码完成
-                            while (outputBufferIndex >= 0) {
-                                //logger.d("outputBufferIndex = " + outputBufferIndex);
-                                //true : 将解码的数据显示到surface上
-                                mCodec.releaseOutputBuffer(outputBufferIndex, true);
-                                outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-                            }
-                        }
-                    } else {
-                        try {
-                            Thread.sleep(OtherUtil.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }).start();
+    @Override
+    public void videoCallback(byte[] video) {
+        if (isdecoder && isdestroyed) {
+            decoder(video);
+        }
     }
+
+    private MediaCodec.BufferInfo debufferInfo = new MediaCodec.BufferInfo();
+
+    public void decoder(byte[] video) {
+        //写文件
+        writeFile(video, video.length);
+        //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
+        int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
+        if (inputBufferIndex >= 0) {
+            ByteBuffer inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
+            //清空buffer
+            inputBuffer.clear();
+            //put需要解码的数据
+            inputBuffer.put(video, 0, video.length);
+            //解码
+            mCodec.queueInputBuffer(inputBufferIndex, 0, video.length, 0, 0);
+        } else {
+            Log.e("dcoder_failure", "dcoder failure_VD");
+            return;
+        }
+        // 获取输出buffer index
+        int outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
+
+        //循环解码，直到数据全部解码完成
+        while (outputBufferIndex >= 0) {
+            //logger.d("outputBufferIndex = " + outputBufferIndex);
+            //true : 将解码的数据显示到surface上
+            mCodec.releaseOutputBuffer(outputBufferIndex, true);
+            outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
+        }
+    }
+
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
     private ByteBuffer writebuffer = ByteBuffer.allocate(1024 * 80);

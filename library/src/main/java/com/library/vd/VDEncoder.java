@@ -80,6 +80,9 @@ public class VDEncoder {
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (YUVQueue.size() > 0) {
+                        /*
+                        480*320编码发送大约4ms，1280*720大约10ms。
+                         */
                         input = ImageUtil.NV21ToNV12(YUVQueue.poll(), width, height);
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
@@ -130,11 +133,7 @@ public class VDEncoder {
                             t.printStackTrace();
                         }
                     } else {
-                        try {
-                            Thread.sleep(OtherUtil.sleepTime);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                        OtherUtil.sleepLongTime();
                     }
                 }
             }
