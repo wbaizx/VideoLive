@@ -23,10 +23,9 @@ import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 
+import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
 import com.library.stream.UdpControlInterface;
-import com.library.file.WriteMp4;
-import com.library.util.OtherUtil;
 import com.library.util.ImageUtil;
 import com.library.vc.VoiceRecord;
 import com.library.vd.VDEncoder;
@@ -37,8 +36,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class Publish implements TextureView.SurfaceTextureListener {
     private Context context;
+    private final int frameMax = 4;
     //帧率控制队列
-    private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(frameMax);
     //视频编码
     private VDEncoder vdEncoder = null;
     //音频采集
@@ -264,17 +264,16 @@ public class Publish implements TextureView.SurfaceTextureListener {
      */
     private Surface getImageReaderSurface() {
         //最后一个参数代表每次最多获取几帧数据
-        imageReader = ImageReader.newInstance(publishSize.getWidth(), publishSize.getHeight(), ImageFormat.YUV_420_888, 4);
+        imageReader = ImageReader.newInstance(publishSize.getWidth(), publishSize.getHeight(), ImageFormat.YUV_420_888, frameMax);
         //监听ImageReader的事件，它的参数就是预览帧数据，可以对这帧数据进行处理,类似于Camera1的PreviewCallback回调的预览帧数据
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                if (frameRateControlQueue.size() < 3) {
-                    frameRateControlQueue.add(reader.acquireNextImage());
-                } else {
+                if (frameRateControlQueue.size() >= frameMax) {
                     //超出限制丢弃
-                    reader.acquireNextImage().close();
+                    frameRateControlQueue.poll().close();
                 }
+                frameRateControlQueue.add(reader.acquireNextImage());
             }
         }, camearHandler);
         return imageReader.getSurface();

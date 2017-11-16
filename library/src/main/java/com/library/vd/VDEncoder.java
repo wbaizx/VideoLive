@@ -5,10 +5,10 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import com.library.stream.BaseSend;
 import com.library.file.WriteMp4;
-import com.library.util.OtherUtil;
+import com.library.stream.BaseSend;
 import com.library.util.ImageUtil;
+import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -64,10 +64,7 @@ public class VDEncoder {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        if (YUVQueue.size() >= OtherUtil.QueueNum) {
-            YUVQueue.poll();
-        }
-        YUVQueue.add(bytes);
+        OtherUtil.addQueue(YUVQueue, bytes);
     }
 
     public void StartEncoderThread() {

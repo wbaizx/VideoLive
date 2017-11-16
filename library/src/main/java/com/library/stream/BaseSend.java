@@ -21,17 +21,11 @@ public abstract class BaseSend {
     public abstract void destroy();
 
     public void addVideo(byte[] video) {
-        if (sendFrameQueue.size() >= OtherUtil.QueueNum) {
-            sendFrameQueue.poll();
-        }
-        sendFrameQueue.add(video);
+        OtherUtil.addQueue(sendFrameQueue, video);
     }
 
     public void addVoice(byte[] voice) {
-        if (sendAACQueue.size() >= OtherUtil.QueueNum) {
-            sendAACQueue.poll();
-        }
-        sendAACQueue.add(voice);
+        OtherUtil.addQueue(sendAACQueue, voice);
     }
 
     public void setUdpControl(UdpControlInterface udpControl) {

@@ -118,10 +118,7 @@ public class UdpRecive extends BaseRecive {
             //添加到待拼接队列
             while (videoList.size() > videoUdpLength) {
                 //由于与读取的并发操作存在问题,所以只能在建一个列表
-                if (videoPacket.size() >= OtherUtil.QueueNum) {
-                    videoPacket.poll();
-                }
-                videoPacket.add(videoList.removeFirst());
+                OtherUtil.addQueue(videoPacket, videoList.removeFirst());
             }
         } else if (udpBytes.getTag() == (byte) 0x00) {
             //按序号有序插入
@@ -140,10 +137,7 @@ public class UdpRecive extends BaseRecive {
             //添加到待拼接队列
             if (voiceList.size() > 30) {
                 //由于与读取的并发操作存在问题,所以只能在建一个列表
-                if (voicePacket.size() >= OtherUtil.QueueNum) {
-                    voicePacket.poll();
-                }
-                voicePacket.add(voiceList.removeFirst());
+                OtherUtil.addQueue(voicePacket, voiceList.removeFirst());
             }
         }
     }
@@ -185,19 +179,13 @@ public class UdpRecive extends BaseRecive {
                         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
                             if (isFrameBegin) {
                                 frameBuffer.put(udpBytes.getData());
-                                if (reciveFrameQueue.size() >= OtherUtil.QueueNum) {
-                                    reciveFrameQueue.poll();
-                                }
                                 byte[] frame = new byte[frameBuffer.position()];
                                 System.arraycopy(frameBuffer.array(), 0, frame, 0, frameBuffer.position());
-                                reciveFrameQueue.add(frame);
+                                OtherUtil.addQueue(reciveFrameQueue, frame);
                                 isFrameBegin = false;
                             }
                         } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
-                            if (reciveFrameQueue.size() >= OtherUtil.QueueNum) {
-                                reciveFrameQueue.poll();
-                            }
-                            reciveFrameQueue.add(udpBytes.getData());
+                            OtherUtil.addQueue(reciveFrameQueue, udpBytes.getData());
                             isFrameBegin = false;
                         }
                     }
@@ -251,10 +239,7 @@ public class UdpRecive extends BaseRecive {
                         controlSynchronization();
 
                         if (udpBytes.getFrameTag() == (byte) 0x03) {//独立音频帧
-                            if (reciveAACQueue.size() >= OtherUtil.QueueNum) {
-                                reciveAACQueue.poll();
-                            }
-                            reciveAACQueue.add(udpBytes.getData());
+                            OtherUtil.addQueue(reciveAACQueue, udpBytes.getData());
                         }
                     }
                 }

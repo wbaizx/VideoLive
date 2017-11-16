@@ -216,10 +216,7 @@ public class UdpSend extends BaseSend {
 
     private void pushAdd(byte[] pushBytes) {
         Log.d("UdpPackage_app_size", "--" + push.size());
-        if (push.size() >= OtherUtil.QueueNum - 1) {
-            push.poll();
-        }
-        push.add(pushBytes);
+        OtherUtil.addQueue(push, pushBytes);
     }
 
 }
