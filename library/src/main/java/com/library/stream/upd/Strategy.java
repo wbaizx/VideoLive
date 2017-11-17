@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import com.library.stream.IsLiveBuffer;
 import com.library.util.OtherUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,12 +30,15 @@ public class Strategy {
     private int VDtime;//视频帧绝对时间
     private int VCtime;//音频帧绝对时间
 
-    private final int videomin = 20;//视频帧缓存达到播放条件
+    private int videomin = 20;//视频帧缓存达到播放条件
 
-    private final int videoCarltontime = 500;//视频帧缓冲时间
-    private final int voiceCarltontime = 100;//音频帧缓冲时间
+    private int videoCarltontime = 500;//视频帧缓冲时间
+    private int voiceCarltontime = 100;//音频帧缓冲时间
 
     private final int frameControltime = 10;//帧时间控制
+    private final int voiceFrameControltime = 100;//音视频帧同步时间差错范围
+
+    private IsLiveBuffer isLiveBuffer;
 
     public void setCachingStrategyCallback(CachingStrategyCallback cachingStrategyCallback) {
         this.cachingStrategyCallback = cachingStrategyCallback;
@@ -71,9 +75,17 @@ public class Strategy {
                 } else {
                     isVideocode = false;//进入这个位置一定是videoframes.size() < 0，关闭开关标志
                     if (videoframes.size() > videomin) {
+                        if (isLiveBuffer != null) {
+                            //结束缓冲，回调给客户端
+                            isLiveBuffer.isLiveBuffer(false);
+                        }
                         isVideocode = true;
                         VideoHandler.post(this);
                     } else {
+                        if (isLiveBuffer != null) {
+                            //开始缓冲，回调给客户端
+                            isLiveBuffer.isLiveBuffer(true);
+                        }
                         VideoHandler.postDelayed(this, videoCarltontime);
                     }
                 }
@@ -88,13 +100,13 @@ public class Strategy {
                 if (isVideocode && voiceframes.size() > 0) {//这里为什么用视频标志来判断，因为视频不播放的时候不需要播放声音
                     FramesObject framesObject = voiceframes.poll();
                     VCtime = framesObject.getTime();
-                    if ((VCtime - VDtime) > voiceCarltontime) {//音频帧快了，音频要慢一点
+                    if ((VCtime - VDtime) > voiceFrameControltime) {//音频帧快了，音频要慢一点
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference() + frameControltime);
-                    } else if ((VDtime - VCtime) > voiceCarltontime) {//视频帧快了，音频要快一点
-                        if ((VDtime - VCtime) > (voiceCarltontime * 3)) {
+                    } else if ((VDtime - VCtime) > voiceFrameControltime) {//视频帧快了，音频要快一点
+                        if ((VDtime - VCtime) > (voiceFrameControltime * 3)) {
                             Log.d("playerInfromation_loss", "音频帧过慢，丢弃部分");
                             while (voiceframes.size() > 0) {
-                                if ((voiceframes.poll().getTime() - VDtime) < voiceCarltontime) {
+                                if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime) {
                                     break;
                                 }
                             }
@@ -138,6 +150,26 @@ public class Strategy {
 
     public void destroy() {
         stop();
+    }
+
+
+    public void setVideoFrameCacheMin(int videoFrameCacheMin) {
+        videomin = videoFrameCacheMin;
+    }
+
+    public void setVideoCarltontime(int videoCarltontime) {
+        this.videoCarltontime = videoCarltontime;
+    }
+
+    public void setVoiceCarltontime(int voiceCarltontime) {
+        this.voiceCarltontime = voiceCarltontime;
+    }
+
+    /*
+     缓冲接口，用于客户端判断是否正在缓冲，根据需要决定是否需要使用
+     */
+    public void setIsLiveBuffer(IsLiveBuffer isLiveBuffer) {
+        this.isLiveBuffer = isLiveBuffer;
     }
 
 

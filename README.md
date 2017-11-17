@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.0.0'
+	        compile 'com.github.wbaizx:VideoLive:2.0.1'
 	}
 
 
@@ -104,8 +104,23 @@ Step 2：
                 .setVideoCode(VDDecoder.H264)//设置解码方式
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
-   
-   
+
+   如果想要控制缓存策略可以在构建时设置如下参数
+
+                .setUdpPacketCacheMin(40)//udp包缓存数量
+                .setVideoFrameCacheMin(20)//视频帧达到播放条件的缓存帧数
+                .setVideoCarltontime(500)//视频帧缓冲时间
+                .setVoiceCarltontime(100)//音频帧缓冲时间
+
+   还可以通过如下设置回调缓冲状态
+
+                .setIsLiveBuffer(new IsLiveBuffer() {
+                    @Override
+                    public void isLiveBuffer(boolean liveBuffer) {
+                        //liveBuffer为true开始缓冲，为false表示结束缓冲，注意开始缓冲可能会多次回调
+                    }
+                })
+
    如果程序中其他位置已经使用了相同端口的socket，需要自行接收数据并送入解码器
        
         1.UdpRecive udpRecive = new UdpRecive();(无参)
@@ -129,6 +144,8 @@ Step 2：
 
             videoCallback.videoCallback(video);
             voiceCallback.voiceCallback(voice);
+
+   其他更多自定义设置可以参考BaseRecive源码
 
    调用播放
    

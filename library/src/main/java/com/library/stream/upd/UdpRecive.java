@@ -3,6 +3,7 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseRecive;
+import com.library.stream.IsLiveBuffer;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -19,7 +20,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private boolean isrevice = false;
     private DatagramSocket socket = null;
     private DatagramPacket packetreceive;
-    private int UdpPacketMax = 40;
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
@@ -220,6 +220,22 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             socket.close();
             socket = null;
         }
+    }
+
+    /*
+    可以通过这个方法获得一些策略参数，根据需要决定是否需要,
+    3个参数分别为 视频帧达到播放条件的缓存帧数，视频帧缓冲时间，音频帧缓冲时间
+     */
+    @Override
+    public void setOther(int videoFrameCacheMin, int videoCarltontime, int voiceCarltontime) {
+        strategy.setVideoFrameCacheMin(videoFrameCacheMin);
+        strategy.setVideoCarltontime(videoCarltontime);
+        strategy.setVoiceCarltontime(voiceCarltontime);
+    }
+
+    @Override
+    public void setIsLiveBuffer(IsLiveBuffer isLiveBuffer) {
+        strategy.setIsLiveBuffer(isLiveBuffer);
     }
 
     @Override
