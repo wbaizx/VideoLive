@@ -21,6 +21,8 @@ public class UDPservice {
 	private void star() {
 		try {
 			server = new DatagramSocket(8765);
+			server.setSendBufferSize(1024 * 1024 * 5);
+			server.setReceiveBufferSize(1024 * 1024 * 5);
 			System.out.println("打开");
 		} catch (SocketException e) {
 			e.printStackTrace();
@@ -58,9 +60,7 @@ public class UDPservice {
 				byte[] b;
 				
 				//计算丢包率
-				int vd = 0;
 				int vdnum = 0;
-				int vc = 0;
 				int vcnum = 0;
 				while (true) {
 					if (queue.size() > 0) {
@@ -68,17 +68,17 @@ public class UDPservice {
 						
 						//计算丢包率
 						if (b[0] == 1) {
-							if ((byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - vd) != 1) {
-								vdnum +=(byte_to_int(new byte[] {b[4], b[5], b[6],b[7] }) - vd);
-								System.out.println("视频丢包率：" + ((float)vdnum*(float)100)/(float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
-							}
-							vd = byte_to_int(new byte[] { b[4], b[5],b[6], b[7] });
+							 vdnum++;
+					            if ((vdnum % 500) == 0) {//每1000个包输出一次
+					                System.out.println("视频丢包率：" + 
+					            ((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vdnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
+					            }
 						}else if (b[0] == 0) {
-							if ((byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - vc) != 1) {
-								vcnum +=(byte_to_int(new byte[] {b[4], b[5], b[6],b[7] }) - vc);
-								System.out.println("音频丢包率：" + ((float)vcnum*(float)100)/(float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
-							}
-							vc = byte_to_int(new byte[] { b[4], b[5],b[6], b[7] });
+							vcnum++;
+							if ((vcnum % 100) == 0) {//每1000个包输出一次
+				                System.out.println("音频丢包率：" + 
+							((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vcnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
+				            }
 						}
 						
 						bytes = new byte[byte_to_short(b[2], b[3]) + 16];
