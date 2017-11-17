@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:1.1.3'
+	        compile 'com.github.wbaizx:VideoLive:2.0.0'
 	}
 
 
@@ -124,7 +124,12 @@ Step 2：
    如果需要自定义接收方式，需要新建类并继承BaseRecive。注意在包含解码器需要的配置信息的地方
 	 
          调用getInformation(byte[] important)给解码器（important为包含解码器需要的配置信息的视频帧数据，可以不完整）
-    
+
+   在处理完数据后回调给解码器
+
+            videoCallback.videoCallback(video);
+            voiceCallback.voiceCallback(voice);
+
    调用播放
    
          player.star();

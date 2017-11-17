@@ -3,7 +3,6 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseRecive;
-import com.library.util.OtherUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -11,7 +10,6 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created by android1 on 2017/9/23.
@@ -21,10 +19,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private boolean isrevice = false;
     private DatagramSocket socket = null;
     private DatagramPacket packetreceive;
-    private int UdpPacketMax = 50;
-
-    private ArrayBlockingQueue<UdpBytes> videoPacket = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
-    private ArrayBlockingQueue<UdpBytes> voicePacket = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private int UdpPacketMax = 40;
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
@@ -34,6 +29,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     public UdpRecive(int port) {
         try {
             socket = new DatagramSocket(port);
+            socket.setReceiveBufferSize(1024 * 1024 * 5);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -52,13 +48,10 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     public void starRevice() {
         videoList.clear();
         voiceList.clear();
-        voicePacket.clear();
-        videoPacket.clear();
         isrevice = true;
+        frameBuffer.clear();
         strategy.star();
         starReciveUdp();
-        starFrame();
-        starAAC();
     }
 
     /*
@@ -86,10 +79,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     }
 
     //丢包率计算
-//    int vd = 0;
-//    int vdnum = 0;
-//    int vc = 0;
-//    int vcnum = 0;
+    int vdnum = 0;
+    int vcnum = 0;
 
     //添加解码数据
     public void write(byte[] bytes) {
@@ -100,98 +91,80 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //        if (!udpBytes.isCrcRight()) {
 //            Log.d("checkCRC", "--有包错误了");
 //        }
-        Log.d("UdpPackage_app_size", "--" + videoList.size() + "--" + voiceList.size() + "--" + videoPacket.size() + "--" + voicePacket.size());
+        Log.d("UdpPackage_app_size", "--" + videoList.size() + "--" + voiceList.size());
 
         if (udpBytes.getTag() == (byte) 0x01) {
             //按序号有序插入
             addudp(videoList, udpBytes);
 
             //计算丢包率--------------------------------
-//            if (videoList.size() > UdpPacketMax) {
-//                if ((udpBytes.getNum() - vd) != 1) {
-//                    vdnum += udpBytes.getNum() - vd;
-//                    Log.d("UdpLoss", "视频丢包率 :  " + (float) vdnum * (float) 100 / (float) udpBytes.getNum() + "%");
-//                }
-//                vd = udpBytes.getNum();
-//            }
+            vdnum++;
+            if ((vdnum % 500) == 0) {//每1000个包输出一次
+                Log.d("UdpLoss", "视频丢包率 :  " +
+                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+            }
             //--------------------------------
 
-            //添加到待拼接队列
-            while (videoList.size() > UdpPacketMax) {
-                //由于与读取的并发操作存在问题,所以只能在建一个列表
-                OtherUtil.addQueue(videoPacket, videoList.removeFirst());
+            //从排好序的队列中取出数据
+            if (videoList.size() > (UdpPacketMax * 1.3)) {//视频帧包数量多一些，这里可以多存一点，确保策略处理时音频帧比视频帧多
+                //由于与读取的并发操作存在问题,这里单线程执行
+                mosaicVideoFrame(videoList.removeFirst());
             }
         } else if (udpBytes.getTag() == (byte) 0x00) {
             //按序号有序插入
             addudp(voiceList, udpBytes);
 
             //计算丢包率--------------------------------
-//            if (voiceList.size() > UdpPacketMax) {
-//                if ((udpBytes.getNum() - vc) != 1) {
-//                    vcnum += udpBytes.getNum() - vc;
-//                    Log.d("UdpLoss", "音频丢包率 :  " + (float) vcnum * (float) 100 / (float) udpBytes.getNum() + "%");
-//                }
-//                vc = udpBytes.getNum();
-//            }
+            vcnum++;
+            if ((vcnum % 100) == 0) {//每1000个包输出一次
+                Log.d("UdpLoss", "音频丢包率 :  " +
+                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+            }
             //--------------------------------
 
-            //添加到待拼接队列
+            //从排好序的队列中取出数据
             if (voiceList.size() > UdpPacketMax) {
-                //由于与读取的并发操作存在问题,所以只能在建一个列表
-                OtherUtil.addQueue(voicePacket, voiceList.removeFirst());
+                //由于与读取的并发操作存在问题,这里单线程执行
+                mosaicVoiceFrame(voiceList.removeFirst());
             }
         }
     }
 
+    private int oldudptime_vd = 0;//记录上一个包的时间
+    private int oneFrame = 0;//同帧标识符(使用时间戳当同帧标识)
+    private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 60);
+
     /*
      将链表数据拼接成帧
      */
-
-    private void starFrame() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                boolean isFrameBegin = false;
-                UdpBytes udpBytes;
-                ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 60);
-                int oldudptime_vd = 0;//记录上一个包的时间
-                while (isrevice) {
-                    if (videoPacket.size() > 0) {
-                        //获取并移除数据
-                        udpBytes = videoPacket.poll();
-                        if (udpBytes.getFrameTag() == (byte) 0x00) {//帧头
-                            isFrameBegin = true;
-                            frameBuffer.clear();
-                            //将帧头（480字节）信息回调给解码器，提取例如SPS，PPS之类的信息
-                            CheckInformation(udpBytes.getData());
-                            frameBuffer.put(udpBytes.getData());
-                        } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
-                            if (isFrameBegin) {
-                                frameBuffer.put(udpBytes.getData());
-                            }
-                        } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
-                            if (isFrameBegin) {
-                                frameBuffer.put(udpBytes.getData());
-                                byte[] frame = new byte[frameBuffer.position()];
-                                System.arraycopy(frameBuffer.array(), 0, frame, 0, frameBuffer.position());
-                                strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(), frame);
-                                oldudptime_vd = udpBytes.getTime();
-                                isFrameBegin = false;
-                                frameBuffer.clear();
-                            }
-                        } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
-                            strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(), udpBytes.getData());
-                            oldudptime_vd = udpBytes.getTime();
-                            isFrameBegin = false;
-                            frameBuffer.clear();
-                        }
-                    } else {
-                        OtherUtil.sleepShortTime();
-                    }
-                }
+    private void mosaicVideoFrame(UdpBytes udpBytes) {
+        //获取并移除数据
+        if (udpBytes.getFrameTag() == (byte) 0x00) {//帧头
+            frameBuffer.clear();
+            //将帧头（480字节）信息回调给解码器，提取例如SPS，PPS之类的信息
+            CheckInformation(udpBytes.getData());
+            frameBuffer.put(udpBytes.getData());
+            oneFrame = udpBytes.getTime();
+        } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
+            if (udpBytes.getTime() == oneFrame) {//因为一帧的时间戳相同，利用时间判断是否为同一帧
+                frameBuffer.put(udpBytes.getData());
             }
-        }).start();
+        } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
+            if (udpBytes.getTime() == oneFrame) {//因为一帧的时间戳相同，利用时间判断是否为同一帧
+                frameBuffer.put(udpBytes.getData());
+                byte[] frame = new byte[frameBuffer.position()];
+                System.arraycopy(frameBuffer.array(), 0, frame, 0, frameBuffer.position());
+                //完整一帧，交个策略处理
+                strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(), frame);
+                oldudptime_vd = udpBytes.getTime();
+            }
+        } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
+            //完整一帧，交个策略处理
+            strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(), udpBytes.getData());
+            oldudptime_vd = udpBytes.getTime();
+        }
     }
+
 
     /*
     检测关键帧，回调配置信息
@@ -204,27 +177,15 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
+    private int oldudptime_vc = 0;//记录上一个包的时间
 
     /*
-    将链表数据拼接成AAC帧
+     将链表数据拼接成帧
      */
-    private void starAAC() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int oldudptime_vc = 0;//记录上一个包的时间
-                UdpBytes udpBytes;
-                while (isrevice) {
-                    if (voicePacket.size() > 0) {
-                        udpBytes = voicePacket.poll();
-                        strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
-                        oldudptime_vc = udpBytes.getTime();
-                    } else {
-                        OtherUtil.sleepShortTime();
-                    }
-                }
-            }
-        }).start();
+    private void mosaicVoiceFrame(UdpBytes udpBytes) {
+        //完整一帧，交个策略处理
+        strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
+        oldudptime_vc = udpBytes.getTime();
     }
 
     /*
@@ -264,7 +225,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     @Override
     public void videoStrategy(byte[] video) {
         if (videoCallback != null) {
-            //通过接口回调给解码器
+            //回调给解码器
             videoCallback.videoCallback(video);
         }
     }
@@ -272,7 +233,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     @Override
     public void voiceStrategy(byte[] voice) {
         if (voiceCallback != null) {
-            //通过接口回调给解码器
+            //回调给解码器
             voiceCallback.voiceCallback(voice);
         }
     }

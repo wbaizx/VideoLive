@@ -31,6 +31,7 @@ public class UdpSend extends BaseSend {
     public UdpSend(String ip, int port) {
         try {
             socket = new DatagramSocket(port);
+            socket.setSendBufferSize(1024 * 1024 * 5);
             packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
             ismysocket = true;
         } catch (SocketException e) {

@@ -165,7 +165,9 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         isdestroyed = false;
-        mCodec.stop();
+        if (mCodec != null) {
+            mCodec.stop();
+        }
     }
 
     public void star() {
