@@ -1,13 +1,11 @@
 package com.library;
 
-import android.view.SurfaceView;
-
 import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
-import com.library.stream.IsLiveBuffer;
 import com.library.stream.UdpControlInterface;
 import com.library.vc.VoiceTrack;
 import com.library.vd.VDDecoder;
+import com.library.view.PlayerView;
 
 /**
  * Created by android1 on 2017/10/13.
@@ -18,14 +16,16 @@ public class Player {
     private VoiceTrack voiceTrack;
     private BaseRecive baseRecive;
     private WriteMp4 writeMp4;
+    private PlayerView playerView;
 
-    public Player(SurfaceView surfaceView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
+    public Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
         this.baseRecive = baseRecive;
+        this.playerView = playerView;
         this.baseRecive.setUdpControl(udpControl);
         //文件录入类
         writeMp4 = new WriteMp4(path);
 
-        vdDecoder = new VDDecoder(surfaceView, codetype, baseRecive, writeMp4);
+        vdDecoder = new VDDecoder(playerView, codetype, baseRecive, writeMp4);
         voiceTrack = new VoiceTrack(baseRecive, writeMp4);
     }
 
@@ -39,6 +39,7 @@ public class Player {
         baseRecive.stopRevice();
         vdDecoder.stop();
         voiceTrack.stop();
+        playerView.stop();
     }
 
     public void destroy() {
@@ -57,7 +58,7 @@ public class Player {
     }
 
     public static class Buider {
-        private SurfaceView surfaceView;
+        private PlayerView playerView;
         private BaseRecive baseRecive;
         private String codetype = VDDecoder.H264;
         private UdpControlInterface udpControl = null;
@@ -69,10 +70,10 @@ public class Player {
         private int videoCarltontime = 500;//视频帧缓冲时间
         private int voiceCarltontime = 100;//音频帧缓冲时间
 
-        private IsLiveBuffer isLiveBuffer;//缓冲接口回调，用于客户端判断是否正在缓冲
+        private IsOutBuffer isOutBuffer;//缓冲接口回调
 
-        public Buider(SurfaceView surfaceView) {
-            this.surfaceView = surfaceView;
+        public Buider(PlayerView playerView) {
+            this.playerView = playerView;
         }
 
         public Buider setVideoCode(String codetype) {
@@ -116,16 +117,22 @@ public class Player {
             return this;
         }
 
-        public Buider setIsLiveBuffer(IsLiveBuffer isLiveBuffer) {
-            this.isLiveBuffer = isLiveBuffer;
+        public Buider setIsOutBuffer(IsOutBuffer isOutBuffer) {
+            this.isOutBuffer = isOutBuffer;
+            return this;
+        }
+
+        public Buider setBufferAnimator(boolean bufferAnimator) {
+            playerView.setBufferAnimator(bufferAnimator);
             return this;
         }
 
         public Player build() {
             baseRecive.setUdpPacketCacheMin(udpPacketCacheMin);
-            baseRecive.setIsLiveBuffer(isLiveBuffer);
+            baseRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
+            playerView.setIsOutBuffer(isOutBuffer);//给playerView设置isOutBuffer接口用以将缓冲状态回调给客户端
             baseRecive.setOther(videoFrameCacheMin, videoCarltontime, voiceCarltontime);
-            return new Player(surfaceView, codetype, baseRecive, udpControl, path);
+            return new Player(playerView, codetype, baseRecive, udpControl, path);
         }
     }
 }

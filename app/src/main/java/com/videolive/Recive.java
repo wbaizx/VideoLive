@@ -3,14 +3,12 @@ package com.videolive;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 
 import com.library.Player;
-import com.library.stream.IsLiveBuffer;
 import com.library.stream.upd.UdpRecive;
+import com.library.view.PlayerView;
 
 public class Recive extends AppCompatActivity {
     private Player player;
@@ -27,15 +25,9 @@ public class Recive extends AppCompatActivity {
         jiestar = findViewById(R.id.jiestar);
         record = findViewById(R.id.record);
 
-        player = new Player.Buider((SurfaceView) findViewById(R.id.surfaceview))
+        player = new Player.Buider((PlayerView) findViewById(R.id.playerView))
                 .setPullMode(new UdpRecive(getIntent().getExtras().getInt("port")))
                 .setVideoCode(getIntent().getExtras().getString("videoCode"))
-                .setIsLiveBuffer(new IsLiveBuffer() {
-                    @Override
-                    public void isLiveBuffer(boolean liveBuffer) {
-                        //liveBuffer为true开始缓冲，为false表示结束缓冲，注意开始缓冲可能会多次回调
-                    }
-                })
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
                 .build();
 

@@ -4,7 +4,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
-import com.library.stream.IsLiveBuffer;
+import com.library.stream.IsInBuffer;
 import com.library.util.OtherUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,7 +38,7 @@ public class Strategy {
     private final int frameControltime = 10;//帧时间控制
     private final int voiceFrameControltime = 100;//音视频帧同步时间差错范围
 
-    private IsLiveBuffer isLiveBuffer;
+    private IsInBuffer isInBuffer;
 
     public void setCachingStrategyCallback(CachingStrategyCallback cachingStrategyCallback) {
         this.cachingStrategyCallback = cachingStrategyCallback;
@@ -75,16 +75,16 @@ public class Strategy {
                 } else {
                     isVideocode = false;//进入这个位置一定是videoframes.size() < 0，关闭开关标志
                     if (videoframes.size() > videomin) {
-                        if (isLiveBuffer != null) {
-                            //结束缓冲，回调给客户端
-                            isLiveBuffer.isLiveBuffer(false);
+                        if (isInBuffer != null) {
+                            //结束缓冲，回调给PlayerView
+                            isInBuffer.isBuffer(false);
                         }
                         isVideocode = true;
                         VideoHandler.post(this);
                     } else {
-                        if (isLiveBuffer != null) {
-                            //开始缓冲，回调给客户端
-                            isLiveBuffer.isLiveBuffer(true);
+                        if (isInBuffer != null) {
+                            //开始缓冲，回调给PlayerView
+                            isInBuffer.isBuffer(true);
                         }
                         VideoHandler.postDelayed(this, videoCarltontime);
                     }
@@ -166,10 +166,10 @@ public class Strategy {
     }
 
     /*
-     缓冲接口，用于客户端判断是否正在缓冲，根据需要决定是否需要使用
+     缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
      */
-    public void setIsLiveBuffer(IsLiveBuffer isLiveBuffer) {
-        this.isLiveBuffer = isLiveBuffer;
+    public void setIsInBuffer(IsInBuffer isInBuffer) {
+        this.isInBuffer = isInBuffer;
     }
 
 

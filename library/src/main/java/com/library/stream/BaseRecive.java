@@ -51,7 +51,7 @@ public abstract class BaseRecive {
     public abstract void setOther(int videoFrameCacheMin, int videoCarltontime, int voiceCarltontime);
 
     /*
-    缓冲接口，用于客户端判断是否正在缓冲，根据需要决定是否需要使用
+    缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
      */
-    public abstract void setIsLiveBuffer(IsLiveBuffer isLiveBuffer);
+    public abstract void setIsInBuffer(IsInBuffer isInBuffer);
 }

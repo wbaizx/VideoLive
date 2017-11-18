@@ -3,7 +3,7 @@ package com.library.stream.upd;
 import android.util.Log;
 
 import com.library.stream.BaseRecive;
-import com.library.stream.IsLiveBuffer;
+import com.library.stream.IsInBuffer;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -234,9 +234,10 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     }
 
     @Override
-    public void setIsLiveBuffer(IsLiveBuffer isLiveBuffer) {
-        strategy.setIsLiveBuffer(isLiveBuffer);
+    public void setIsInBuffer(IsInBuffer isInBuffer) {
+        strategy.setIsInBuffer(isInBuffer);
     }
+
 
     @Override
     public void videoStrategy(byte[] video) {

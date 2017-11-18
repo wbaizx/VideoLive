@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.0.1'
+	        compile 'com.github.wbaizx:VideoLive:2.0.2'
 	}
 
 
@@ -91,15 +91,15 @@ Step 2：
 
       接收端：
       
-      <SurfaceView
-        android:id="@+id/textureView"
+    <com.library.view.PlayerView
+        android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1" />
         
    需要让服务器知道自己是接收方并且知道自己的IP，这个自行完成
           
-        player = new Player.Buider((SurfaceView) findViewById(R.id.surfaceview))
+        player = new Player.Buider((PlayerView) findViewById(R.id.playerView))
                 .setPullMode(new UdpRecive(8765))
                 .setVideoCode(VDDecoder.H264)//设置解码方式
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
@@ -112,12 +112,19 @@ Step 2：
                 .setVideoCarltontime(500)//视频帧缓冲时间
                 .setVoiceCarltontime(100)//音频帧缓冲时间
 
-   还可以通过如下设置回调缓冲状态
+   可以关闭默认缓冲动画
 
-                .setIsLiveBuffer(new IsLiveBuffer() {
+                .setBufferAnimator(false)//默认开启
+
+   如果觉得动画太丑也可以自己根据状态去做，通过如下设置回调缓冲状态
+
+                .setIsOutBuffer(new IsOutBuffer() {
                     @Override
-                    public void isLiveBuffer(boolean liveBuffer) {
-                        //liveBuffer为true开始缓冲，为false表示结束缓冲，注意开始缓冲可能会多次回调
+                    public void isBuffer(boolean isBuffer) {
+                        /*
+                        isBuffer为true开始缓冲，为false表示结束缓冲，注意开始缓冲可能会多次回调。
+                        另外更新ui注意，此处回调在线程中。
+                         */
                     }
                 })
 

@@ -11,6 +11,7 @@ import com.library.stream.BaseRecive;
 import com.library.stream.VideoCallback;
 import com.library.util.ByteUtil;
 import com.library.util.OtherUtil;
+import com.library.view.PlayerView;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,8 +41,8 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     /**
      * 初始化解码器
      */
-    public VDDecoder(SurfaceView surfaceView, String codetype, BaseRecive baseRecive, WriteMp4 writeMp4) {
-        this.holder = surfaceView.getHolder();
+    public VDDecoder(PlayerView playerView, String codetype, BaseRecive baseRecive, WriteMp4 writeMp4) {
+        this.holder = playerView.getHolder();
         this.writeMp4 = writeMp4;
         MIME_TYPE = codetype;
         try {
