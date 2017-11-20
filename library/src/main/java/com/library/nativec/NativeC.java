@@ -9,7 +9,7 @@ public class NativeC {
         System.loadLibrary("liveudpnative");
     }
 
-    public static native int test(byte[] buf, int offset, int length);
+    public static native byte[] rotateYUVDegree270AndMirror(byte[] data, int imageWidth, int imageHeight);
 
     /*
     计算CRC

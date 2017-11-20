@@ -1,13 +1,14 @@
 #include <jni.h>
 
 extern "C"
-JNIEXPORT jint JNICALL
-Java_com_library_nativec_NativeC_test(JNIEnv *env, jclass type, jbyteArray buf_, jint offset,
-                                      jint length) {
-    jbyte *buf = env->GetByteArrayElements(buf_, NULL);
+JNIEXPORT jbyteArray JNICALL
+Java_com_library_nativec_NativeC_rotateYUVDegree270AndMirror(JNIEnv *env, jclass type,
+                                                             jbyteArray data_, jint imageWidth,
+                                                             jint imageHeight) {
+    jbyte *data = env->GetByteArrayElements(data_, NULL);
 
-    // TODO
 
-    env->ReleaseByteArrayElements(buf_, buf, 0);
-    return 0;
+    env->ReleaseByteArrayElements(data_, data, 0);
+
+    return NULL;
 }
