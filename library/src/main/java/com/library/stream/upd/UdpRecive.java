@@ -88,10 +88,9 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             bytes = udpControl.Control(bytes);
         }
         UdpBytes udpBytes = new UdpBytes(bytes);
-//        if (!udpBytes.isCrcRight()) {
-//            Log.d("checkCRC", "--有包错误了");
-//        }
-        Log.d("UdpPackage_app_size", "--" + videoList.size() + "--" + voiceList.size());
+        if (!udpBytes.isCrcRight()) {
+            Log.d("checkCRC", "--有包错误了");
+        }
 
         if (udpBytes.getTag() == (byte) 0x01) {
             //按序号有序插入

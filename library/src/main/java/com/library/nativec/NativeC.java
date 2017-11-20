@@ -9,5 +9,27 @@ public class NativeC {
         System.loadLibrary("liveudpnative");
     }
 
-    public static native int getCrcInt(byte[] buf, int offset, int length);
+    public static native int test(byte[] buf, int offset, int length);
+
+    /*
+    计算CRC
+     */
+    public static int getCrcInt(byte[] buf, int offset, int length) {
+        int remain = 0;
+        byte val;
+        for (int i = offset; i < offset + length; i++) {
+            val = buf[i];
+            for (int j = 0; j < 8; j++) {
+                if (((val ^ remain) & 0x0001) != 0) {
+                    remain ^= 0x0810;
+                    remain >>= 1;
+                    remain |= 0x8000;
+                } else {
+                    remain >>= 1;
+                }
+                val >>= 1;
+            }
+        }
+        return remain;
+    }
 }
