@@ -6,8 +6,8 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.library.file.WriteMp4;
+import com.library.nativec.NativeC;
 import com.library.stream.BaseSend;
-import com.library.util.ImageUtil;
 import com.library.util.OtherUtil;
 
 import java.io.IOException;
@@ -83,7 +83,7 @@ public class VDEncoder {
                         /*
                         480*320编码发送大约4ms，1280*720大约10ms。
                          */
-                        input = ImageUtil.NV21ToNV12(YUVQueue.poll(), width, height);
+                        input = NativeC.NV21ToNV12(YUVQueue.poll(), width, height);
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {

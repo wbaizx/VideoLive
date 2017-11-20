@@ -24,9 +24,9 @@ import android.view.Surface;
 import android.view.TextureView;
 
 import com.library.file.WriteMp4;
+import com.library.nativec.NativeC;
 import com.library.stream.BaseSend;
 import com.library.stream.UdpControlInterface;
-import com.library.util.ImageUtil;
 import com.library.vc.VoiceRecord;
 import com.library.vd.VDEncoder;
 
@@ -301,12 +301,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
                      */
                     if (rotate) {
                         //先转成NV21再旋转图片然后交给编码器等待编码
-                        vdEncoder.addFrame(ImageUtil.rotateYUVDegree270AndMirror(
-                                ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
+                        vdEncoder.addFrame(NativeC.rotateYUVDegree270AndMirror(
+                                NativeC.YUV_420_888toNV21(image, NativeC.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
                     } else {
                         //后置
-                        vdEncoder.addFrame(ImageUtil.rotateYUVDegree90(
-                                ImageUtil.YUV_420_888toNV21(image, ImageUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
+                        vdEncoder.addFrame(NativeC.rotateYUVDegree90(
+                                NativeC.YUV_420_888toNV21(image, NativeC.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
                     }
                     image.close();
                     if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
