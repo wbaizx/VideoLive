@@ -30,10 +30,10 @@ public class Strategy {
     private int VDtime;//视频帧绝对时间
     private int VCtime;//音频帧绝对时间
 
-    private int videomin = 20;//视频帧缓存达到播放条件
+    private int videomin = 10;//视频帧缓存达到播放条件
 
-    private int videoCarltontime = 500;//视频帧缓冲时间
-    private int voiceCarltontime = 100;//音频帧缓冲时间
+    private int videoCarltontime = 400;//视频帧缓冲时间
+    private int voiceCarltontime = 400;//音频帧缓冲时间
 
     private final int frameControltime = 10;//帧时间控制
     private final int voiceFrameControltime = 100;//音视频帧同步时间差错范围
@@ -106,7 +106,7 @@ public class Strategy {
                         if ((VDtime - VCtime) > (voiceFrameControltime * 3)) {
                             Log.d("playerInfromation_loss", "音频帧过慢，丢弃部分");
                             while (voiceframes.size() > 0) {
-                                if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime) {
+                                if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime + frameControltime) {
                                     break;
                                 }
                             }

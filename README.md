@@ -108,9 +108,9 @@ Step 2：
    如果想要控制缓存策略可以在构建时设置如下参数
 
                 .setUdpPacketCacheMin(40)//udp包缓存数量
-                .setVideoFrameCacheMin(20)//视频帧达到播放条件的缓存帧数
-                .setVideoCarltontime(500)//视频帧缓冲时间
-                .setVoiceCarltontime(100)//音频帧缓冲时间
+                .setVideoFrameCacheMin(10)//视频帧达到播放条件的缓存帧数
+                .setVideoCarltontime(400)//视频帧缓冲时间
+                .setVoiceCarltontime(400)//音频帧缓冲时间
 
    可以关闭默认缓冲动画
 

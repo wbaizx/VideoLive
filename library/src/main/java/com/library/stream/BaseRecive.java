@@ -11,7 +11,7 @@ public abstract class BaseRecive {
     protected UdpControlInterface udpControl = null;
     protected VoiceCallback voiceCallback = null;
     protected VideoCallback videoCallback = null;
-    protected int UdpPacketMax;
+    protected int UdpPacketMin = 40;
 
     public abstract void starRevice();
 
@@ -41,7 +41,7 @@ public abstract class BaseRecive {
 
     //控制缓存包数量 用于解决udp乱序
     public void setUdpPacketCacheMin(int udpPacketCacheMin) {
-        UdpPacketMax = udpPacketCacheMin;
+        UdpPacketMin = udpPacketCacheMin;
     }
 
     /*

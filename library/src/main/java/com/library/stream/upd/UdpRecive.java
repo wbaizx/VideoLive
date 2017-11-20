@@ -106,7 +106,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             //--------------------------------
 
             //从排好序的队列中取出数据
-            if (videoList.size() > (UdpPacketMax * 1.3)) {//视频帧包数量多一些，这里可以多存一点，确保策略处理时音频帧比视频帧多
+            if (videoList.size() > (UdpPacketMin * 1.3)) {//视频帧包数量多一些，这里可以多存一点，确保策略处理时音频帧比视频帧多
                 //由于与读取的并发操作存在问题,这里单线程执行
                 mosaicVideoFrame(videoList.removeFirst());
             }
@@ -123,7 +123,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             //--------------------------------
 
             //从排好序的队列中取出数据
-            if (voiceList.size() > UdpPacketMax) {
+            if (voiceList.size() > UdpPacketMin) {
                 //由于与读取的并发操作存在问题,这里单线程执行
                 mosaicVoiceFrame(voiceList.removeFirst());
             }
