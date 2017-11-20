@@ -11,7 +11,7 @@ public class NativeC {
         System.loadLibrary("liveudpnative");
     }
 
-    public static native byte[] test(byte[] data, int imageWidth, int imageHeight);
+    public static native int mtest();
 
     /*
     计算CRC
