@@ -112,8 +112,6 @@ public class NativeC {
         System.arraycopy(nv21, 0, input, 0, width * height);
         for (int j = 0; j < width * height / 2; j += 2) {
             input[width * height + j - 1] = nv21[j + width * height];
-        }
-        for (int j = 0; j < width * height / 2; j += 2) {
             input[width * height + j] = nv21[j + width * height - 1];
         }
         return input;
