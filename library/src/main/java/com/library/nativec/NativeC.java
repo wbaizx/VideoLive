@@ -11,7 +11,7 @@ public class NativeC {
         System.loadLibrary("liveudpnative");
     }
 
-    public static native int mtest();
+    public static native int test();
 
     /*
     计算CRC
