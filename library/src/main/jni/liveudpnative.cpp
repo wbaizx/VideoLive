@@ -10,8 +10,8 @@ long getCurrentTime() {
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_library_nativec_NativeC_test(JNIEnv *env, jclass type) {
+Java_com_library_util_ImagUtil_test(JNIEnv *env, jclass type) {
 
     // TODO
-
+    return 1055;
 }

@@ -1,7 +1,7 @@
 # 版本号
 cmake_minimum_required(VERSION 3.4.1)
 
-#password                      表示库的名称
+#liveudpnative                      表示库的名称
 #SHARED                         设置库的一种模式  SHARED / STATIC
 #src/main/cpp/liveudpnative.cpp     C/C++文件的具体路径
 

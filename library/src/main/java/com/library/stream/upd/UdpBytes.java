@@ -1,7 +1,7 @@
 package com.library.stream.upd;
 
-import com.library.nativec.NativeC;
 import com.library.util.ByteUtil;
+import com.library.util.OtherUtil;
 
 /**
  * UDP协议内容：
@@ -50,7 +50,7 @@ public class UdpBytes {
     }
 
     public boolean isCrcRight() {
-        return NativeC.getCrcInt(data, 0, data.length) == CRC;
+        return OtherUtil.getCrcInt(data, 0, data.length) == CRC;
     }
 
     public byte[] getData() {

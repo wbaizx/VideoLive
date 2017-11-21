@@ -1,4 +1,4 @@
-package com.library.nativec;
+package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
@@ -6,7 +6,7 @@ import android.media.Image;
 import java.nio.ByteBuffer;
 
 
-public class NativeC {
+public class ImagUtil {
     static {
         System.loadLibrary("liveudpnative");
     }
@@ -14,35 +14,12 @@ public class NativeC {
     public static native int test();
 
     /*
-    计算CRC
-     */
-    public static int getCrcInt(byte[] buf, int offset, int length) {
-        int remain = 0;
-        byte val;
-        for (int i = offset; i < offset + length; i++) {
-            val = buf[i];
-            for (int j = 0; j < 8; j++) {
-                if (((val ^ remain) & 0x0001) != 0) {
-                    remain ^= 0x0810;
-                    remain >>= 1;
-                    remain |= 0x8000;
-                } else {
-                    remain >>= 1;
-                }
-                val >>= 1;
-            }
-        }
-        return remain;
-    }
-
-
-    /*
    YUV_420_888转换为NV21或者I420
     */
     public static final int COLOR_FormatI420 = 1;
     public static final int COLOR_FormatNV21 = 2;
 
-    public static byte[] YUV_420_888toNV21(Image image, int colorFormat) {
+    public static byte[] YUV420888toNV21(Image image, int colorFormat) {
         int width = image.getCropRect().width();
         int height = image.getCropRect().height();
         Image.Plane[] planes = image.getPlanes();
@@ -120,7 +97,7 @@ public class NativeC {
     /*
     后置摄像头90度
      */
-    public static byte[] rotateYUVDegree90(byte[] data, int imageWidth, int imageHeight) {
+    public static byte[] rotateYUV90(byte[] data, int imageWidth, int imageHeight) {
         byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
         // Rotate the Y luma
         int i = 0;
@@ -146,7 +123,7 @@ public class NativeC {
     /*
     前置摄像头270度&&镜像
      */
-    public static byte[] rotateYUVDegree270AndMirror(byte[] data, int imageWidth, int imageHeight) {
+    public static byte[] rotateYUV270AndMirror(byte[] data, int imageWidth, int imageHeight) {
         byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
         // Rotate and mirror the Y luma
         int i = 0;
@@ -177,7 +154,7 @@ public class NativeC {
     /*
     前置摄像头270度
      */
-    public static byte[] rotateYUVDegree270(byte[] data, int imageWidth, int imageHeight) {
+    public static byte[] rotateYUV270(byte[] data, int imageWidth, int imageHeight) {
         byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
         // Rotate the Y luma
         int i = 0;
