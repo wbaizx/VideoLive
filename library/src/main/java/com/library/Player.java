@@ -70,7 +70,7 @@ public class Player {
         private int videoCarltontime = 400;//视频帧缓冲时间
         private int voiceCarltontime = 400;//音频帧缓冲时间
 
-        private IsOutBuffer isOutBuffer;//缓冲接口回调
+        private IsOutBuffer isOutBuffer = null;//缓冲接口回调
 
         public Buider(PlayerView playerView) {
             this.playerView = playerView;
