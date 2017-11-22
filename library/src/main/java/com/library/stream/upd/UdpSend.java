@@ -106,7 +106,7 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) sendUdplength);//长度
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, sendUdplength));//CRC校验位
+//            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, sendUdplength));//CRC校验位
             buffvideo.put(video, nowPosition, sendUdplength);
 
             pushBytes = new byte[buffvideo.position()];
@@ -132,7 +132,7 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) (video.length - nowPosition));
             buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, video.length - nowPosition));//CRC校验位
+//            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, video.length - nowPosition));//CRC校验位
             buffvideo.put(video, nowPosition, video.length - nowPosition);
 
             pushBytes = new byte[buffvideo.position()];
@@ -156,7 +156,7 @@ public class UdpSend extends BaseSend {
         buffvoice.putShort((short) voice.length);//长度
         buffvoice.putInt(voiceNum++);//序号
         buffvoice.putInt(OtherUtil.getTime());//时戳
-        buffvoice.putInt(OtherUtil.getCrcInt(voice, 0, voice.length));//CRC校验位
+//        buffvoice.putInt(OtherUtil.getCrcInt(voice, 0, voice.length));//CRC校验位
         buffvoice.put(voice);//数据
 
         byte[] pushBytes = new byte[buffvoice.position()];

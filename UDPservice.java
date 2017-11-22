@@ -69,19 +69,19 @@ public class UDPservice {
 						//计算丢包率
 						if (b[0] == 1) {
 							 vdnum++;
-					            if ((vdnum % 500) == 0) {//每1000个包输出一次
+					            if ((vdnum % 500) == 0) {//每500个包输出一次
 					                System.out.println("视频丢包率：" + 
 					            ((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vdnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
 					            }
 						}else if (b[0] == 0) {
 							vcnum++;
-							if ((vcnum % 100) == 0) {//每1000个包输出一次
+							if ((vcnum % 100) == 0) {//每100个包输出一次
 				                System.out.println("音频丢包率：" + 
 							((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vcnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
 				            }
 						}
 						
-						bytes = new byte[byte_to_short(b[2], b[3]) + 16];
+						bytes = new byte[byte_to_short(b[2], b[3]) + 12];//12是数据前面协议字节长度，如果修改协议记得修改头长度
 						System.arraycopy(b, 0, bytes, 0, bytes.length);
 						try {
 							sendPacket.setData(bytes);
