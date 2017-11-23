@@ -54,16 +54,18 @@ Step 2：
   
   如果需要添加自己的协议
        
-       .setUdpControl(new UdpControlInterface() {
-            @Override public byte[] Control(byte[] bytes) {//bytes为udp包数据
-                return bytes;//将自定义后的udp包数据返回
-            }
-        })
+                .setUdpControl(new UdpControlInterface() {
+                    @Override
+                    public byte[] Control(byte[] bytes, int offset, int end) {//bytes为udp包数据,offset为起始位,end为结束位(不是长度)
+                        //返回自定义后udp包数据,不要做耗时操作。如调用此方法则必须处理bytes,不要将原数组返回
+                        return new byte[0];
+                    }
+                })
 
   如果需要自定义发送方式，需要新建类并继承BaseSend。注意回调自定义UPD包发送，如下
         
-	if (udpControl != null) {
-            byte[] control = udpControl.Control(pushBytes);
+        if (udpControl != null) {
+            bytes = udpControl.Control(bytes, 0, bytes.length);
         }
 
   然后在需要推流的地方调用
@@ -108,7 +110,7 @@ Step 2：
    如果想要控制缓存策略可以在构建时设置如下参数
 
                 .setUdpPacketCacheMin(5)//udp包缓存数量,以音频为基准
-                .setVideoFrameCacheMin(10)//视频帧达到播放条件的缓存帧数
+                .setVideoFrameCacheMin(5)//视频帧达到播放条件的缓存帧数
                 .setVideoCarltontime(400)//视频帧缓冲时间
                 .setVoiceCarltontime(400)//音频帧缓冲时间
 
@@ -136,10 +138,10 @@ Step 2：
 
    如果需要去掉自己添加的协议
                 
-		.setUdpControl(new UdpControlInterface() {
+                .setUdpControl(new UdpControlInterface() {
                     @Override
-                    public byte[] Control(byte[] bytes) {//bytes为接收到的原始数据
-                        return bytes;//在这里将发送时的自定义处理去掉后返回
+                    public byte[] Control(byte[] bytes, int offset, int end) {//bytes为接收到的原始数据
+                        return new byte[0];//在这里将发送时的自定义处理去掉后返回
                     }
                 })
 

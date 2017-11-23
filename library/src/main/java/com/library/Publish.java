@@ -402,7 +402,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Buider setFrameRate(int frameRate) {
-            this.frameRate = frameRate;
+            this.frameRate = Math.max(8, frameRate);//限制最小8帧
             return this;
         }
 
@@ -443,7 +443,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Buider setBitrateVC(int bitrate_vc) {
-            this.bitrate_vc = bitrate_vc;
+            this.bitrate_vc = Math.min(48 * 1024, bitrate_vc);//限制最大48，因为发送会合并5个包，过大会导致溢出
             return this;
         }
 

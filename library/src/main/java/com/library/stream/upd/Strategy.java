@@ -30,7 +30,7 @@ public class Strategy {
     private int VDtime;//视频帧绝对时间
     private int VCtime;//音频帧绝对时间
 
-    private int videomin = 10;//视频帧缓存达到播放条件
+    private int videomin = 5;//视频帧缓存达到播放条件
 
     private int videoCarltontime = 400;//视频帧缓冲时间
     private int voiceCarltontime = 400;//音频帧缓冲时间
@@ -64,7 +64,7 @@ public class Strategy {
             if (iscode) {
                 if (isVideocode && videoframes.size() > 0) {
                     FramesObject framesObject = videoframes.poll();
-                    if (videoframes.size() > (videomin + 10)) {//帧缓存峰值为起始条件 +10，超过这个值则加快 frameControltime ms播放
+                    if (videoframes.size() > (videomin + 5)) {//帧缓存峰值为起始条件 +5，超过这个值则加快 frameControltime ms播放
                         VideoHandler.postDelayed(this, framesObject.getTimedifference() - frameControltime);
                     } else {
                         VideoHandler.postDelayed(this, framesObject.getTimedifference());

@@ -5,5 +5,5 @@ package com.library.stream;
  */
 
 public interface UdpControlInterface {
-    byte[] Control(byte[] bytes);
+    byte[] Control(byte[] bytes, int offset, int end);
 }

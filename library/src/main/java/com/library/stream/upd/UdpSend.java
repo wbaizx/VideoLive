@@ -90,7 +90,6 @@ public class UdpSend extends BaseSend {
     发送视频
      */
     public void writeVideo(byte[] video) {
-        byte[] pushBytes;
         //当前截取位置
         int nowPosition = 0;
         //是否首次进入
@@ -112,11 +111,8 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) sendUdplength);//长度
             //添加视频数据
             buffvideo.put(video, nowPosition, sendUdplength);
-
-            pushBytes = new byte[buffvideo.position()];
-            System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
             //UPD发送
-            sendbytes(pushBytes);
+            sendbytes(buffvideo);
             isOne = false;
             buffvideo.clear();
             nowPosition += sendUdplength;
@@ -135,16 +131,13 @@ public class UdpSend extends BaseSend {
             buffvideo.putShort((short) (video.length - nowPosition));//长度
             //添加视频数据
             buffvideo.put(video, nowPosition, video.length - nowPosition);
-
-            pushBytes = new byte[buffvideo.position()];
-            System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
             //UPD发送
-            sendbytes(pushBytes);
+            sendbytes(buffvideo);
             buffvideo.clear();
         }
     }
 
-    private int voiceSendNum = 0;
+    private int voiceSendNum = 0;//控制语音包合并发送，5个包发送一次
 
     /*
     发送音频
@@ -172,10 +165,8 @@ public class UdpSend extends BaseSend {
 
         if (voiceSendNum == 5) {
             voiceSendNum = 0;//5帧一包，标志置0
-            byte[] pushBytes = new byte[buffvoice.position()];
-            System.arraycopy(buffvoice.array(), 0, pushBytes, 0, buffvoice.position());
             //UPD发送
-            sendbytes(pushBytes);
+            sendbytes(buffvoice);
             buffvoice.clear();
         }
     }
@@ -183,13 +174,13 @@ public class UdpSend extends BaseSend {
     /*
     真正发送数据
      */
-    private synchronized void sendbytes(byte[] pushBytes) {
+    private synchronized void sendbytes(ByteBuffer buff) {
         if (issend) {
             if (udpControl != null) {
                 //如果自定义UPD发送
-                packetsendPush.setData(udpControl.Control(pushBytes));
+                packetsendPush.setData(udpControl.Control(buff.array(), 0, buff.position()));
             } else {
-                packetsendPush.setData(pushBytes);
+                packetsendPush.setData(buff.array(), 0, buff.position() - 0);
             }
             try {
                 socket.send(packetsendPush);
