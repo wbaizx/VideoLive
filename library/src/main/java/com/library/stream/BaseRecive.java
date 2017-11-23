@@ -11,7 +11,7 @@ public abstract class BaseRecive {
     protected UdpControlInterface udpControl = null;
     protected VoiceCallback voiceCallback = null;
     protected VideoCallback videoCallback = null;
-    protected int UdpPacketMin = 40;
+    protected int UdpPacketMin = 5;
 
     public abstract void starRevice();
 

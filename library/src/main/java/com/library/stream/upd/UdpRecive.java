@@ -29,11 +29,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     public UdpRecive(int port) {
         try {
             socket = new DatagramSocket(port);
-            socket.setReceiveBufferSize(1024 * 1024 * 5);
+            socket.setReceiveBufferSize(1024 * 1024);
         } catch (SocketException e) {
             e.printStackTrace();
         }
-        byte[] tmpBuf1 = new byte[548];
+        byte[] tmpBuf1 = new byte[1024];
         packetreceive = new DatagramPacket(tmpBuf1, tmpBuf1.length);
         strategy = new Strategy();
         strategy.setCachingStrategyCallback(this);
@@ -57,6 +57,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     /*
      接收UDP包
      */
+    long a = 0;
+
     private void starReciveUdp() {
         //如果socket为空，则需要手动调用write方法送入数据
         if (socket != null) {
@@ -70,7 +72,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        //由于后面会使用UdpBytes装下并记录所有数据，所以这里不需要重新拷贝一份也不会造成数据覆盖
                         write(packetreceive.getData());
                     }
                 }
@@ -88,9 +89,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             bytes = udpControl.Control(bytes);
         }
         UdpBytes udpBytes = new UdpBytes(bytes);
-//        if (!udpBytes.isCrcRight()) {
-//            Log.d("checkCRC", "--有包错误了");
-//        }
 
         if (udpBytes.getTag() == (byte) 0x01) {
             //按序号有序插入
@@ -98,14 +96,14 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
             //计算丢包率--------------------------------
             vdnum++;
-            if ((vdnum % 500) == 0) {//每1000个包输出一次
+            if ((vdnum % 500) == 0) {//每500个包输出一次
                 Log.d("UdpLoss", "视频丢包率 :  " +
                         ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
             }
             //--------------------------------
 
             //从排好序的队列中取出数据
-            if (videoList.size() > (UdpPacketMin * 1.3)) {//视频帧包数量多一些，这里可以多存一点，确保策略处理时音频帧比视频帧多
+            if (videoList.size() > (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
                 //由于与读取的并发操作存在问题,这里单线程执行
                 mosaicVideoFrame(videoList.removeFirst());
             }
@@ -115,7 +113,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
             //计算丢包率--------------------------------
             vcnum++;
-            if ((vcnum % 100) == 0) {//每1000个包输出一次
+            if ((vcnum % 50) == 0) {//每50个包输出一次
                 Log.d("UdpLoss", "音频丢包率 :  " +
                         ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
             }
@@ -182,9 +180,14 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
      将链表数据拼接成帧
      */
     private void mosaicVoiceFrame(UdpBytes udpBytes) {
-        //完整一帧，交个策略处理
+        //从一个包中取出5帧数据，交个策略处理
         strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
         oldudptime_vc = udpBytes.getTime();
+        for (int i = 0; i < 4; i++) {
+            udpBytes.nextVoice();//定位下一帧
+            strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
+            oldudptime_vc = udpBytes.getTime();
+        }
     }
 
     /*

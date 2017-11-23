@@ -1,18 +1,15 @@
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class UDPservice {
 
 	DatagramSocket server = null;
-	ArrayBlockingQueue<byte[]> queue = new ArrayBlockingQueue<byte[]>(100);
-
+	DatagramPacket sendPacket = null;
+	
 	public static void main(String[] args) {
 		UDPservice udPservice = new UDPservice();
 		udPservice.star();
@@ -21,102 +18,95 @@ public class UDPservice {
 	private void star() {
 		try {
 			server = new DatagramSocket(8765);
-			server.setSendBufferSize(1024 * 1024 * 5);
-			server.setReceiveBufferSize(1024 * 1024 * 5);
+			server.setSendBufferSize(1024 * 1024);
+			server.setReceiveBufferSize(1024 * 1024);
 			System.out.println("打开");
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-
-		//接受包
+		
+		
+		try {
+			sendPacket = new DatagramPacket(new byte[10], 0,InetAddress.getByName("192.168.2.116"), 8765);
+		} catch (UnknownHostException e1) {
+			e1.printStackTrace();
+		}
+		
 		new Thread(new Runnable() {
 			public void run() {
-				byte[] recvbuf = new byte[548];
+				byte[] recvbuf = new byte[1024];
 				DatagramPacket recvPacket = new DatagramPacket(recvbuf,recvbuf.length);
-				byte[] bytes;
+				byte[] b;
+				//计算丢包率
+				int vdnum = 0;
+				int vcnum = 0;
 				while (true) {
 					try {
 						server.receive(recvPacket);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					bytes = new byte[548];
-					System.arraycopy(recvPacket.getData(), 0, bytes, 0, 548);
-					queue.add(bytes);
-				}
-			}
-		}).start();
-
-		//发送包
-		new Thread(new Runnable() {
-			public void run() {
-				DatagramPacket sendPacket = null;
-				try {
-					sendPacket = new DatagramPacket(new byte[10], 0,InetAddress.getByName("192.168.2.116"), 8765);
-				} catch (UnknownHostException e1) {
-					e1.printStackTrace();
-				}
-				byte[] bytes;
-				byte[] b;
-				
-				//计算丢包率
-				int vdnum = 0;
-				int vcnum = 0;
-				while (true) {
-					if (queue.size() > 0) {
-						b = queue.poll();
-						
-						//计算丢包率
-						if (b[0] == 1) {
-							 vdnum++;
-					            if ((vdnum % 500) == 0) {//每500个包输出一次
-					                System.out.println("视频丢包率：" + 
-					            ((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vdnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
-					            }
-						}else if (b[0] == 0) {
-							vcnum++;
-							if ((vcnum % 100) == 0) {//每100个包输出一次
-				                System.out.println("音频丢包率：" + 
-							((float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) - (float) vcnum) * (float) 100 / (float)byte_to_int(new byte[] { b[4], b[5],b[6], b[7] }) + "%");
+					
+					b=copybyte(recvPacket.getData());
+					
+					if (b[0] == 1) {
+						 vdnum++;
+				            if ((vdnum % 500) == 0) {//每500个包输出一次
+				                System.out.println("视频丢包率：" + 
+				            ((float)byte_to_int(b[1], b[2],b[3], b[4]) - (float) vdnum) * (float) 100 / (float)byte_to_int(b[1], b[2],b[3], b[4]) + "%");
 				            }
-						}
-						
-						bytes = new byte[byte_to_short(b[2], b[3]) + 12];//12是数据前面协议字节长度，如果修改协议记得修改头长度
-						System.arraycopy(b, 0, bytes, 0, bytes.length);
-						try {
-							sendPacket.setData(bytes);
-							server.send(sendPacket);
-							// System.out.println(bytes.length);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+					}else if (b[0] == 0) {
+						vcnum++;
+						if ((vcnum % 50) == 0) {//每50个包输出一次
+			                System.out.println("音频丢包率：" + 
+						((float)byte_to_int(b[1], b[2],b[3], b[4]) - (float) vcnum) * (float) 100 / (float)byte_to_int(b[1], b[2],b[3], b[4]) + "%");
+			            }
+					}
+
+					try {
+						sendPacket.setData(b);
+						server.send(sendPacket);
+						// System.out.println(bytes.length);
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
 			}
 		}).start();
+
+	}
+
+	/*
+	 * 裁剪数组
+	 */
+	protected byte[] copybyte(byte[] data) {
+		byte [] bytes; 
+		int lengthnum;
+		
+		if(data[0] == 1){
+			lengthnum = byte_to_short(data[10], data[11]) + 12;
+			bytes = new byte[lengthnum];
+            System.arraycopy(data, 0, bytes, 0, lengthnum);
+            
+		}else{
+			lengthnum = byte_to_short(data[9], data[10]) + 11;
+			for (int i = 0; i < 4; i++) {
+				 lengthnum = lengthnum + byte_to_short(data[lengthnum + 4], data[lengthnum + 5]) + 6;//记录偏移量
+			}
+			bytes = new byte[lengthnum];
+            System.arraycopy(data, 0, bytes, 0, lengthnum);
+            
+		}
+		
+		return bytes;
 	}
 
 	// -----------------------
-	// -----------------------
-	public short byte_to_short(byte b1, byte b2) {
-		return (short) ((b1 & 0xff) << 8 | (b2 & 0xff));
-	}
 
-	public int byte_to_int(byte[] bytes) {
-		return Integer.parseInt(new BigInteger(bytes).toString(10));// 这里的1代表正数,10表示10进制
-	}
+    public  short byte_to_short(byte b1, byte b2) {
+        return (short) ((b1 & 0xff) << 8 | (b2 & 0xff));
+    }
+    public  int byte_to_int(byte b1, byte b2, byte b3, byte b4) {
+        return (((b1 & 0xFF) << 24) | ((b2 & 0xFF) << 16) | ((b3 & 0xFF) << 8) | (b4 & 0xFF));
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

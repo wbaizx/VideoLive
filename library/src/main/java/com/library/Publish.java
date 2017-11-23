@@ -371,7 +371,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         //编码参数
         private int frameRate = 15;
         private int bitrate = 600 * 1024;
-        private int bitrate_vc = 32 * 1024;
+        private int bitrate_vc = 20 * 1024;
         //推流分辨率
         private Size publishSize = new Size(480, 320);
 

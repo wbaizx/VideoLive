@@ -235,7 +235,7 @@
             android:layout_height="40dp"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="32" />
+            android:text="20" />
 
         <TextView
             android:layout_width="0dp"

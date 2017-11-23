@@ -65,7 +65,7 @@ public class Player {
         //录制地址
         private String path = null;
 
-        private int udpPacketCacheMin = 40;//udp包最小缓存数量，用于udp包排序
+        private int udpPacketCacheMin = 5;//udp包最小缓存数量，用于udp包排序
         private int videoFrameCacheMin = 10;//视频帧达到播放标准的数量
         private int videoCarltontime = 400;//视频帧缓冲时间
         private int voiceCarltontime = 400;//音频帧缓冲时间

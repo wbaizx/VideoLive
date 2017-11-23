@@ -230,7 +230,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-    private ByteBuffer writebuffer = ByteBuffer.allocate(1024 * 80);
+    private ByteBuffer writebuffer = ByteBuffer.allocate(1024 * 60);
 
     /*
     写入文件

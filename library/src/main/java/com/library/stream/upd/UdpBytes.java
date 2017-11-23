@@ -4,31 +4,66 @@ import com.library.util.ByteUtil;
 
 /**
  * UDP协议内容：
+ * <p>
+ * UDP头：----
  * 1字节 音视频tag  0音频 1视频
- * 1字节 帧标记tag  0帧头 1帧中间 2帧尾 3独立帧
- * 2字节 内容长度（只包含纯数据部分）
  * 4字节 包序号
+ * <p>
+ * 视频：----
+ * 1字节 帧标记tag  0帧头 1帧中间 2帧尾 3独立帧
  * 4字节 时间戳
+ * 2字节 内容长度（纯数据部分）
  * length 数据内容
+ * <p>
+ * 音频：----
+ * 4字节 时间戳
+ * 2字节 内容长度（纯数据部分）
+ * length 数据内容
+ * ......
+ * 4字节 时间戳
+ * 2字节 内容长度（纯数据部分）
+ * length 数据内容
+ * ......音频5帧一包，所以5个相同数据段
+ * <p>
+ * 如果修改协议记得修改下面去除的头长度，以及服务器头长度设置
  */
 public class UdpBytes {
-    private byte[] data;//纯数据
-    private int num;
-    //    private int CRC;
-    private int time;
-    private int frameTag;
     private int tag;
+    private int num;
+    private byte[] bytes;
+    private byte[] data;
+    private int time;
+    private int length;
+
+    private int frameTag;
+    private int lengthnum;//记录音频偏移长度
 
     public UdpBytes(byte[] bytes) {
         tag = bytes[0];
-        frameTag = bytes[1];
-        num = ByteUtil.byte_to_int(bytes[4], bytes[5], bytes[6], bytes[7]);
-        time = ByteUtil.byte_to_int(bytes[8], bytes[9], bytes[10], bytes[11]);
-//        CRC = ByteUtil.byte_to_int(bytes[12], bytes[13], bytes[14], bytes[15]);
+        num = ByteUtil.byte_to_int(bytes[1], bytes[2], bytes[3], bytes[4]);
 
-        int length = ByteUtil.byte_to_short(bytes[2], bytes[3]);
-        data = new byte[length];
-        System.arraycopy(bytes, 12, data, 0, length);//12是数据前面协议字节长度，如果修改协议记得修改头长度
+        if (tag == (byte) 0x01) {//视频
+            frameTag = bytes[5];
+            time = ByteUtil.byte_to_int(bytes[6], bytes[7], bytes[8], bytes[9]);
+            length = ByteUtil.byte_to_short(bytes[10], bytes[11]);
+            data = new byte[length];
+            System.arraycopy(bytes, 12, data, 0, length);//12是视频UDP包头+视频协议字长,data得到数据可能不足一帧视频
+
+        } else if (tag == (byte) 0x00) {//音频
+            this.bytes = new byte[bytes.length];
+            System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);//11是音频UDP包头+音频协议字长，data得到的是包中第一帧音频
+
+            time = ByteUtil.byte_to_int(bytes[5], bytes[6], bytes[7], bytes[8]);
+            length = ByteUtil.byte_to_short(bytes[9], bytes[10]);
+            data = new byte[length];
+            System.arraycopy(bytes, 11, data, 0, length);//11是音频UDP包头+音频协议字长，data得到的是包中第一帧音频
+            lengthnum = length + 11;//记录偏移量
+        }
+
+    }
+
+    public int getTag() {
+        return tag;
     }
 
     public int getNum() {
@@ -39,19 +74,21 @@ public class UdpBytes {
         return time;
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
+    //视频独有---------获取帧标记
     public int getFrameTag() {
         return frameTag;
     }
 
-    public int getTag() {
-        return tag;
-    }
-
-//    public boolean isCrcRight() {
-//        return OtherUtil.getCrcInt(data, 0, data.length) == CRC;
-//    }
-
-    public byte[] getData() {
-        return data;
+    //音频独有---------定位到下一帧
+    public void nextVoice() {
+        time = ByteUtil.byte_to_int(bytes[lengthnum], bytes[lengthnum + 1], bytes[lengthnum + 2], bytes[lengthnum + 3]);
+        length = ByteUtil.byte_to_short(bytes[lengthnum + 4], bytes[lengthnum + 5]);
+        data = new byte[length];
+        System.arraycopy(bytes, lengthnum + 6, data, 0, length);//6是音频协议字长，data得到的是包中下一帧音频
+        lengthnum = lengthnum + length + 6;//记录偏移量
     }
 }

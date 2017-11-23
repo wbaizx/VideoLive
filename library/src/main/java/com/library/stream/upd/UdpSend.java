@@ -25,13 +25,13 @@ public class UdpSend extends BaseSend {
     private int videoNum = 0;
     private final int sendUdplength = 480;//视频包长度固定480
     private ByteBuffer buffvideo = ByteBuffer.allocate(548);
-    private ByteBuffer buffvoice = ByteBuffer.allocate(548);
+    private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
     public UdpSend(String ip, int port) {
         try {
             socket = new DatagramSocket(port);
-            socket.setSendBufferSize(1024 * 1024 * 5);
+            socket.setSendBufferSize(1024 * 1024);
             packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
             ismysocket = true;
         } catch (SocketException e) {
@@ -53,6 +53,8 @@ public class UdpSend extends BaseSend {
 
     @Override
     public void starsend() {
+        buffvoice.clear();
+        voiceSendNum = 0;
         issend = true;
     }
 
@@ -96,78 +98,86 @@ public class UdpSend extends BaseSend {
         //记录时间值
         int time_vd_vaule = OtherUtil.getTime();
 
-        while ((video.length - nowPosition) >= sendUdplength) {
+        while ((video.length - nowPosition) > sendUdplength) {
+            //添加udp头
             buffvideo.put((byte) 1);//视频TAG
+            buffvideo.putInt(videoNum++);//序号
+            //添加视频头
             if (isOne) {
                 buffvideo.put((byte) 0);//起始帧
             } else {
                 buffvideo.put((byte) 1);//中间帧
             }
-            buffvideo.putShort((short) sendUdplength);//长度
-            buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-//            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, sendUdplength));//CRC校验位
+            buffvideo.putShort((short) sendUdplength);//长度
+            //添加视频数据
             buffvideo.put(video, nowPosition, sendUdplength);
 
             pushBytes = new byte[buffvideo.position()];
             System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
-
-            if (udpControl != null) {
-                //如果自定义UPD发送
-                sendbytes(udpControl.Control(pushBytes));
-            } else {
-                sendbytes(pushBytes);
-            }
+            //UPD发送
+            sendbytes(pushBytes);
             isOne = false;
             buffvideo.clear();
             nowPosition += sendUdplength;
         }
         if ((video.length - nowPosition) > 0) {
+            //添加udp头
             buffvideo.put((byte) 1);//视频TAG
+            buffvideo.putInt(videoNum++);//序号
+            //添加视频头
             if (isOne) {
                 buffvideo.put((byte) 3);//完整帧
             } else {
                 buffvideo.put((byte) 2);//结束帧
             }
-            buffvideo.putShort((short) (video.length - nowPosition));
-            buffvideo.putInt(videoNum++);//序号
             buffvideo.putInt(time_vd_vaule);//时戳
-//            buffvideo.putInt(OtherUtil.getCrcInt(video, nowPosition, video.length - nowPosition));//CRC校验位
+            buffvideo.putShort((short) (video.length - nowPosition));//长度
+            //添加视频数据
             buffvideo.put(video, nowPosition, video.length - nowPosition);
 
             pushBytes = new byte[buffvideo.position()];
             System.arraycopy(buffvideo.array(), 0, pushBytes, 0, buffvideo.position());
-            if (udpControl != null) {
-                //如果自定义UPD发送
-                sendbytes(udpControl.Control(pushBytes));
-            } else {
-                sendbytes(pushBytes);
-            }
+            //UPD发送
+            sendbytes(pushBytes);
             buffvideo.clear();
         }
     }
+
+    private int voiceSendNum = 0;
 
     /*
     发送音频
      */
     public void writeVoice(byte[] voice) {
-        buffvoice.put((byte) 0);//音频TAG
-        buffvoice.put((byte) 3);//完整帧
-        buffvoice.putShort((short) voice.length);//长度
-        buffvoice.putInt(voiceNum++);//序号
-        buffvoice.putInt(OtherUtil.getTime());//时戳
-//        buffvoice.putInt(OtherUtil.getCrcInt(voice, 0, voice.length));//CRC校验位
-        buffvoice.put(voice);//数据
+        if (voiceSendNum == 0) {
+            //添加udp头
+            buffvoice.put((byte) 0);//音频TAG
+            buffvoice.putInt(voiceNum++);//序号
+            //添加音频头
+            buffvoice.putInt(OtherUtil.getTime());//时戳
+            buffvoice.putShort((short) voice.length);//长度
+            //添加音频数据
+            buffvoice.put(voice);//数据
 
-        byte[] pushBytes = new byte[buffvoice.position()];
-        System.arraycopy(buffvoice.array(), 0, pushBytes, 0, buffvoice.position());
-        if (udpControl != null) {
-            //如果自定义UPD发送
-            sendbytes(udpControl.Control(pushBytes));
+            voiceSendNum++;
         } else {
-            sendbytes(pushBytes);
+            //添加音频头
+            buffvoice.putInt(OtherUtil.getTime());//时戳
+            buffvoice.putShort((short) voice.length);//长度
+            //添加音频数据
+            buffvoice.put(voice);//数据
+            voiceSendNum++;
         }
-        buffvoice.clear();
+
+        if (voiceSendNum == 5) {
+            voiceSendNum = 0;//5帧一包，标志置0
+            byte[] pushBytes = new byte[buffvoice.position()];
+            System.arraycopy(buffvoice.array(), 0, pushBytes, 0, buffvoice.position());
+            //UPD发送
+            sendbytes(pushBytes);
+            buffvoice.clear();
+        }
     }
 
     /*
@@ -175,7 +185,12 @@ public class UdpSend extends BaseSend {
      */
     private synchronized void sendbytes(byte[] pushBytes) {
         if (issend) {
-            packetsendPush.setData(pushBytes);
+            if (udpControl != null) {
+                //如果自定义UPD发送
+                packetsendPush.setData(udpControl.Control(pushBytes));
+            } else {
+                packetsendPush.setData(pushBytes);
+            }
             try {
                 socket.send(packetsendPush);
             } catch (IOException e) {
