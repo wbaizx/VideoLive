@@ -56,7 +56,7 @@ Step 2：
        
                 .setUdpControl(new UdpControlInterface() {
                     @Override
-                    public byte[] Control(byte[] bytes, int offset, int end) {//bytes为udp包数据,offset为起始位,end为结束位(不是长度)
+                    public byte[] Control(byte[] bytes, int offset, int length) {//bytes为udp包数据,offset为起始位,length为长度
                         //返回自定义后udp包数据,不要做耗时操作。如调用此方法则必须处理bytes,不要将原数组返回
                         return new byte[0];
                     }
@@ -140,7 +140,7 @@ Step 2：
                 
                 .setUdpControl(new UdpControlInterface() {
                     @Override
-                    public byte[] Control(byte[] bytes, int offset, int end) {//bytes为接收到的原始数据
+                    public byte[] Control(byte[] bytes, int offset, int length) {//bytes为接收到的原始数据
                         return new byte[0];//在这里将发送时的自定义处理去掉后返回
                     }
                 })

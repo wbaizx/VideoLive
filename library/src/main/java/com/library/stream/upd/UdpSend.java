@@ -178,7 +178,7 @@ public class UdpSend extends BaseSend {
         if (issend) {
             if (udpControl != null) {
                 //如果自定义UPD发送
-                packetsendPush.setData(udpControl.Control(buff.array(), 0, buff.position()));
+                packetsendPush.setData(udpControl.Control(buff.array(), 0, buff.position() - 0));
             } else {
                 packetsendPush.setData(buff.array(), 0, buff.position() - 0);
             }

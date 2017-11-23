@@ -47,7 +47,7 @@ public class UDPservice {
 						e.printStackTrace();
 					}
 					
-					b=copybyte(recvPacket.getData());
+					b=recvPacket.getData();
 					
 					if (b[0] == 1) {
 						 vdnum++;
@@ -64,7 +64,7 @@ public class UDPservice {
 					}
 
 					try {
-						sendPacket.setData(b);
+						sendPacket.setData(b,0,copybyte(b));
 						server.send(sendPacket);
 						// System.out.println(bytes.length);
 					} catch (IOException e) {
@@ -77,28 +77,22 @@ public class UDPservice {
 	}
 
 	/*
-	 * 裁剪数组
+	 * 计算有效长度
 	 */
-	protected byte[] copybyte(byte[] data) {
-		byte [] bytes; 
+	private int copybyte(byte[] data) {
 		int lengthnum;
 		
 		if(data[0] == 1){
 			lengthnum = byte_to_short(data[10], data[11]) + 12;
-			bytes = new byte[lengthnum];
-            System.arraycopy(data, 0, bytes, 0, lengthnum);
             
 		}else{
 			lengthnum = byte_to_short(data[9], data[10]) + 11;
 			for (int i = 0; i < 4; i++) {
 				 lengthnum = lengthnum + byte_to_short(data[lengthnum + 4], data[lengthnum + 5]) + 6;//记录偏移量
 			}
-			bytes = new byte[lengthnum];
-            System.arraycopy(data, 0, bytes, 0, lengthnum);
             
 		}
-		
-		return bytes;
+		return lengthnum;
 	}
 
 	// -----------------------

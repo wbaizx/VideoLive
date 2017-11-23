@@ -86,7 +86,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     //添加解码数据
     public void write(byte[] bytes) {
         if (udpControl != null) {
-            bytes = udpControl.Control(bytes, 0, bytes.length);
+            bytes = udpControl.Control(bytes, 0, bytes.length - 0);
         }
         UdpBytes udpBytes = new UdpBytes(bytes);
 
