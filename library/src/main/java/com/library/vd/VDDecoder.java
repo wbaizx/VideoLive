@@ -2,14 +2,11 @@ package com.library.vd;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.util.Log;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
 import com.library.stream.VideoCallback;
-import com.library.util.ByteUtil;
 import com.library.util.OtherUtil;
 import com.library.view.PlayerView;
 
@@ -116,7 +113,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 4] == (byte) 0x68) {
                 byte[] bytes = new byte[i];
                 System.arraycopy(information, 0, bytes, 0, i);
-                Log.d("VDDecoder_information", "h264 sps" + ByteUtil.byte_to_16(bytes));
+//                Log.d("VDDecoder_information", "h264 sps" + ByteUtil.byte_to_16(bytes));
                 return ByteBuffer.wrap(bytes);
             }
         }
@@ -138,7 +135,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                             && information[j + 4] == (byte) 0x65) {
                         byte[] bytes = new byte[j - i];
                         System.arraycopy(information, i, bytes, 0, j - i);
-                        Log.d("VDDecoder_information", "h264 pps" + ByteUtil.byte_to_16(bytes));
+//                        Log.d("VDDecoder_information", "h264 pps" + ByteUtil.byte_to_16(bytes));
                         return ByteBuffer.wrap(bytes);
                     }
                 }
@@ -156,7 +153,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
                     && information[i + 4] == (byte) 0x26) {
                 byte[] bytes = new byte[i];
                 System.arraycopy(information, 0, bytes, 0, i);
-                Log.d("VDDecoder_information", "h265信息" + ByteUtil.byte_to_16(bytes));
+//                Log.d("VDDecoder_information", "h265信息" + ByteUtil.byte_to_16(bytes));
                 return ByteBuffer.wrap(bytes);
             }
         }
@@ -213,7 +210,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
             //解码
             mCodec.queueInputBuffer(inputBufferIndex, 0, video.length, 0, 0);
         } else {
-            Log.e("dcoder_failure", "dcoder failure_VD");
+//            Log.d("dcoder_failure", "dcoder failure_VD");
             return;
         }
         // 获取输出buffer index

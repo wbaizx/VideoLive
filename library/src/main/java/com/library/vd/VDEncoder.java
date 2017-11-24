@@ -3,7 +3,6 @@ package com.library.vd;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.util.Log;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
@@ -27,7 +26,7 @@ public class VDEncoder {
     private int framerate;
     private byte[] information;
     private boolean isRuning = false;
-    protected ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     //文件录入类
     private WriteMp4 writeMp4;
 
@@ -110,7 +109,6 @@ public class VDEncoder {
                                     outputBuffer.get(outData);
                                     information = outData;
 //                                    Log.d("sps_pps", ByteUtil.byte_to_16(information));
-
                                 } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                     //关键帧
                                     outData = new byte[bufferInfo.size + information.length];
@@ -123,7 +121,7 @@ public class VDEncoder {
                                     //添加将要发送的视频数据
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
-                                    Log.d("frame_length", "普通帧长度为  --   " + outData.length);
+//                                    Log.d("frame_length", "普通帧长度为  --   " + outData.length);
                                     baseSend.addVideo(outData);
                                 }
                                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
@@ -139,6 +137,4 @@ public class VDEncoder {
             }
         }).start();
     }
-
-
 }

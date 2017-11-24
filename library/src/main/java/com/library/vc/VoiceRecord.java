@@ -7,6 +7,8 @@ import android.media.MediaRecorder;
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
 
+import java.util.Arrays;
+
 /**
  * Created by android1 on 2017/9/22.
  */
@@ -46,7 +48,6 @@ public class VoiceRecord {
                 if (audioRecord != null) {
                     isrecord = true;
                     byte[] buffer = new byte[recBufSize];
-                    byte[] result;
                     int bufferReadResult;
                     audioRecord.startRecording();//开始录制
                     while (isrecord) {
@@ -57,9 +58,7 @@ public class VoiceRecord {
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;
                         }
-                        result = new byte[bufferReadResult];
-                        System.arraycopy(buffer, 0, result, 0, bufferReadResult);
-                        vencoder.encode(result);
+                        vencoder.encode(Arrays.copyOfRange(buffer, 0, bufferReadResult));
                     }
                 }
             }

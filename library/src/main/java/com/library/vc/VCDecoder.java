@@ -3,7 +3,6 @@ package com.library.vc;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.util.Log;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
@@ -83,7 +82,7 @@ public class VCDecoder implements VoiceCallback {
                 dstBuf.put(voice, 0, voice.length);
                 mDecoder.queueInputBuffer(inputBufIndex, 0, voice.length, 0, 0);
             } else {
-                Log.e("dcoder_failure", "dcoder failure_VC");
+//                Log.d("dcoder_failure", "dcoder failure_VC");
                 return;
             }
             outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);

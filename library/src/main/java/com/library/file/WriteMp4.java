@@ -4,7 +4,6 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Environment;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,14 +48,14 @@ public class WriteMp4 {
                     presentationTimeUsVD = bufferInfo.presentationTimeUs;
 
                     mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
-                    Log.d("app_WriteMp4", "写了视频数据----------------");
+//                    Log.d("app_WriteMp4", "写了视频数据----------------");
                 }
             } else if (flag == voice) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVE) {//容错
                     presentationTimeUsVE = bufferInfo.presentationTimeUs;
 
                     mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
-                    Log.d("app_WriteMp4", "写了音频数据----");
+//                    Log.d("app_WriteMp4", "写了音频数据----");
                 }
             }
         }
@@ -83,7 +82,7 @@ public class WriteMp4 {
                 mMediaMuxer.start();
                 presentationTimeUsVE = 0;
                 presentationTimeUsVD = 0;
-                Log.d("app_WriteMp4", "启动");
+//                Log.d("app_WriteMp4", "启动");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -96,7 +95,7 @@ public class WriteMp4 {
             isStart = false;
             mMediaMuxer.release();
             mMediaMuxer = null;
-            Log.d("app_WriteMp4", "关闭");
+//            Log.d("app_WriteMp4", "关闭");
         }
     }
 }

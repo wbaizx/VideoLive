@@ -2,7 +2,6 @@ package com.library.stream.upd;
 
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
 
 import com.library.stream.IsInBuffer;
 import com.library.util.OtherUtil;
@@ -69,7 +68,7 @@ public class Strategy {
                     } else {
                         VideoHandler.postDelayed(this, framesObject.getTimedifference());
                     }
-                    Log.d("playerInfromation_vd", "视频队列数--" + videoframes.size() + "--时间戳--" + framesObject.getTimedifference());
+//                    Log.d("playerInfromation_vd", "视频队列数--" + videoframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     VDtime = framesObject.getTime();
                     cachingStrategyCallback.videoStrategy(framesObject.getData());
                 } else {
@@ -104,7 +103,7 @@ public class Strategy {
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference() + frameControltime);
                     } else if ((VDtime - VCtime) > voiceFrameControltime) {//视频帧快了，音频要快一点
                         if ((VDtime - VCtime) > (voiceFrameControltime * 3)) {
-                            Log.d("playerInfromation_loss", "音频帧过慢，丢弃部分");
+//                            Log.d("playerInfromation_loss", "音频帧过慢，丢弃部分");
                             while (voiceframes.size() > 0) {
                                 if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime + frameControltime) {
                                     break;
@@ -115,7 +114,7 @@ public class Strategy {
                     } else {
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference());
                     }
-                    Log.d("playerInfromation_vc", "音频队列数--" + voiceframes.size() + "--时间戳--" + framesObject.getTimedifference());
+//                    Log.d("playerInfromation_vc", "音频队列数--" + voiceframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     cachingStrategyCallback.voiceStrategy(framesObject.getData());
                 } else {
                     VoiceHandler.postDelayed(this, voiceCarltontime);

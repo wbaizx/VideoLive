@@ -4,11 +4,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class UDPservice {
 
-	DatagramSocket server = null;
-	DatagramPacket sendPacket = null;
+	private DatagramSocket server = null;
+	private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<byte[]>(100);
 	
 	public static void main(String[] args) {
 		UDPservice udPservice = new UDPservice();
@@ -25,18 +27,10 @@ public class UDPservice {
 			e.printStackTrace();
 		}
 		
-		
-		try {
-			sendPacket = new DatagramPacket(new byte[10], 0,InetAddress.getByName("192.168.2.116"), 8765);
-		} catch (UnknownHostException e1) {
-			e1.printStackTrace();
-		}
-		
 		new Thread(new Runnable() {
 			public void run() {
 				byte[] recvbuf = new byte[1024];
 				DatagramPacket recvPacket = new DatagramPacket(recvbuf,recvbuf.length);
-				byte[] b;
 				//计算丢包率
 				int vdnum = 0;
 				int vcnum = 0;
@@ -47,52 +41,57 @@ public class UDPservice {
 						e.printStackTrace();
 					}
 					
-					b=recvPacket.getData();
-					
-					if (b[0] == 1) {
-						 vdnum++;
+					if (recvbuf[0] == 1) {
 				            if ((vdnum % 500) == 0) {//每500个包输出一次
 				                System.out.println("视频丢包率：" + 
-				            ((float)byte_to_int(b[1], b[2],b[3], b[4]) - (float) vdnum) * (float) 100 / (float)byte_to_int(b[1], b[2],b[3], b[4]) + "%");
+				            ((float)byte_to_int(recvbuf[1], recvbuf[2],recvbuf[3], recvbuf[4]) 
+				            		- (float) vdnum) * (float) 100 / (float)byte_to_int(recvbuf[1], recvbuf[2],recvbuf[3], recvbuf[4]) + "%");
 				            }
-					}else if (b[0] == 0) {
-						vcnum++;
+				            vdnum++;
+					}else if (recvbuf[0] == 0) {
 						if ((vcnum % 50) == 0) {//每50个包输出一次
 			                System.out.println("音频丢包率：" + 
-						((float)byte_to_int(b[1], b[2],b[3], b[4]) - (float) vcnum) * (float) 100 / (float)byte_to_int(b[1], b[2],b[3], b[4]) + "%");
+						((float)byte_to_int(recvbuf[1], recvbuf[2],recvbuf[3], recvbuf[4]) 
+								- (float) vcnum) * (float) 100 / (float)byte_to_int(recvbuf[1], recvbuf[2],recvbuf[3], recvbuf[4]) + "%");
 			            }
+						vcnum++;
 					}
 
-					try {
-						sendPacket.setData(b,0,copybyte(b));
-						server.send(sendPacket);
-						// System.out.println(bytes.length);
-					} catch (IOException e) {
-						e.printStackTrace();
+					if(udpQueue.size()>98){
+						udpQueue.poll();
+					}
+					udpQueue.add(Arrays.copyOfRange(recvbuf, 0, recvPacket.getLength()));
+				}
+			}
+		}).start();
+		
+		
+		new Thread(new Runnable() {
+			
+			public void run() {
+				// TODO Auto-generated method stub
+				DatagramPacket sendPacket = null;
+				try {
+					 sendPacket = new DatagramPacket(new byte[10], 0,InetAddress.getByName("192.168.2.116"), 8765);
+				} catch (UnknownHostException e1) {
+					e1.printStackTrace();
+				}
+				while(true){
+					if(udpQueue.size()>0){
+						sendPacket.setData(udpQueue.poll());
+						try {
+							server.send(sendPacket);
+							Thread.sleep(1);
+						} catch (IOException e) {
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
 		}).start();
 
-	}
-
-	/*
-	 * 计算有效长度
-	 */
-	private int copybyte(byte[] data) {
-		int lengthnum;
-		
-		if(data[0] == 1){
-			lengthnum = byte_to_short(data[10], data[11]) + 12;
-            
-		}else{
-			lengthnum = byte_to_short(data[9], data[10]) + 11;
-			for (int i = 0; i < 4; i++) {
-				 lengthnum = lengthnum + byte_to_short(data[lengthnum + 4], data[lengthnum + 5]) + 6;//记录偏移量
-			}
-            
-		}
-		return lengthnum;
 	}
 
 	// -----------------------

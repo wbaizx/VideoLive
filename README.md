@@ -57,7 +57,7 @@ Step 2：
                 .setUdpControl(new UdpControlInterface() {
                     @Override
                     public byte[] Control(byte[] bytes, int offset, int length) {//bytes为udp包数据,offset为起始位,length为长度
-                        //返回自定义后udp包数据,不要做耗时操作。如调用此方法则必须处理bytes,不要将原数组返回
+                        //返回自定义后udp包数据,不要做耗时操作。如果调用了此方法不要将原数组返回
                         return new byte[0];
                     }
                 })
@@ -118,7 +118,7 @@ Step 2：
 
                 .setBufferAnimator(false)//默认开启
 
-   如果觉得动画太丑也可以自己根据状态去做，通过如下设置回调缓冲状态
+   如果觉得动画太丑也可以自己根据状态去做个dialog，通过如下设置回调缓冲状态
 
                 .setIsOutBuffer(new IsOutBuffer() {
                     @Override

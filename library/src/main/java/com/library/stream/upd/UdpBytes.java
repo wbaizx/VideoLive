@@ -2,6 +2,8 @@ package com.library.stream.upd;
 
 import com.library.util.ByteUtil;
 
+import java.util.Arrays;
+
 /**
  * UDP协议内容：
  * <p>
@@ -33,7 +35,6 @@ public class UdpBytes {
     private byte[] bytes;
     private byte[] data;
     private int time;
-    private int length;
 
     private int frameTag;
     private int lengthnum;//记录音频偏移长度
@@ -45,21 +46,16 @@ public class UdpBytes {
         if (tag == (byte) 0x01) {//视频
             frameTag = bytes[5];
             time = ByteUtil.byte_to_int(bytes[6], bytes[7], bytes[8], bytes[9]);
-            length = ByteUtil.byte_to_short(bytes[10], bytes[11]);
-            data = new byte[length];
-            System.arraycopy(bytes, 12, data, 0, length);//12是视频UDP包头+视频协议字长,data得到数据可能不足一帧视频
+            //12是视频UDP包头+视频协议字长,data得到数据可能不足一帧视频
+            data = Arrays.copyOfRange(bytes, 12, ByteUtil.byte_to_short(bytes[10], bytes[11]) + 12);
 
         } else if (tag == (byte) 0x00) {//音频
-            this.bytes = new byte[bytes.length];
-            System.arraycopy(bytes, 0, this.bytes, 0, bytes.length);//11是音频UDP包头+音频协议字长，data得到的是包中第一帧音频
-
+            this.bytes = bytes;
             time = ByteUtil.byte_to_int(bytes[5], bytes[6], bytes[7], bytes[8]);
-            length = ByteUtil.byte_to_short(bytes[9], bytes[10]);
-            data = new byte[length];
-            System.arraycopy(bytes, 11, data, 0, length);//11是音频UDP包头+音频协议字长，data得到的是包中第一帧音频
-            lengthnum = length + 11;//记录偏移量
+            //11是音频UDP包头+音频协议字长，data得到的是包中第一帧音频
+            data = Arrays.copyOfRange(bytes, 11, ByteUtil.byte_to_short(bytes[9], bytes[10]) + 11);
+            lengthnum = data.length + 11;//记录偏移量
         }
-
     }
 
     public int getTag() {
@@ -86,9 +82,8 @@ public class UdpBytes {
     //音频独有---------定位到下一帧
     public void nextVoice() {
         time = ByteUtil.byte_to_int(bytes[lengthnum], bytes[lengthnum + 1], bytes[lengthnum + 2], bytes[lengthnum + 3]);
-        length = ByteUtil.byte_to_short(bytes[lengthnum + 4], bytes[lengthnum + 5]);
-        data = new byte[length];
-        System.arraycopy(bytes, lengthnum + 6, data, 0, length);//6是音频协议字长，data得到的是包中下一帧音频
-        lengthnum = lengthnum + length + 6;//记录偏移量
+        //6是音频协议字长，data得到的是包中下一帧音频
+        data = Arrays.copyOfRange(bytes, lengthnum + 6, ByteUtil.byte_to_short(bytes[lengthnum + 4], bytes[lengthnum + 5]) + lengthnum + 6);
+        lengthnum = lengthnum + data.length + 6;//记录偏移量
     }
 }

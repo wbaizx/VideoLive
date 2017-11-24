@@ -1,7 +1,5 @@
 package com.library.stream.upd;
 
-import android.util.Log;
-
 import com.library.stream.BaseSend;
 import com.library.util.OtherUtil;
 
@@ -12,6 +10,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Created by android1 on 2017/9/25.
@@ -28,27 +28,32 @@ public class UdpSend extends BaseSend {
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
+    private ArrayBlockingQueue<byte[]> sendQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+
     public UdpSend(String ip, int port) {
         try {
             socket = new DatagramSocket(port);
             socket.setSendBufferSize(1024 * 1024);
-            packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
             ismysocket = true;
         } catch (SocketException e) {
             e.printStackTrace();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
         }
+        init(ip, port);
     }
+
 
     public UdpSend(DatagramSocket socket, String ip, int port) {
         this.socket = socket;
+        ismysocket = false;
+        init(ip, port);
+    }
+
+    private void init(String ip, int port) {
         try {
             packetsendPush = new DatagramPacket(new byte[10], 10, InetAddress.getByName(ip), port);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        ismysocket = false;
     }
 
     @Override
@@ -56,6 +61,7 @@ public class UdpSend extends BaseSend {
         buffvoice.clear();
         voiceSendNum = 0;
         issend = true;
+        starsendThread();
     }
 
     @Override
@@ -112,7 +118,7 @@ public class UdpSend extends BaseSend {
             //添加视频数据
             buffvideo.put(video, nowPosition, sendUdplength);
             //UPD发送
-            sendbytes(buffvideo);
+            addbytes(buffvideo);
             isOne = false;
             buffvideo.clear();
             nowPosition += sendUdplength;
@@ -132,7 +138,7 @@ public class UdpSend extends BaseSend {
             //添加视频数据
             buffvideo.put(video, nowPosition, video.length - nowPosition);
             //UPD发送
-            sendbytes(buffvideo);
+            addbytes(buffvideo);
             buffvideo.clear();
         }
     }
@@ -166,29 +172,42 @@ public class UdpSend extends BaseSend {
         if (voiceSendNum == 5) {
             voiceSendNum = 0;//5帧一包，标志置0
             //UPD发送
-            sendbytes(buffvoice);
+            addbytes(buffvoice);
             buffvoice.clear();
+        }
+    }
+
+    private synchronized void addbytes(ByteBuffer buff) {
+        if (udpControl != null) {
+            //如果自定义UPD发送
+            OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position() - 0));
+        } else {
+            OtherUtil.addQueue(sendQueue, Arrays.copyOfRange(buff.array(), 0, buff.position()));//复制数组
         }
     }
 
     /*
     真正发送数据
      */
-    private synchronized void sendbytes(ByteBuffer buff) {
-        if (issend) {
-            if (udpControl != null) {
-                //如果自定义UPD发送
-                packetsendPush.setData(udpControl.Control(buff.array(), 0, buff.position() - 0));
-            } else {
-                packetsendPush.setData(buff.array(), 0, buff.position() - 0);
+    private void starsendThread() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (issend) {
+                    if (sendQueue.size() > 0) {
+                        packetsendPush.setData(sendQueue.poll());
+                        try {
+                            socket.send(packetsendPush);
+                            Thread.sleep(1);
+                        } catch (IOException e) {
+//                            Log.d("senderror", "发送失败");
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
-            try {
-                socket.send(packetsendPush);
-            } catch (IOException e) {
-                Log.d("senderror", "发送失败");
-                e.printStackTrace();
-            }
-        }
+        }).start();
     }
-
 }
