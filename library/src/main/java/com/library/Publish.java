@@ -195,8 +195,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 //        Log.d("publishSize", "最佳分辨率  =  " + publishSize.getWidth() + "*" + publishSize.getHeight());
 
         if (vdEncoder == null) {
-            //初始化视频编码,由于图片旋转过，所以高度宽度需要对调
-            vdEncoder = new VDEncoder(publishSize.getHeight(), publishSize.getWidth(), frameRate, bitrate, writeMp4, codetype, baseSend);
+            vdEncoder = new VDEncoder(publishSize, frameRate, bitrate, writeMp4, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
 
@@ -301,11 +300,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     if (rotate) {
                         //先转成NV21再旋转图片然后交给编码器等待编码
                         vdEncoder.addFrame(ImagUtil.rotateYUV270AndMirror(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
+                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize));
                     } else {
                         //后置
                         vdEncoder.addFrame(ImagUtil.rotateYUV90(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize.getWidth(), publishSize.getHeight()));
+                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize));
                     }
                     image.close();
 //                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {

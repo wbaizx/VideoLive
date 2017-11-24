@@ -2,6 +2,7 @@ package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
+import android.util.Size;
 
 import java.nio.ByteBuffer;
 
@@ -97,23 +98,23 @@ public class ImagUtil {
     /*
     后置摄像头90度
      */
-    public static byte[] rotateYUV90(byte[] data, int imageWidth, int imageHeight) {
-        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+    public static byte[] rotateYUV90(byte[] data, Size size) {
+        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
         // Rotate the Y luma
         int i = 0;
-        for (int x = 0; x < imageWidth; x++) {
-            for (int y = imageHeight - 1; y >= 0; y--) {
-                yuv[i] = data[y * imageWidth + x];
+        for (int x = 0; x < size.getWidth(); x++) {
+            for (int y = size.getHeight() - 1; y >= 0; y--) {
+                yuv[i] = data[y * size.getWidth() + x];
                 i++;
             }
         }
         // Rotate the U and V color components
-        i = imageWidth * imageHeight * 3 / 2 - 1;
-        for (int x = imageWidth - 1; x > 0; x = x - 2) {
-            for (int y = 0; y < imageHeight / 2; y++) {
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
+        i = size.getWidth() * size.getHeight() * 3 / 2 - 1;
+        for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
+            for (int y = 0; y < size.getHeight() / 2; y++) {
+                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + x];
                 i--;
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
+                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + (x - 1)];
                 i--;
             }
         }
@@ -123,28 +124,28 @@ public class ImagUtil {
     /*
     前置摄像头270度&&镜像
      */
-    public static byte[] rotateYUV270AndMirror(byte[] data, int imageWidth, int imageHeight) {
-        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+    public static byte[] rotateYUV270AndMirror(byte[] data, Size size) {
+        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
         // Rotate and mirror the Y luma
         int i = 0;
         int maxY = 0;
-        for (int x = imageWidth - 1; x >= 0; x--) {
-            maxY = imageWidth * (imageHeight - 1) + x * 2;
-            for (int y = 0; y < imageHeight; y++) {
-                yuv[i] = data[maxY - (y * imageWidth + x)];
+        for (int x = size.getWidth() - 1; x >= 0; x--) {
+            maxY = size.getWidth() * (size.getHeight() - 1) + x * 2;
+            for (int y = 0; y < size.getHeight(); y++) {
+                yuv[i] = data[maxY - (y * size.getWidth() + x)];
                 i++;
             }
         }
         // Rotate and mirror the U and V color components
-        int uvSize = imageWidth * imageHeight;
+        int uvSize = size.getWidth() * size.getHeight();
         i = uvSize;
         int maxUV = 0;
-        for (int x = imageWidth - 1; x > 0; x = x - 2) {
-            maxUV = imageWidth * (imageHeight / 2 - 1) + x * 2 + uvSize;
-            for (int y = 0; y < imageHeight / 2; y++) {
-                yuv[i] = data[maxUV - 2 - (y * imageWidth + x - 1)];
+        for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
+            maxUV = size.getWidth() * (size.getHeight() / 2 - 1) + x * 2 + uvSize;
+            for (int y = 0; y < size.getHeight() / 2; y++) {
+                yuv[i] = data[maxUV - 2 - (y * size.getWidth() + x - 1)];
                 i++;
-                yuv[i] = data[maxUV - (y * imageWidth + x)];
+                yuv[i] = data[maxUV - (y * size.getWidth() + x)];
                 i++;
             }
         }

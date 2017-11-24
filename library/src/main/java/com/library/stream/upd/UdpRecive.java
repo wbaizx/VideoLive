@@ -154,7 +154,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     private int oldudptime_vd = 0;//记录上一个包的时间
     private int oneFrame = 0;//同帧标识符(使用时间戳当同帧标识)
-    private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 60);
+    private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 80);
 
     /*
      将链表数据拼接成帧

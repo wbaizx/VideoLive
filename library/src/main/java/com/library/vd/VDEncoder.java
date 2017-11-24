@@ -3,6 +3,7 @@ package com.library.vd;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.util.Size;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
@@ -30,9 +31,10 @@ public class VDEncoder {
     //文件录入类
     private WriteMp4 writeMp4;
 
-    public VDEncoder(int width, int height, int framerate, int bitrate, WriteMp4 writeMp4, String codetype, BaseSend baseSend) {
-        this.width = width;
-        this.height = height;
+    public VDEncoder(Size size, int framerate, int bitrate, WriteMp4 writeMp4, String codetype, BaseSend baseSend) {
+        //由于图片旋转过，所以高度宽度需要对调
+        this.width = size.getHeight();
+        this.height = size.getWidth();
         this.framerate = framerate;
         this.writeMp4 = writeMp4;
         //UPD实例
