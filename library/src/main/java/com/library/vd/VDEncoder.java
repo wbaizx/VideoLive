@@ -24,7 +24,6 @@ public class VDEncoder {
     //编码参数
     private int width;
     private int height;
-    private int framerate;
     private byte[] information;
     private boolean isRuning = false;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
@@ -35,7 +34,6 @@ public class VDEncoder {
         //由于图片旋转过，所以高度宽度需要对调
         this.width = size.getHeight();
         this.height = size.getWidth();
-        this.framerate = framerate;
         this.writeMp4 = writeMp4;
         //UPD实例
         this.baseSend = baseSend;

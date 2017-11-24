@@ -92,6 +92,7 @@ public class WriteMp4 {
 
     public void destroy() {
         if (isStart) {
+            //从开启到关闭中间必须写入一段数据，否则崩溃，开启->关闭不能连续调用
             isStart = false;
             mMediaMuxer.release();
             mMediaMuxer = null;
