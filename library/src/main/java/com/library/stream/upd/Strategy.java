@@ -142,6 +142,8 @@ public class Strategy {
     public void stop() {
         iscode = false;
         if (handlerVideoThread != null) {
+            VideoHandler.removeCallbacksAndMessages(null);
+            VoiceHandler.removeCallbacksAndMessages(null);
             handlerVideoThread.quitSafely();
             handlerVoiceThread.quitSafely();
         }

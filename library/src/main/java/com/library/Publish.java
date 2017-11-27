@@ -69,6 +69,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private HandlerThread controlFrameRateThread;
     private HandlerThread handlerCamearThread;
     private Handler camearHandler;
+    private Handler frameHandler;
 
     private WriteMp4 writeMp4;
 
@@ -284,12 +285,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private void startControlFrameRate() {
         controlFrameRateThread = new HandlerThread("FrameRateControl");
         controlFrameRateThread.start();
-        final Handler handler = new Handler(controlFrameRateThread.getLooper());
+        frameHandler = new Handler(controlFrameRateThread.getLooper());
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 if (controlFrameRateThread.isAlive()) {
-                    handler.postDelayed(this, 1000 / frameRate);//帧率控制时间
+                    frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 }
                 if (frameRateControlQueue.size() > 0) {
 //                    time = System.currentTimeMillis();
@@ -315,7 +316,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 }
             }
         };
-        handler.post(runnable);
+        frameHandler.post(runnable);
     }
 
     private void releaseCamera() {
@@ -354,6 +355,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //销毁
     public void destroy() {
         releaseCamera();
+        frameHandler.removeCallbacksAndMessages(null);
         handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
         writeMp4.destroy();

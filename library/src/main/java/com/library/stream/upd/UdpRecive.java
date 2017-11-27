@@ -237,6 +237,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         isrevice = false;
         strategy.stop();
         if (handlerUdpThread != null) {
+            udpHandler.removeCallbacksAndMessages(null);
             handlerUdpThread.quitSafely();
         }
     }

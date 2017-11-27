@@ -155,22 +155,22 @@ public class ImagUtil {
     /*
     前置摄像头270度
      */
-    public static byte[] rotateYUV270(byte[] data, int imageWidth, int imageHeight) {
-        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+    public static byte[] rotateYUV270(byte[] data, Size size) {
+        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
         // Rotate the Y luma
         int i = 0;
-        for (int x = imageWidth - 1; x >= 0; x--) {
-            for (int y = 0; y < imageHeight; y++) {
-                yuv[i] = data[y * imageWidth + x];
+        for (int x = size.getWidth() - 1; x >= 0; x--) {
+            for (int y = 0; y < size.getHeight(); y++) {
+                yuv[i] = data[y * size.getWidth() + x];
                 i++;
             }
         }// Rotate the U and V color components
-        i = imageWidth * imageHeight;
-        for (int x = imageWidth - 1; x > 0; x = x - 2) {
-            for (int y = 0; y < imageHeight / 2; y++) {
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
+        i = size.getWidth() * size.getHeight();
+        for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
+            for (int y = 0; y < size.getHeight() / 2; y++) {
+                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + (x - 1)];
                 i++;
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
+                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + x];
                 i++;
             }
         }
