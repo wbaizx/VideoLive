@@ -47,8 +47,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //是否翻转，默认后置
     private boolean rotate = false;
     private boolean ispreview = true;
-    //帧率控制时间
-    private int frameRate = 66;
+    //帧率
+    private int frameRate;
     private int bitrate;
     private int bitrate_vc;
     private String codetype;
