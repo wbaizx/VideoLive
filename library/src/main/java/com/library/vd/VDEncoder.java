@@ -7,8 +7,10 @@ import android.util.Size;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
+import com.library.util.ByteUtil;
 import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
+import com.library.util.mLog;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -108,7 +110,7 @@ public class VDEncoder {
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
                                     information = outData;
-//                                    Log.d("sps_pps", ByteUtil.byte_to_16(information));
+                                    mLog.log("sps_pps", ByteUtil.byte_to_16(information));
                                 } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                     //关键帧
                                     outData = new byte[bufferInfo.size + information.length];
@@ -121,7 +123,7 @@ public class VDEncoder {
                                     //添加将要发送的视频数据
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
-//                                    Log.d("frame_length", "普通帧长度为  --   " + outData.length);
+                                    mLog.log("frame_length", "普通帧长度为  --   " + outData.length);
                                     baseSend.addVideo(outData);
                                 }
                                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);

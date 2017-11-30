@@ -8,6 +8,7 @@ import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
 import com.library.stream.VoiceCallback;
 import com.library.util.OtherUtil;
+import com.library.util.mLog;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,7 +83,7 @@ public class VCDecoder implements VoiceCallback {
                 dstBuf.put(voice, 0, voice.length);
                 mDecoder.queueInputBuffer(inputBufIndex, 0, voice.length, 0, 0);
             } else {
-//                Log.d("dcoder_failure", "dcoder failure_VC");
+                mLog.log("dcoder_failure", "dcoder failure_VC");
                 return;
             }
             outputBufferIndex = mDecoder.dequeueOutputBuffer(info, OtherUtil.waitTime);

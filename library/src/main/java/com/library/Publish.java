@@ -26,6 +26,7 @@ import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
 import com.library.stream.UdpControlInterface;
 import com.library.util.ImagUtil;
+import com.library.util.mLog;
 import com.library.vc.VoiceRecord;
 import com.library.vd.VDEncoder;
 
@@ -181,7 +182,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         int numh = 10000;
         int num = 0;
         for (int i = 0; i < outputSizes.length; i++) {
-//            Log.d("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
             if (Math.abs(outputSizes[i].getWidth() - publishSize.getWidth()) <= numw) {
                 numw = Math.abs(outputSizes[i].getWidth() - publishSize.getWidth());
                 if (Math.abs(outputSizes[i].getHeight() - publishSize.getHeight()) <= numh) {
@@ -193,7 +194,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
         previewSize = outputSizes[num];
         publishSize = outputSizes[num];
-//        Log.d("publishSize", "最佳分辨率  =  " + publishSize.getWidth() + "*" + publishSize.getHeight());
+        mLog.log("publishSize", "最佳分辨率  =  " + publishSize.getWidth() + "*" + publishSize.getHeight());
 
         if (vdEncoder == null) {
             vdEncoder = new VDEncoder(publishSize, frameRate, bitrate, writeMp4, codetype, baseSend);
@@ -279,7 +280,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     //耗时检测
-//    private long time = 0;
+    private long time = 0;
 
     //帧率控制策略
     private void startControlFrameRate() {
@@ -293,7 +294,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 }
                 if (frameRateControlQueue.size() > 0) {
-//                    time = System.currentTimeMillis();
+                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
                     /*
                     480*320图像处理大概14ms，1280*720大概48ms
@@ -308,11 +309,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
                                 ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize));
                     }
                     image.close();
-//                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
-//                        Log.d("Frame_slow", "图像处理速度过慢");
-//                    }
+                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
+                        mLog.log("Frame_slow", "图像处理速度过慢");
+                    }
                 } else {
-//                    Log.d("Frame_loss", "图像采集速率不够");
+                    mLog.log("Frame_loss", "图像采集速率不够");
                 }
             }
         };

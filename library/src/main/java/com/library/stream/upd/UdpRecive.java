@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import com.library.stream.BaseRecive;
 import com.library.stream.IsInBuffer;
 import com.library.util.OtherUtil;
+import com.library.util.mLog;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -15,13 +16,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by android1 on 2017/9/23.
  */
 
 public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
-    private boolean isrevice = false;
     private DatagramSocket socket = null;
     private DatagramPacket packetreceive;
 
@@ -32,6 +34,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     private HandlerThread handlerUdpThread;
     private Handler udpHandler;
+
+    private ExecutorService executorService = null;//单例线程池，用于控制线程结束和执行
 
     private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
@@ -58,7 +62,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         videoList.clear();
         voiceList.clear();
         udpQueue.clear();
-        isrevice = true;
         frameBuffer.clear();
         strategy.star();
         starReciveUdp();
@@ -67,21 +70,18 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     /*
      接收UDP包
      */
-    long a = 0;
-
     private void starReciveUdp() {
         //如果socket为空，则需要手动调用write方法送入数据
         if (socket != null) {
-
             handlerUdpThread = new HandlerThread("Udp");
             handlerUdpThread.start();
             udpHandler = new Handler(handlerUdpThread.getLooper());
 
-            //获取
-            new Thread(new Runnable() {
+            executorService = Executors.newSingleThreadExecutor();
+            executorService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    while (isrevice) {
+                    while (!Thread.currentThread().isInterrupted()) {
                         try {
                             socket.receive(packetreceive);
                             OtherUtil.addQueue(udpQueue, Arrays.copyOfRange(packetreceive.getData(), 0, packetreceive.getLength()));
@@ -90,8 +90,9 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                             e.printStackTrace();
                         }
                     }
+                    mLog.log("interrupt_Thread", "中断线程");
                 }
-            }).start();
+            });
         }
     }
 
@@ -105,8 +106,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     };
 
     //丢包率计算
-//    int vdnum = 0;
-//    int vcnum = 0;
+    int vdnum = 0;
+    int vcnum = 0;
 
     //添加解码数据
     public void write(byte[] bytes) {
@@ -120,12 +121,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             addudp(videoList, udpBytes);
 
             //计算丢包率--------------------------------
-//            if ((vdnum % 500) == 0) {//每500个包输出一次
-//                Log.d("UdpLoss", "视频丢包率 :  " +
-//                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-//            }
-//            vdnum++;
-            //--------------------------------
+            if ((vdnum % 500) == 0) {//每500个包输出一次
+                mLog.log("UdpLoss", "视频丢包率 :  " +
+                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+            }
+            vdnum++;
 
             //从排好序的队列中取出数据
             if (videoList.size() > (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
@@ -137,12 +137,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             addudp(voiceList, udpBytes);
 
             //计算丢包率--------------------------------
-//            if ((vcnum % 50) == 0) {//每50个包输出一次
-//                Log.d("UdpLoss", "音频丢包率 :  " +
-//                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-//            }
-//            vcnum++;
-            //--------------------------------
+            if ((vcnum % 50) == 0) {//每50个包输出一次
+                mLog.log("UdpLoss", "音频丢包率 :  " +
+                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+            }
+            vcnum++;
 
             //从排好序的队列中取出数据
             if (voiceList.size() > UdpPacketMin) {
@@ -234,11 +233,14 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void stopRevice() {
-        isrevice = false;
         strategy.stop();
         if (handlerUdpThread != null) {
             udpHandler.removeCallbacksAndMessages(null);
             handlerUdpThread.quitSafely();
+        }
+        if (executorService != null) {
+            executorService.shutdownNow();//关闭线程池，并给所以线程发送中断
+            executorService = null;
         }
     }
 

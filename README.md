@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.0.4'
+	        compile 'com.github.wbaizx:VideoLive:2.0.5'
 	}
 
 
@@ -110,7 +110,7 @@ Step 2：
    如果想要控制缓存策略可以在构建时设置如下参数
 
                 .setUdpPacketCacheMin(5)//udp包缓存数量,以音频为基准
-                .setVideoFrameCacheMin(5)//视频帧达到播放条件的缓存帧数
+                .setVideoFrameCacheMin(6)//视频帧达到播放条件的缓存帧数
                 .setVideoCarltontime(400)//视频帧缓冲时间
                 .setVoiceCarltontime(400)//音频帧缓冲时间
 

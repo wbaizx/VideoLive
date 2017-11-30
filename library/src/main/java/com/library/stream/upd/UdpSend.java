@@ -2,6 +2,7 @@ package com.library.stream.upd;
 
 import com.library.stream.BaseSend;
 import com.library.util.OtherUtil;
+import com.library.util.mLog;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,6 +13,8 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by android1 on 2017/9/25.
@@ -27,6 +30,8 @@ public class UdpSend extends BaseSend {
     private ByteBuffer buffvideo = ByteBuffer.allocate(548);
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
+
+    private ExecutorService executorService = null;//单例线程池，用于控制线程结束和执行
 
     private ArrayBlockingQueue<byte[]> sendQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
@@ -67,6 +72,10 @@ public class UdpSend extends BaseSend {
     @Override
     public void stopsend() {
         issend = false;
+        if (executorService != null) {
+            executorService.shutdownNow();//关闭线程池，并给所以线程发送中断
+            executorService = null;
+        }
     }
 
     @Override
@@ -190,24 +199,30 @@ public class UdpSend extends BaseSend {
     真正发送数据
      */
     private void starsendThread() {
-        new Thread(new Runnable() {
+        executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
-                while (issend) {
+                while (!Thread.currentThread().isInterrupted()) {//根据中断标志判断是否执行
                     if (sendQueue.size() > 0) {
                         packetsendPush.setData(sendQueue.poll());
                         try {
                             socket.send(packetsendPush);
-                            Thread.sleep(1);
                         } catch (IOException e) {
-//                            Log.d("senderror", "发送失败");
+                            mLog.log("senderror", "发送失败");
                             e.printStackTrace();
+                        }
+                        try {
+                            Thread.sleep(1);
                         } catch (InterruptedException e) {
+                            //sleep会响应中断抛出此异常，并且清除中断标志，所以在此处重新设置中断
+                            Thread.currentThread().interrupt();
                             e.printStackTrace();
                         }
                     }
                 }
+                mLog.log("interrupt_Thread", "中断线程");
             }
-        }).start();
+        });
     }
 }
