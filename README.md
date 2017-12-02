@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.0.5'
+	        compile 'com.github.wbaizx:VideoLive:2.1.0'
 	}
 
 
@@ -42,7 +42,9 @@ Step 2：
                 .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
                 .setBitrate(600 * 1024)//视频采样率
                 .setBitrateVC(32 * 1024)//音频采样率
-                .setPublishSize(480, 320)//分辨率，如果系统不支持会自动选取最相近的
+                .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
+                .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
+                .setCollectionSize(480, 320)//采集分辨率，如果系统不支持会自动选取最相近的
                 .setRotate(true)//是否为前置摄像头,默认后置
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
@@ -83,6 +85,10 @@ Step 2：
        publish.starRecode();//停止录制
        
        publish.stopRecode();//开始录制
+
+  但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
+
+        publish.setWriteCallback(new WriteMp4.writeCallback);
 
    最后销毁资源
         
@@ -164,8 +170,9 @@ Step 2：
    
          player.stop();
   
-   播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制）
-   
+   播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制,可以注册信号接收器获取）
+
+        player.setWriteCallback(new WriteMp4.writeCallback);
    
         player.starRecode();//停止录制
 	

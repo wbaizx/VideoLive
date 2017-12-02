@@ -32,7 +32,9 @@ public class Send extends AppCompatActivity {
                 .setIsPreview(getIntent().getExtras().getBoolean("ispreview"))
                 .setBitrate(getIntent().getExtras().getInt("bitrate"))
                 .setBitrateVC(getIntent().getExtras().getInt("bitrate_vc"))
-                .setPublishSize(getIntent().getExtras().getInt("width"), getIntent().getExtras().getInt("height"))
+                .setPublishSize(getIntent().getExtras().getInt("pu_width"), getIntent().getExtras().getInt("pu_height"))
+                .setPreviewSize(getIntent().getExtras().getInt("pr_width"), getIntent().getExtras().getInt("pr_height"))
+                .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
                 .build();

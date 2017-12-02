@@ -29,6 +29,10 @@ public class Player {
         voiceTrack = new VoiceTrack(baseRecive, writeMp4);
     }
 
+    public void setWriteCallback(WriteMp4.writeCallback writeCallback) {
+        writeMp4.setWriteCallback(writeCallback);
+    }
+
     public void star() {
         voiceTrack.star();
         vdDecoder.star();
@@ -43,10 +47,10 @@ public class Player {
     }
 
     public void destroy() {
-        writeMp4.destroy();
-        baseRecive.destroy();
         vdDecoder.destroy();
         voiceTrack.destroy();
+        baseRecive.destroy();
+        writeMp4.destroy();
     }
 
     public void starRecode() {

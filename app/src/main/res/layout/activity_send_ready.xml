@@ -14,7 +14,7 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="推流地址 :" />
@@ -22,10 +22,11 @@
         <EditText
             android:id="@+id/url"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="192.168.2.106" />
+            android:text="192.168.2.106"
+            android:textSize="15dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -35,7 +36,7 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="端口 :" />
@@ -43,10 +44,11 @@
         <EditText
             android:id="@+id/port"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="8765" />
+            android:text="8765"
+            android:textSize="15dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -56,7 +58,7 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="FrameRate :" />
@@ -64,10 +66,11 @@
         <EditText
             android:id="@+id/framerate"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="15" />
+            android:text="15"
+            android:textSize="15dp" />
 
 
     </LinearLayout>
@@ -79,7 +82,7 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="Bitrate :" />
@@ -87,14 +90,15 @@
         <EditText
             android:id="@+id/bitrate"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="600" />
+            android:text="600"
+            android:textSize="15dp" />
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="Kpbs" />
@@ -107,39 +111,115 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="PublishSize :" />
 
         <EditText
-            android:id="@+id/width"
+            android:id="@+id/pu_width"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="480" />
+            android:text="480"
+            android:textSize="15dp" />
 
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:text="*" />
 
         <EditText
-            android:id="@+id/height"
+            android:id="@+id/pu_height"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="320" />
+            android:text="320"
+            android:textSize="15dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="PreviewSize :" />
+
+        <EditText
+            android:id="@+id/pr_width"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="480"
+            android:textSize="15dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="*" />
+
+        <EditText
+            android:id="@+id/pr_height"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="320"
+            android:textSize="15dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="CollectionSize :" />
+
+        <EditText
+            android:id="@+id/c_width"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="480"
+            android:textSize="15dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="*" />
+
+        <EditText
+            android:id="@+id/c_height"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="320"
+            android:textSize="15dp" />
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="编码方式" />
+        android:text="编码方式"
+        android:textSize="12dp" />
 
     <RadioGroup
         android:id="@+id/svideoCode"
@@ -166,7 +246,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="是否需要预览" />
+        android:text="是否需要预览"
+        android:textSize="12dp" />
 
     <RadioGroup
         android:id="@+id/preview"
@@ -193,7 +274,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="摄像头选择" />
+        android:text="摄像头选择"
+        android:textSize="12dp" />
 
     <RadioGroup
         android:id="@+id/rotate"
@@ -224,7 +306,7 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="音频码率 :" />
@@ -232,14 +314,15 @@
         <EditText
             android:id="@+id/bitrate_vc"
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="20" />
+            android:text="20"
+            android:textSize="15dp" />
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:text="Kpbs" />
@@ -249,6 +332,5 @@
         android:id="@+id/begin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
         android:text="ok" />
 </LinearLayout>

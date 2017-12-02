@@ -236,52 +236,43 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
      */
     private void writeFile(byte[] output, int length) {
         writebuffer.clear();
-        bufferInfo.offset = 0;
-        bufferInfo.presentationTimeUs = OtherUtil.getFPS();
         if (MIME_TYPE.equals(H264)) {
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
             if (output[4] == (byte) 0x67) {//KEY
-                bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
                 for (int i = 5; i < length; i++) {
                     if (output[i] == (byte) 0x00
                             && output[i + 1] == (byte) 0x00
                             && output[i + 2] == (byte) 0x00
                             && output[i + 3] == (byte) 0x01
                             && output[i + 4] == (byte) 0x65) {
-                        bufferInfo.size = length - i;
+                        bufferInfo.set(0, length - i, OtherUtil.getFPS(), MediaCodec.BUFFER_FLAG_KEY_FRAME);
                         writebuffer.put(output, i, length - i);
-                        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
                         break;
                     }
                 }
             } else {//NO KEY
-                bufferInfo.size = length;
-                bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
+                bufferInfo.set(0, length, OtherUtil.getFPS(), MediaCodec.CRYPTO_MODE_UNENCRYPTED);
                 writebuffer.put(output);
-                writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
             }
         } else if (MIME_TYPE.equals(H265)) {
 //        HEVC[00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20]后面00 00 00 01 26为帧数据开始，普通帧为00 00 00 01 02            if (output[4] == (byte) 0x40) {
             if (output[4] == (byte) 0x40) {//KEY
-                bufferInfo.flags = MediaCodec.BUFFER_FLAG_KEY_FRAME;
                 for (int i = 5; i < length; i++) {
                     if (output[i] == (byte) 0x00
                             && output[i + 1] == (byte) 0x00
                             && output[i + 2] == (byte) 0x00
                             && output[i + 3] == (byte) 0x01
                             && output[i + 4] == (byte) 0x26) {
-                        bufferInfo.size = length - i;
+                        bufferInfo.set(0, length - i, OtherUtil.getFPS(), MediaCodec.BUFFER_FLAG_KEY_FRAME);
                         writebuffer.put(output, i, length - i);
-                        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
                         break;
                     }
                 }
             } else {//NO KEY
-                bufferInfo.size = length;
-                bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
+                bufferInfo.set(0, length, OtherUtil.getFPS(), MediaCodec.CRYPTO_MODE_UNENCRYPTED);
                 writebuffer.put(output);
-                writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
             }
         }
+        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
     }
 }

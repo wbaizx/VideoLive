@@ -63,6 +63,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private Size previewSize;
     //推流分辨率
     private Size publishSize;
+    //采集分辨率
+    private Size collectionSize;
     //控制前后摄像头
     private int facingFront;
 
@@ -75,10 +77,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private WriteMp4 writeMp4;
 
 
-    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, int frameRate, int bitrate, int bitrate_vc, String codetype, boolean rotate,
+    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize, int frameRate, int bitrate, int bitrate_vc, String codetype, boolean rotate,
                    String path, BaseSend baseSend, UdpControlInterface udpControl) {
         this.context = context;
         this.publishSize = publishSize;
+        this.previewSize = previewSize;
+        this.collectionSize = collectionSize;
         this.bitrate = bitrate;
         this.frameRate = frameRate;
         this.bitrate_vc = bitrate_vc;
@@ -191,11 +195,46 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 }
             }
         }
-
-        previewSize = outputSizes[num];
         publishSize = outputSizes[num];
-        mLog.log("publishSize", "最佳分辨率  =  " + publishSize.getWidth() + "*" + publishSize.getHeight());
+        initEncode();
 
+        numw = 10000;
+        numh = 10000;
+        num = 0;
+        for (int i = 0; i < outputSizes.length; i++) {
+            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+            if (Math.abs(outputSizes[i].getWidth() - previewSize.getWidth()) <= numw) {
+                numw = Math.abs(outputSizes[i].getWidth() - previewSize.getWidth());
+                if (Math.abs(outputSizes[i].getHeight() - previewSize.getHeight()) <= numh) {
+                    numh = Math.abs(outputSizes[i].getHeight() - previewSize.getHeight());
+                    num = i;
+                }
+            }
+        }
+        previewSize = outputSizes[num];
+
+        numw = 10000;
+        numh = 10000;
+        num = 0;
+        for (int i = 0; i < outputSizes.length; i++) {
+            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+            if (Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth()) <= numw) {
+                numw = Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth());
+                if (Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight()) <= numh) {
+                    numh = Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight());
+                    num = i;
+                }
+            }
+        }
+        collectionSize = outputSizes[num];
+
+        mLog.log("pictureSize", "推流分辨率  =  " + publishSize.getWidth() + " * " + publishSize.getHeight());
+        mLog.log("pictureSize", "预览分辨率  =  " + previewSize.getWidth() + " * " + previewSize.getHeight());
+        mLog.log("pictureSize", "采集分辨率  =  " + collectionSize.getWidth() + " * " + collectionSize.getHeight());
+
+    }
+
+    private void initEncode() {
         if (vdEncoder == null) {
             vdEncoder = new VDEncoder(publishSize, frameRate, bitrate, writeMp4, codetype, baseSend);
             //初始化音频编码
@@ -264,7 +303,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
      */
     private Surface getImageReaderSurface() {
         //最后一个参数代表每次最多获取几帧数据
-        imageReader = ImageReader.newInstance(publishSize.getWidth(), publishSize.getHeight(), ImageFormat.YUV_420_888, frameMax);
+        imageReader = ImageReader.newInstance(collectionSize.getWidth(), collectionSize.getHeight(), ImageFormat.YUV_420_888, frameMax);
         //监听ImageReader的事件，它的参数就是预览帧数据，可以对这帧数据进行处理,类似于Camera1的PreviewCallback回调的预览帧数据
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
@@ -302,11 +341,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     if (rotate) {
                         //先转成NV21再旋转图片然后交给编码器等待编码
                         vdEncoder.addFrame(ImagUtil.rotateYUV270AndMirror(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize));
+                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize));
                     } else {
                         //后置
                         vdEncoder.addFrame(ImagUtil.rotateYUV90(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), publishSize));
+                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize));
                     }
                     image.close();
                     if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
@@ -343,6 +382,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
         initCamera();
     }
 
+    public void setWriteCallback(WriteMp4.writeCallback writeCallback) {
+        writeMp4.setWriteCallback(writeCallback);
+    }
+
     //开始
     public void star() {
         baseSend.starsend();
@@ -355,15 +398,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //销毁
     public void destroy() {
-        releaseCamera();
-        frameHandler.removeCallbacksAndMessages(null);
-        handlerCamearThread.quitSafely();
-        controlFrameRateThread.quitSafely();
-        writeMp4.destroy();
         vdEncoder.destroy();
         voiceRecord.destroy();
         baseSend.destroy();
+        frameHandler.removeCallbacksAndMessages(null);
+        handlerCamearThread.quitSafely();
+        controlFrameRateThread.quitSafely();
+        releaseCamera();
         imageReader.close();
+        writeMp4.destroy();
     }
 
     public static class Buider {
@@ -375,7 +418,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private int bitrate_vc = 20 * 1024;
         //推流分辨率
         private Size publishSize = new Size(480, 320);
-
+        //预览分辨率
+        private Size previewSize = new Size(480, 320);
+        //采集分辨率
+        private Size collectionSize = new Size(480, 320);
         //是否翻转，默认后置
         private boolean rotate = false;
         //设置是否需要显示预览,默认显示
@@ -399,6 +445,16 @@ public class Publish implements TextureView.SurfaceTextureListener {
         //编码分辨率
         public Buider setPublishSize(int publishWidth, int publishHeight) {
             publishSize = new Size(publishWidth, publishHeight);
+            return this;
+        }
+
+        public Buider setPreviewSize(int previewWidth, int previewHeight) {
+            previewSize = new Size(previewWidth, previewHeight);
+            return this;
+        }
+
+        public Buider setCollectionSize(int collectionWidth, int collectionHeight) {
+            collectionSize = new Size(collectionWidth, collectionHeight);
             return this;
         }
 
@@ -449,7 +505,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Publish build() {
-            return new Publish(context, textureView, ispreview, publishSize, frameRate, bitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
+            return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate, bitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
         }
     }
 }
