@@ -348,7 +348,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     if (rotate) {
                         input = ImagUtil.NV21ToNV12(
                                 ImagUtil.rotateYUV270AndMirror(
-                                        ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize), collectionSize);
+                                        ImagUtil.YUV420888toNV21(image), collectionSize), collectionSize);
                         //编码器
                         vdEncoder.addFrame(input);
                         //录制器
@@ -356,7 +356,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     } else {
                         input = ImagUtil.NV21ToNV12(
                                 ImagUtil.rotateYUV90(
-                                        ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize), collectionSize);
+                                        ImagUtil.YUV420888toNV21(image), collectionSize), collectionSize);
                         //编码器
                         vdEncoder.addFrame(input);
                         ////录制器
