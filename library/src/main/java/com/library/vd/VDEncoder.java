@@ -29,19 +29,20 @@ public class VDEncoder {
     private byte[] information;
     private boolean isRuning = false;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
-    //文件录入类
-    private WriteMp4 writeMp4;
+    private RecordEncoder recordEncoder;
 
-    public VDEncoder(Size size, int framerate, int bitrate, WriteMp4 writeMp4, String codetype, BaseSend baseSend) {
-        //由于图片旋转过，所以高度宽度需要对调
-        this.width = size.getHeight();
-        this.height = size.getWidth();
-        this.writeMp4 = writeMp4;
+    public VDEncoder(Size psize, Size csize, int framerate, int publishBitrate, int collectionBitrate, WriteMp4 writeMp4, String codetype,
+                     BaseSend baseSend) {
+        //由于图片旋转过，所以高度宽度需要对调,使用采集分辨率大小
+        this.width = csize.getHeight();
+        this.height = csize.getWidth();
+        recordEncoder = new RecordEncoder(csize, framerate, collectionBitrate, writeMp4, codetype);
         //UPD实例
         this.baseSend = baseSend;
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
+        //由于图片旋转过，所以高度宽度需要对调,使用推流分辨率大小,推流分辨率仅设置推流编码器这一处地方
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, psize.getHeight(), psize.getWidth());
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, publishBitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
@@ -56,6 +57,7 @@ public class VDEncoder {
 
     public void destroy() {
         isRuning = false;
+        recordEncoder.destroy();
         mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
@@ -68,9 +70,14 @@ public class VDEncoder {
         OtherUtil.addQueue(YUVQueue, bytes);
     }
 
-    public void StartEncoderThread() {
+    public void star() {
+        recordEncoder.star();
         YUVQueue.clear();
         isRuning = true;
+        StartEncoderThread();
+    }
+
+    public void StartEncoderThread() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -82,9 +89,12 @@ public class VDEncoder {
                 while (isRuning) {
                     if (YUVQueue.size() > 0) {
                         /*
-                        480*320编码发送大约4ms，1280*720大约10ms。
+                        这里的宽高应该使用采集分辨率的宽高处理图片，因为图片大小就是采集宽高大小。
                          */
                         input = ImagUtil.NV21ToNV12(YUVQueue.poll(), width, height);
+                        //交给录制器
+                        recordEncoder.addFrame(input);
+
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {
@@ -95,22 +105,15 @@ public class VDEncoder {
                             }
 
                             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-
-                            if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-                                writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
-                            }
                             while (outputBufferIndex >= 0) {
                                 outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
-
-                                //写文件
-                                writeMp4.write(WriteMp4.video, outputBuffer, bufferInfo);
 
                                 if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
                                     //sps pps信息
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
                                     information = outData;
-                                    mLog.log("sps_pps", ByteUtil.byte_to_16(information));
+                                    mLog.log("publish_sps_pps", ByteUtil.byte_to_16(information));
                                 } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                     //关键帧
                                     outData = new byte[bufferInfo.size + information.length];
@@ -123,7 +126,7 @@ public class VDEncoder {
                                     //添加将要发送的视频数据
                                     outData = new byte[bufferInfo.size];
                                     outputBuffer.get(outData);
-                                    mLog.log("frame_length", "普通帧长度为  --   " + outData.length);
+                                    mLog.log("publish_frame_length", "普通帧长度为  --   " + outData.length);
                                     baseSend.addVideo(outData);
                                 }
                                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);

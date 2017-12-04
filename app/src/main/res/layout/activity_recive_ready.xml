@@ -25,7 +25,8 @@
             android:layout_height="40dp"
             android:layout_weight="3"
             android:gravity="center"
-            android:text="8765" />
+            android:text="8765"
+            android:textSize="15dp" />
     </LinearLayout>
 
 
@@ -33,7 +34,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="解码方式" />
+        android:text="解码方式"
+        android:textSize="12dp" />
 
     <RadioGroup
         android:id="@+id/rvideoCode"

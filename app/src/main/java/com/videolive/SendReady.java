@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
@@ -14,7 +15,8 @@ public class SendReady extends AppCompatActivity {
     private EditText url;
     private EditText port;
     private EditText framerate;
-    private EditText bitrate;
+    private EditText publishbitrate;
+    private EditText collectionbitrate;
     private EditText pu_width;
     private EditText pu_height;
     private EditText pr_width;
@@ -32,10 +34,13 @@ public class SendReady extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_send_ready);
 
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
         url = findViewById(R.id.url);
         port = findViewById(R.id.port);
         framerate = findViewById(R.id.framerate);
-        bitrate = findViewById(R.id.bitrate);
+        publishbitrate = findViewById(R.id.publishbitrate);
+        collectionbitrate = findViewById(R.id.collectionbitrate);
         pr_width = findViewById(R.id.pr_width);
         c_width = findViewById(R.id.c_width);
         pr_height = findViewById(R.id.pr_height);
@@ -62,7 +67,8 @@ public class SendReady extends AppCompatActivity {
         bundle.putString("url", url.getText().toString());
         bundle.putInt("port", Integer.parseInt(port.getText().toString()));
         bundle.putInt("framerate", Integer.parseInt(framerate.getText().toString()));
-        bundle.putInt("bitrate", Integer.parseInt(bitrate.getText().toString()) * 1024);
+        bundle.putInt("publishbitrate", Integer.parseInt(publishbitrate.getText().toString()) * 1024);
+        bundle.putInt("collectionbitrate", Integer.parseInt(collectionbitrate.getText().toString()) * 1024);
         bundle.putInt("bitrate_vc", Integer.parseInt(bitrate_vc.getText().toString()) * 1024);
         bundle.putInt("pu_width", Integer.parseInt(pu_width.getText().toString()));
         bundle.putInt("pu_height", Integer.parseInt(pu_height.getText().toString()));

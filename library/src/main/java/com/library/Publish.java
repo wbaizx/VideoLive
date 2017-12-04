@@ -50,7 +50,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private boolean ispreview = true;
     //帧率
     private int frameRate;
-    private int bitrate;
+    private int publishBitrate;
+    private int collectionBitrate;
     private int bitrate_vc;
     private String codetype;
     //相机设备
@@ -77,13 +78,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private WriteMp4 writeMp4;
 
 
-    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize, int frameRate, int bitrate, int bitrate_vc, String codetype, boolean rotate,
-                   String path, BaseSend baseSend, UdpControlInterface udpControl) {
+    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
+                   int frameRate, int publishBitrate, int collectionBitrate, int bitrate_vc, String codetype, boolean rotate, String path, BaseSend baseSend,
+                   UdpControlInterface udpControl) {
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
         this.collectionSize = collectionSize;
-        this.bitrate = bitrate;
+        this.publishBitrate = publishBitrate;
+        this.collectionBitrate = collectionBitrate;
         this.frameRate = frameRate;
         this.bitrate_vc = bitrate_vc;
         this.codetype = codetype;
@@ -196,7 +199,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
             }
         }
         publishSize = outputSizes[num];
-        initEncode();
 
         numw = 10000;
         numh = 10000;
@@ -232,15 +234,16 @@ public class Publish implements TextureView.SurfaceTextureListener {
         mLog.log("pictureSize", "预览分辨率  =  " + previewSize.getWidth() + " * " + previewSize.getHeight());
         mLog.log("pictureSize", "采集分辨率  =  " + collectionSize.getWidth() + " * " + collectionSize.getHeight());
 
+        initEncode();
     }
 
     private void initEncode() {
         if (vdEncoder == null) {
-            vdEncoder = new VDEncoder(publishSize, frameRate, bitrate, writeMp4, codetype, baseSend);
+            vdEncoder = new VDEncoder(publishSize, collectionSize, frameRate, publishBitrate, collectionBitrate, writeMp4, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
 
-            vdEncoder.StartEncoderThread();
+            vdEncoder.star();
             voiceRecord.star();
         }
     }
@@ -414,13 +417,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private Context context;
         //编码参数
         private int frameRate = 15;
-        private int bitrate = 600 * 1024;
+        private int publishBitrate = 600 * 1024;
+        private int collectionBitrate = 600 * 1024;
         private int bitrate_vc = 20 * 1024;
-        //推流分辨率
+        //推流分辨率,仅控制推流编码
         private Size publishSize = new Size(480, 320);
-        //预览分辨率
+        //预览分辨率，仅控制预览
         private Size previewSize = new Size(480, 320);
-        //采集分辨率
+        //采集分辨率，录制编码分辨率，图片处理分辨率（开销最大）
         private Size collectionSize = new Size(480, 320);
         //是否翻转，默认后置
         private boolean rotate = false;
@@ -468,8 +472,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
-        public Buider setBitrate(int bitrate) {
-            this.bitrate = bitrate;
+        public Buider setPublishBitrate(int publishBitrate) {
+            this.publishBitrate = publishBitrate;
+            return this;
+        }
+
+        public Buider setCollectionBitrate(int collectionBitrate) {
+            this.collectionBitrate = collectionBitrate;
             return this;
         }
 
@@ -505,7 +514,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Publish build() {
-            return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate, bitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
+            return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate,
+                    publishBitrate, collectionBitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
         }
     }
 }
