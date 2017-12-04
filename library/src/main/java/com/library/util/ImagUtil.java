@@ -16,6 +16,8 @@ public class ImagUtil {
 
     /*
    YUV_420_888转换为NV12
+   将方法中case 1:和case 2:对调可以得到NV21格式
+   1280*720处理大约15ms
     */
     public static byte[] YUV420888toNV12(Image image) {
         int width = image.getCropRect().width();
@@ -24,20 +26,16 @@ public class ImagUtil {
         byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(image.getFormat()) / 8];
         byte[] rowData = new byte[planes[0].getRowStride()];
         int channelOffset = 0;
-        int outputStride = 1;
         for (int i = 0; i < planes.length; i++) {
             switch (i) {
                 case 0:
                     channelOffset = 0;
-                    outputStride = 1;
                     break;
                 case 1:
                     channelOffset = width * height;
-                    outputStride = 2;
                     break;
                 case 2:
                     channelOffset = width * height + 1;
-                    outputStride = 2;
                     break;
             }
             ByteBuffer buffer = planes[i].getBuffer();
@@ -47,9 +45,9 @@ public class ImagUtil {
             int w = width >> shift;
             int h = height >> shift;
             buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
+            int length;
             for (int row = 0; row < h; row++) {
-                int length;
-                if (pixelStride == 1 && outputStride == 1) {
+                if (pixelStride == 1) {
                     length = w;
                     buffer.get(data, channelOffset, length);
                     channelOffset += length;
@@ -58,59 +56,7 @@ public class ImagUtil {
                     buffer.get(rowData, 0, length);
                     for (int col = 0; col < w; col++) {
                         data[channelOffset] = rowData[col * pixelStride];
-                        channelOffset += outputStride;
-                    }
-                }
-                if (row < h - 1) {
-                    buffer.position(buffer.position() + rowStride - length);
-                }
-            }
-        }
-        return data;
-    }
-
-    public static byte[] oldYUV420888toNV12(Image image) {
-        int width = image.getCropRect().width();
-        int height = image.getCropRect().height();
-        Image.Plane[] planes = image.getPlanes();
-        byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(image.getFormat()) / 8];
-        byte[] rowData = new byte[planes[0].getRowStride()];
-        int channelOffset = 0;
-        int outputStride = 1;
-        for (int i = 0; i < planes.length; i++) {
-            switch (i) {
-                case 0:
-                    channelOffset = 0;
-                    outputStride = 1;
-                    break;
-                case 1:
-                    channelOffset = width * height;
-                    outputStride = 2;
-                    break;
-                case 2:
-                    channelOffset = width * height + 1;
-                    outputStride = 2;
-                    break;
-            }
-            ByteBuffer buffer = planes[i].getBuffer();
-            int rowStride = planes[i].getRowStride();
-            int pixelStride = planes[i].getPixelStride();
-            int shift = (i == 0) ? 0 : 1;
-            int w = width >> shift;
-            int h = height >> shift;
-            buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
-            for (int row = 0; row < h; row++) {
-                int length;
-                if (pixelStride == 1 && outputStride == 1) {
-                    length = w;
-                    buffer.get(data, channelOffset, length);
-                    channelOffset += length;
-                } else {
-                    length = (w - 1) * pixelStride + 1;
-                    buffer.get(rowData, 0, length);
-                    for (int col = 0; col < w; col++) {
-                        data[channelOffset] = rowData[col * pixelStride];
-                        channelOffset += outputStride;
+                        channelOffset += pixelStride;
                     }
                 }
                 if (row < h - 1) {
@@ -123,6 +69,7 @@ public class ImagUtil {
 
     /*
     后置摄像头90度
+    1280*720处理大约35ms
      */
     public static byte[] rotateYUV90(byte[] data, Size size) {
         byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
@@ -149,6 +96,7 @@ public class ImagUtil {
 
     /*
     前置摄像头270度&&镜像
+    1280*720处理大约35ms
      */
     public static byte[] rotateYUV270AndMirror(byte[] data, Size size) {
         byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];

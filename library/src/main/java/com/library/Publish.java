@@ -344,7 +344,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 if (frameRateControlQueue.size() > 0) {
                     time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
-                    //先转成NV21再旋转图片再转成NV12然后交给编码器等待编码
+                    //先转成NV12再旋转图片然后交给编码器等待编码
                     if (rotate) {
                         input = ImagUtil.rotateYUV270AndMirror(
                                 ImagUtil.YUV420888toNV12(image), collectionSize);
