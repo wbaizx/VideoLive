@@ -17,8 +17,7 @@ public class ImagUtil {
     /*
    YUV_420_888转换为NV21
     */
-
-    public static byte[] YUV420888toNV21(Image image) {
+    public static byte[] YUV420888toNV12(Image image) {
         int width = image.getCropRect().width();
         int height = image.getCropRect().height();
         Image.Plane[] planes = image.getPlanes();
@@ -33,11 +32,11 @@ public class ImagUtil {
                     outputStride = 1;
                     break;
                 case 1:
-                    channelOffset = width * height + 1;
+                    channelOffset = width * height;
                     outputStride = 2;
                     break;
                 case 2:
-                    channelOffset = width * height;
+                    channelOffset = width * height + 1;
                     outputStride = 2;
                     break;
             }
@@ -68,70 +67,6 @@ public class ImagUtil {
             }
         }
         return data;
-    }
-
-    /*
-    YUV_420_888转换为I420
-     */
-    public static byte[] YUV420888toI420(Image image) {
-        int width = image.getCropRect().width();
-        int height = image.getCropRect().height();
-        Image.Plane[] planes = image.getPlanes();
-        byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(image.getFormat()) / 8];
-        byte[] rowData = new byte[planes[0].getRowStride()];
-        int channelOffset = 0;
-        for (int i = 0; i < planes.length; i++) {
-            switch (i) {
-                case 0:
-                    channelOffset = 0;
-                    break;
-                case 1:
-                    channelOffset = width * height;
-                    break;
-                case 2:
-                    channelOffset = (int) (width * height * 1.25);
-                    break;
-            }
-            ByteBuffer buffer = planes[i].getBuffer();
-            int rowStride = planes[i].getRowStride();
-            int pixelStride = planes[i].getPixelStride();
-            int shift = (i == 0) ? 0 : 1;
-            int w = width >> shift;
-            int h = height >> shift;
-            buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
-            for (int row = 0; row < h; row++) {
-                int length;
-                if (pixelStride == 1) {
-                    length = w;
-                    buffer.get(data, channelOffset, length);
-                    channelOffset += length;
-                } else {
-                    length = (w - 1) * pixelStride + 1;
-                    buffer.get(rowData, 0, length);
-                    for (int col = 0; col < w; col++) {
-                        data[channelOffset] = rowData[col * pixelStride];
-                        channelOffset += 1;
-                    }
-                }
-                if (row < h - 1) {
-                    buffer.position(buffer.position() + rowStride - length);
-                }
-            }
-        }
-        return data;
-    }
-
-    /*
-    NV21转换为NV12
-     */
-    public static byte[] NV21ToNV12(byte[] nv21, Size size) {
-        byte[] input = new byte[size.getWidth() * size.getHeight() * 3 / 2];
-        System.arraycopy(nv21, 0, input, 0, size.getWidth() * size.getHeight());
-        for (int j = 0; j < size.getWidth() * size.getHeight() / 2; j += 2) {
-            input[size.getWidth() * size.getHeight() + j - 1] = nv21[j + size.getWidth() * size.getHeight()];
-            input[size.getWidth() * size.getHeight() + j] = nv21[j + size.getWidth() * size.getHeight() - 1];
-        }
-        return input;
     }
 
     /*

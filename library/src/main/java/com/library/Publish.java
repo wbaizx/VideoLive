@@ -346,17 +346,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     Image image = frameRateControlQueue.poll();
                     //先转成NV21再旋转图片再转成NV12然后交给编码器等待编码
                     if (rotate) {
-                        input = ImagUtil.NV21ToNV12(
-                                ImagUtil.rotateYUV270AndMirror(
-                                        ImagUtil.YUV420888toNV21(image), collectionSize), collectionSize);
+                        input = ImagUtil.rotateYUV270AndMirror(
+                                ImagUtil.YUV420888toNV12(image), collectionSize);
                         //编码器
                         vdEncoder.addFrame(input);
                         //录制器
                         recordEncoder.addFrame(input);
                     } else {
-                        input = ImagUtil.NV21ToNV12(
-                                ImagUtil.rotateYUV90(
-                                        ImagUtil.YUV420888toNV21(image), collectionSize), collectionSize);
+                        input = ImagUtil.rotateYUV90(
+                                ImagUtil.YUV420888toNV12(image), collectionSize);
                         //编码器
                         vdEncoder.addFrame(input);
                         ////录制器
