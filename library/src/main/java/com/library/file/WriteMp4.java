@@ -149,10 +149,10 @@ public class WriteMp4 {
                 isCanStar = true;
                 //文件过短删除
                 if (frameNum < 20) {
+                    new File(path).delete();
                     if (writeCallback != null) {
                         writeCallback.fileShort();
                     }
-                    new File(path).delete();
                 }
             } else {
                 shouldDestroy = true;

@@ -5,10 +5,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Size;
 
-import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
 import com.library.util.ByteUtil;
-import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
 import com.library.util.mLog;
 
@@ -24,22 +22,14 @@ public class VDEncoder {
     private BaseSend baseSend;
 
     //编码参数
-    private int width;
-    private int height;
     private byte[] information;
     private boolean isRuning = false;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
-    private RecordEncoder recordEncoder;
 
-    public VDEncoder(Size psize, Size csize, int framerate, int publishBitrate, int collectionBitrate, WriteMp4 writeMp4, String codetype,
-                     BaseSend baseSend) {
-        //由于图片旋转过，所以高度宽度需要对调,使用采集分辨率大小
-        this.width = csize.getHeight();
-        this.height = csize.getWidth();
-        recordEncoder = new RecordEncoder(csize, framerate, collectionBitrate, writeMp4, codetype);
+    public VDEncoder(Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
         //UPD实例
         this.baseSend = baseSend;
-        //由于图片旋转过，所以高度宽度需要对调,使用推流分辨率大小,推流分辨率仅设置推流编码器这一处地方
+        //由于图片旋转过，所以高度宽度需要对调
         MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, psize.getHeight(), psize.getWidth());
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, publishBitrate);
@@ -57,7 +47,6 @@ public class VDEncoder {
 
     public void destroy() {
         isRuning = false;
-        recordEncoder.destroy();
         mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
@@ -71,7 +60,6 @@ public class VDEncoder {
     }
 
     public void star() {
-        recordEncoder.star();
         YUVQueue.clear();
         isRuning = true;
         StartEncoderThread();
@@ -88,13 +76,7 @@ public class VDEncoder {
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (YUVQueue.size() > 0) {
-                        /*
-                        这里的宽高应该使用采集分辨率的宽高处理图片，因为图片大小就是采集宽高大小。
-                         */
-                        input = ImagUtil.NV21ToNV12(YUVQueue.poll(), width, height);
-                        //交给录制器
-                        recordEncoder.addFrame(input);
-
+                        input = YUVQueue.poll();
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {

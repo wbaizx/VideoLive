@@ -40,7 +40,8 @@ Step 2：
                 .setFrameRate(15)//帧率
                 .setVideoCode(VDEncoder.H264)//编码方式
                 .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
-                .setBitrate(600 * 1024)//视频采样率
+                .setPublishBitrate(600 * 1024)//推流采样率
+                .setCollectionBitrate(600 * 1024)//采集采样率
                 .setBitrateVC(32 * 1024)//音频采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的

@@ -23,10 +23,10 @@ public class RecordEncoder {
     private WriteMp4 writeMp4;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
-    public RecordEncoder(Size size, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
+    public RecordEncoder(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
         this.writeMp4 = writeMp4;
         //由于图片旋转过，所以高度宽度需要对调
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, size.getHeight(), size.getWidth());
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, csize.getHeight(), csize.getWidth());
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, collectionBitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
@@ -45,7 +45,6 @@ public class RecordEncoder {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        //此处已经进行过NV12转换
         OtherUtil.addQueue(YUVQueue, bytes);
     }
 

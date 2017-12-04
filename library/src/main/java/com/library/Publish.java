@@ -28,6 +28,7 @@ import com.library.stream.UdpControlInterface;
 import com.library.util.ImagUtil;
 import com.library.util.mLog;
 import com.library.vc.VoiceRecord;
+import com.library.vd.RecordEncoder;
 import com.library.vd.VDEncoder;
 
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private ArrayBlockingQueue<Image> frameRateControlQueue = new ArrayBlockingQueue<>(frameMax);
     //视频编码
     private VDEncoder vdEncoder = null;
+    //视频录制
+    private RecordEncoder recordEncoder = null;
     //音频采集
     private VoiceRecord voiceRecord;
     //UDP发送类
@@ -239,10 +242,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void initEncode() {
         if (vdEncoder == null) {
-            vdEncoder = new VDEncoder(publishSize, collectionSize, frameRate, publishBitrate, collectionBitrate, writeMp4, codetype, baseSend);
+            recordEncoder = new RecordEncoder(collectionSize, frameRate, collectionBitrate, writeMp4, codetype);
+            vdEncoder = new VDEncoder(publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
 
+            recordEncoder.star();
             vdEncoder.star();
             voiceRecord.star();
         }
@@ -323,6 +328,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //耗时检测
     private long time = 0;
+    private byte[] input;
 
     //帧率控制策略
     private void startControlFrameRate() {
@@ -338,17 +344,23 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 if (frameRateControlQueue.size() > 0) {
                     time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
-                    /*
-                    480*320图像处理大概14ms，1280*720大概48ms
-                     */
+                    //先转成NV21再旋转图片再转成NV12然后交给编码器等待编码
                     if (rotate) {
-                        //先转成NV21再旋转图片然后交给编码器等待编码
-                        vdEncoder.addFrame(ImagUtil.rotateYUV270AndMirror(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize));
+                        input = ImagUtil.NV21ToNV12(
+                                ImagUtil.rotateYUV270AndMirror(
+                                        ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize), collectionSize);
+                        //编码器
+                        vdEncoder.addFrame(input);
+                        //录制器
+                        recordEncoder.addFrame(input);
                     } else {
-                        //后置
-                        vdEncoder.addFrame(ImagUtil.rotateYUV90(
-                                ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize));
+                        input = ImagUtil.NV21ToNV12(
+                                ImagUtil.rotateYUV90(
+                                        ImagUtil.YUV420888toNV21(image, ImagUtil.COLOR_FormatNV21), collectionSize), collectionSize);
+                        //编码器
+                        vdEncoder.addFrame(input);
+                        ////录制器
+                        recordEncoder.addFrame(input);
                     }
                     image.close();
                     if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
@@ -401,6 +413,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //销毁
     public void destroy() {
+        recordEncoder.destroy();
         vdEncoder.destroy();
         voiceRecord.destroy();
         baseSend.destroy();

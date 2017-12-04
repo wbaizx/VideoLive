@@ -85,12 +85,12 @@ public class ImagUtil {
     /*
     NV21转换为NV12
      */
-    public static byte[] NV21ToNV12(byte[] nv21, int width, int height) {
-        byte[] input = new byte[width * height * 3 / 2];
-        System.arraycopy(nv21, 0, input, 0, width * height);
-        for (int j = 0; j < width * height / 2; j += 2) {
-            input[width * height + j - 1] = nv21[j + width * height];
-            input[width * height + j] = nv21[j + width * height - 1];
+    public static byte[] NV21ToNV12(byte[] nv21, Size size) {
+        byte[] input = new byte[size.getWidth() * size.getHeight() * 3 / 2];
+        System.arraycopy(nv21, 0, input, 0, size.getWidth() * size.getHeight());
+        for (int j = 0; j < size.getWidth() * size.getHeight() / 2; j += 2) {
+            input[size.getWidth() * size.getHeight() + j - 1] = nv21[j + size.getWidth() * size.getHeight()];
+            input[size.getWidth() * size.getHeight() + j] = nv21[j + size.getWidth() * size.getHeight() - 1];
         }
         return input;
     }
