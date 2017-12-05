@@ -2,6 +2,7 @@ package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
+import android.util.Log;
 import android.util.Size;
 
 import java.nio.ByteBuffer;
@@ -72,23 +73,27 @@ public class ImagUtil {
     1280*720处理大约35ms
      */
     public static byte[] rotateYUV90(byte[] data, Size size) {
-        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
+        int imagSize = size.getWidth() * size.getHeight();
+        byte[] yuv = new byte[imagSize * 3 / 2];
         // Rotate the Y luma
         int i = 0;
+
+        int num;
         for (int x = 0; x < size.getWidth(); x++) {
+            num = imagSize - size.getWidth();
             for (int y = size.getHeight() - 1; y >= 0; y--) {
-                yuv[i] = data[y * size.getWidth() + x];
-                i++;
+                yuv[i++] = data[num + x];
+                num -= size.getWidth();
             }
         }
         // Rotate the U and V color components
         i = size.getWidth() * size.getHeight() * 3 / 2 - 1;
         for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
+            num = 0;
             for (int y = 0; y < size.getHeight() / 2; y++) {
-                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + x];
-                i--;
-                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + (x - 1)];
-                i--;
+                yuv[i--] = data[imagSize + num + x];
+                yuv[i--] = data[imagSize + num + (x - 1)];
+                num += size.getWidth();
             }
         }
         return yuv;
@@ -99,30 +104,34 @@ public class ImagUtil {
     1280*720处理大约35ms
      */
     public static byte[] rotateYUV270AndMirror(byte[] data, Size size) {
-        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
+        long a=System.currentTimeMillis();
+        int imagSize = size.getWidth() * size.getHeight();
+        byte[] yuv = new byte[imagSize * 3 / 2];
         // Rotate and mirror the Y luma
         int i = 0;
         int maxY = 0;
+        int num;
         for (int x = size.getWidth() - 1; x >= 0; x--) {
-            maxY = size.getWidth() * (size.getHeight() - 1) + x * 2;
+            maxY = imagSize - size.getWidth() + x * 2;
+            num = 0;
             for (int y = 0; y < size.getHeight(); y++) {
-                yuv[i] = data[maxY - (y * size.getWidth() + x)];
-                i++;
+                yuv[i++] = data[maxY - (num + x)];
+                num += size.getWidth();
             }
         }
         // Rotate and mirror the U and V color components
-        int uvSize = size.getWidth() * size.getHeight();
-        i = uvSize;
+        i = imagSize;
         int maxUV = 0;
         for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
-            maxUV = size.getWidth() * (size.getHeight() / 2 - 1) + x * 2 + uvSize;
+            num = 0;
+            maxUV = (imagSize / 2) - size.getWidth() + x * 2 + imagSize;
             for (int y = 0; y < size.getHeight() / 2; y++) {
-                yuv[i] = data[maxUV - 2 - (y * size.getWidth() + x - 1)];
-                i++;
-                yuv[i] = data[maxUV - (y * size.getWidth() + x)];
-                i++;
+                yuv[i++] = data[maxUV - 2 - (num + x - 1)];
+                yuv[i++] = data[maxUV - (num + x)];
+                num += size.getWidth();
             }
         }
+        Log.d("afeawfaw",(System.currentTimeMillis()-a)+"");
         return yuv;
     }
 
@@ -150,5 +159,4 @@ public class ImagUtil {
         }
         return yuv;
     }
-
 }
