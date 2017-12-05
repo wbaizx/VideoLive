@@ -2,7 +2,6 @@ package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
-import android.util.Log;
 import android.util.Size;
 
 import java.nio.ByteBuffer;
@@ -104,7 +103,6 @@ public class ImagUtil {
     1280*720处理大约35ms
      */
     public static byte[] rotateYUV270AndMirror(byte[] data, Size size) {
-        long a=System.currentTimeMillis();
         int imagSize = size.getWidth() * size.getHeight();
         byte[] yuv = new byte[imagSize * 3 / 2];
         // Rotate and mirror the Y luma
@@ -129,32 +127,6 @@ public class ImagUtil {
                 yuv[i++] = data[maxUV - 2 - (num + x - 1)];
                 yuv[i++] = data[maxUV - (num + x)];
                 num += size.getWidth();
-            }
-        }
-        Log.d("afeawfaw",(System.currentTimeMillis()-a)+"");
-        return yuv;
-    }
-
-    /*
-    前置摄像头270度
-     */
-    public static byte[] rotateYUV270(byte[] data, Size size) {
-        byte[] yuv = new byte[size.getWidth() * size.getHeight() * 3 / 2];
-        // Rotate the Y luma
-        int i = 0;
-        for (int x = size.getWidth() - 1; x >= 0; x--) {
-            for (int y = 0; y < size.getHeight(); y++) {
-                yuv[i] = data[y * size.getWidth() + x];
-                i++;
-            }
-        }// Rotate the U and V color components
-        i = size.getWidth() * size.getHeight();
-        for (int x = size.getWidth() - 1; x > 0; x = x - 2) {
-            for (int y = 0; y < size.getHeight() / 2; y++) {
-                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + (x - 1)];
-                i++;
-                yuv[i] = data[(size.getWidth() * size.getHeight()) + (y * size.getWidth()) + x];
-                i++;
             }
         }
         return yuv;
