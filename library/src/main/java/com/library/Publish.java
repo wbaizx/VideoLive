@@ -348,18 +348,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     if (rotate) {
                         input = ImagUtil.rotateYUV270AndMirror(
                                 ImagUtil.YUV420888toNV12(image), collectionSize);
-                        //编码器
-                        vdEncoder.addFrame(input);
-                        //录制器
-                        recordEncoder.addFrame(input);
                     } else {
                         input = ImagUtil.rotateYUV90(
                                 ImagUtil.YUV420888toNV12(image), collectionSize);
-                        //编码器
-                        vdEncoder.addFrame(input);
-                        ////录制器
-                        recordEncoder.addFrame(input);
                     }
+                    //编码器
+                    vdEncoder.addFrame(input);
+                    //录制器
+                    recordEncoder.addFrame(input);
                     image.close();
                     if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
                         mLog.log("Frame_slow", "图像处理速度过慢");
