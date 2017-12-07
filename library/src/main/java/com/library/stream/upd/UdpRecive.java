@@ -106,8 +106,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     };
 
     //丢包率计算
-    int vdnum = 0;
-    int vcnum = 0;
+//    int vdnum = 0;
+//    int vcnum = 0;
 
     //添加解码数据
     public void write(byte[] bytes) {
@@ -121,11 +121,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             addudp(videoList, udpBytes);
 
             //计算丢包率--------------------------------
-            if ((vdnum % 500) == 0) {//每500个包输出一次
-                mLog.log("UdpLoss", "视频丢包率 :  " +
-                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-            }
-            vdnum++;
+//            if ((vdnum % 500) == 0) {//每500个包输出一次
+//                mLog.log("UdpLoss", "视频丢包率 :  " +
+//                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+//            }
+//            vdnum++;
 
             //从排好序的队列中取出数据
             if (videoList.size() > (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
@@ -137,11 +137,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             addudp(voiceList, udpBytes);
 
             //计算丢包率--------------------------------
-            if ((vcnum % 50) == 0) {//每50个包输出一次
-                mLog.log("UdpLoss", "音频丢包率 :  " +
-                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-            }
-            vcnum++;
+//            if ((vcnum % 50) == 0) {//每50个包输出一次
+//                mLog.log("UdpLoss", "音频丢包率 :  " +
+//                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
+//            }
+//            vcnum++;
 
             //从排好序的队列中取出数据
             if (voiceList.size() > UdpPacketMin) {

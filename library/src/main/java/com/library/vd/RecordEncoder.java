@@ -6,6 +6,7 @@ import android.media.MediaFormat;
 import android.util.Size;
 
 import com.library.file.WriteMp4;
+import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
 
 import java.io.IOException;
@@ -22,11 +23,15 @@ public class RecordEncoder {
     private MediaCodec mediaCodec;
     private WriteMp4 writeMp4;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private int width;
+    private int height;
 
     public RecordEncoder(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
         this.writeMp4 = writeMp4;
         //由于图片旋转过，所以高度宽度需要对调
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, csize.getHeight(), csize.getWidth());
+        width = csize.getHeight();
+        height = csize.getWidth();
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, collectionBitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
@@ -58,12 +63,12 @@ public class RecordEncoder {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                byte[] input;
+                byte[] input = new byte[width * height * 3 / 2];
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (YUVQueue.size() > 0) {
-                        input = YUVQueue.poll();
+                        ImagUtil.yuvI420ToNV12(YUVQueue.poll(), input, width, height);
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {

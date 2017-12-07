@@ -243,7 +243,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private void initEncode() {
         if (vdEncoder == null) {
             recordEncoder = new RecordEncoder(collectionSize, frameRate, collectionBitrate, writeMp4, codetype);
-            vdEncoder = new VDEncoder(publishSize, frameRate, publishBitrate, codetype, baseSend);
+            vdEncoder = new VDEncoder(collectionSize, publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
 
@@ -326,12 +326,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return imageReader.getSurface();
     }
 
-    //耗时检测
-    private long time = 0;
     private byte[] input;
+    private int length;
+    //耗时检测
+//    private long time = 0;
 
     //帧率控制策略
     private void startControlFrameRate() {
+        //初始化长度
+        length = collectionSize.getWidth() * collectionSize.getHeight() * 3 / 2;
         controlFrameRateThread = new HandlerThread("FrameRateControl");
         controlFrameRateThread.start();
         frameHandler = new Handler(controlFrameRateThread.getLooper());
@@ -342,24 +345,25 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 }
                 if (frameRateControlQueue.size() > 0) {
-                    time = System.currentTimeMillis();
+//                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
-                    //先转成NV12再旋转图片然后交给编码器等待编码
+                    //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码
+                    input = new byte[length];
                     if (rotate) {
-                        input = ImagUtil.rotateYUV270AndMirror(
-                                ImagUtil.YUV420888toNV12(image), collectionSize);
+                        ImagUtil.rotateI420(ImagUtil.YUV420888toI420(image), collectionSize.getWidth(), collectionSize.getHeight(),
+                                input, 270, true);
                     } else {
-                        input = ImagUtil.rotateYUV90(
-                                ImagUtil.YUV420888toNV12(image), collectionSize);
+                        ImagUtil.rotateI420(ImagUtil.YUV420888toI420(image), collectionSize.getWidth(), collectionSize.getHeight(),
+                                input, 90, false);
                     }
-                    //编码器
-                    vdEncoder.addFrame(input);
-                    //录制器
+                    //录制编码器
                     recordEncoder.addFrame(input);
+                    //推流编码器
+                    vdEncoder.addFrame(input);
                     image.close();
-                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
-                        mLog.log("Frame_slow", "图像处理速度过慢");
-                    }
+//                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
+//                        mLog.log("Frame_slow", "图像处理速度过慢");
+//                    }
                 } else {
                     mLog.log("Frame_loss", "图像采集速率不够");
                 }
@@ -385,10 +389,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //旋转
     public void rotate() {
-        rotate = !rotate;
-        facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
+        facingFront = !rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         releaseCamera();
         initCamera();
+        //最后来设置标志，防止最后几帧数据旋转错误
+        rotate = !rotate;
     }
 
     public void setWriteCallback(WriteMp4.writeCallback writeCallback) {

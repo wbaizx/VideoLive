@@ -7,6 +7,7 @@ import android.util.Size;
 
 import com.library.stream.BaseSend;
 import com.library.util.ByteUtil;
+import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
 import com.library.util.mLog;
 
@@ -26,11 +27,21 @@ public class VDEncoder {
     private boolean isRuning = false;
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
-    public VDEncoder(Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
+    private int cWidth;
+    private int cHeight;
+    private int pWidth;
+    private int pHeight;
+
+    public VDEncoder(Size csize, Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
         //UPD实例
         this.baseSend = baseSend;
         //由于图片旋转过，所以高度宽度需要对调
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, psize.getHeight(), psize.getWidth());
+        cWidth = csize.getHeight();
+        cHeight = csize.getWidth();
+        pWidth = psize.getHeight();
+        pHeight = psize.getWidth();
+
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, pWidth, pHeight);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, publishBitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
@@ -69,14 +80,21 @@ public class VDEncoder {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                byte[] input;
+                byte[] data = new byte[pWidth * pHeight * 3 / 2];
+                byte[] input = new byte[pWidth * pHeight * 3 / 2];
                 byte[] outData;
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
                     if (YUVQueue.size() > 0) {
-                        input = YUVQueue.poll();
+                        if (cWidth == pWidth && cHeight == pHeight) {
+                            ImagUtil.yuvI420ToNV12(YUVQueue.poll(), input, pWidth, pHeight);
+                        } else {
+                            //两个分辨率不同才进行缩放
+                            ImagUtil.scaleI420(YUVQueue.poll(), cWidth, cHeight, data, pWidth, pHeight, 0);
+                            ImagUtil.yuvI420ToNV12(data, input, pWidth, pHeight);
+                        }
                         try {
                             int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                             if (inputBufferIndex >= 0) {
