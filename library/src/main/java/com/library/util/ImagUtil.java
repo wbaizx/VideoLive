@@ -56,59 +56,6 @@ public class ImagUtil {
      **/
     public static native void cropYUV(byte[] src, int width, int height, byte[] dst, int dst_width, int dst_height, int left, int top);
 
-
-    /*
-   YUV_420_888转换为NV12
-   将方法中case 1:和case 2:对调可以得到NV21格式
-    */
-    public static byte[] YUV420888toNV12(Image image) {
-        int width = image.getCropRect().width();
-        int height = image.getCropRect().height();
-        Image.Plane[] planes = image.getPlanes();
-        byte[] data = new byte[width * height * ImageFormat.getBitsPerPixel(image.getFormat()) / 8];
-        byte[] rowData = new byte[planes[0].getRowStride()];
-        int channelOffset = 0;
-        for (int i = 0; i < planes.length; i++) {
-            switch (i) {
-                case 0:
-                    channelOffset = 0;
-                    break;
-                case 1:
-                    channelOffset = width * height;
-                    break;
-                case 2:
-                    channelOffset = width * height + 1;
-                    break;
-            }
-            ByteBuffer buffer = planes[i].getBuffer();
-            int rowStride = planes[i].getRowStride();
-            int pixelStride = planes[i].getPixelStride();
-            int shift = (i == 0) ? 0 : 1;
-            int w = width >> shift;
-            int h = height >> shift;
-            buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
-            int length;
-            for (int row = 0; row < h; row++) {
-                if (pixelStride == 1) {
-                    length = w;
-                    buffer.get(data, channelOffset, length);
-                    channelOffset += length;
-                } else {
-                    length = (w - 1) * pixelStride + 1;
-                    buffer.get(rowData, 0, length);
-                    for (int col = 0; col < w; col++) {
-                        data[channelOffset] = rowData[col * pixelStride];
-                        channelOffset += pixelStride;
-                    }
-                }
-                if (row < h - 1) {
-                    buffer.position(buffer.position() + rowStride - length);
-                }
-            }
-        }
-        return data;
-    }
-
     /*
      YUV_420_888转换为I420
      */
@@ -138,22 +85,26 @@ public class ImagUtil {
             int w = width >> shift;
             int h = height >> shift;
             buffer.position(rowStride * (image.getCropRect().top >> shift) + pixelStride * (image.getCropRect().left >> shift));
-            int length;
-            for (int row = 0; row < h; row++) {
-                if (pixelStride == 1) {
-                    length = w;
+            if (pixelStride == 1) {
+                int length = w;
+                for (int row = 0; row < h; row++) {
                     buffer.get(data, channelOffset, length);
                     channelOffset += length;
-                } else {
-                    length = (w - 1) * pixelStride + 1;
+                    if (row < h - 1) {
+                        buffer.position(buffer.position() + rowStride - length);
+                    }
+                }
+            } else {
+                int length = (w - 1) * pixelStride + 1;
+                for (int row = 0; row < h; row++) {
                     buffer.get(rowData, 0, length);
                     for (int col = 0; col < w; col++) {
                         data[channelOffset] = rowData[col * pixelStride];
-                        channelOffset += 1;
+                        channelOffset++;
                     }
-                }
-                if (row < h - 1) {
-                    buffer.position(buffer.position() + rowStride - length);
+                    if (row < h - 1) {
+                        buffer.position(buffer.position() + rowStride - length);
+                    }
                 }
             }
         }
