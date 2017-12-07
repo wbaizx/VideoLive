@@ -22,8 +22,6 @@ public class ImagUtil {
     public static native void rotateI420(byte[] src, int width, int height, byte[] dst, int degree, boolean isMirror);
 
     /**
-     * 将I420转化为NV21
-     *
      * @param i420Src 原始I420数据
      * @param nv12Src 转化后的NV21数据
      * @param width   输出的宽
