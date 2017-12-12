@@ -18,13 +18,15 @@ public class VoiceRecord {
     private boolean isrecord = false;
     private int recBufSize;
     private int samplerate = 44100;
-    //音频编码
+    //音频推流编码
     private VCEncoder vencoder;
+    //音频录制编码
+    private RecordEncoderVC recordEncoderVC;
 
     /*
      *初始化
      */
-    public VoiceRecord(BaseSend baseSend, int bitrate_vc, WriteMp4 writeMp4) {
+    public VoiceRecord(BaseSend baseSend, int collectionbitrate_vc, int publishbitrate_vc, WriteMp4 writeMp4) {
         recBufSize = AudioRecord.getMinBufferSize(
                 samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -35,7 +37,8 @@ public class VoiceRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
-        vencoder = new VCEncoder(samplerate, bitrate_vc, recBufSize, baseSend, writeMp4);
+        vencoder = new VCEncoder(samplerate, publishbitrate_vc, recBufSize, baseSend);
+        recordEncoderVC = new RecordEncoderVC(samplerate, collectionbitrate_vc, recBufSize, writeMp4);
     }
 
     /*
@@ -58,7 +61,9 @@ public class VoiceRecord {
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;
                         }
-                        vencoder.encode(Arrays.copyOfRange(buffer, 0, bufferReadResult));
+                        byte[] bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
+                        vencoder.encode(bytes);
+                        recordEncoderVC.encode(bytes);
                     }
                 }
             }
@@ -71,6 +76,7 @@ public class VoiceRecord {
         audioRecord.stop();
         audioRecord.release();
         audioRecord = null;
+        recordEncoderVC.destroy();
         vencoder.destroy();
     }
 }

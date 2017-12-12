@@ -17,7 +17,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Created by android1 on 2017/12/2.
  */
 
-public class RecordEncoder {
+public class RecordEncoderVD {
     //编码参数
     private boolean isRuning = false;
     private MediaCodec mediaCodec;
@@ -26,7 +26,7 @@ public class RecordEncoder {
     private int width;
     private int height;
 
-    public RecordEncoder(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
+    public RecordEncoderVD(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
         this.writeMp4 = writeMp4;
         //由于图片旋转过，所以高度宽度需要对调
         width = csize.getHeight();

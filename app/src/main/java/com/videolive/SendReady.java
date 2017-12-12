@@ -23,7 +23,8 @@ public class SendReady extends AppCompatActivity {
     private EditText pr_height;
     private EditText c_width;
     private EditText c_height;
-    private EditText bitrate_vc;
+    private EditText collectionbitrate_vc;
+    private EditText publishbitrate_vc;
     private RadioGroup videoCode;
     private RadioGroup preview;
     private RadioGroup rotate;
@@ -45,7 +46,8 @@ public class SendReady extends AppCompatActivity {
         c_width = findViewById(R.id.c_width);
         pr_height = findViewById(R.id.pr_height);
         c_height = findViewById(R.id.c_height);
-        bitrate_vc = findViewById(R.id.bitrate_vc);
+        collectionbitrate_vc = findViewById(R.id.collectionbitrate_vc);
+        publishbitrate_vc = findViewById(R.id.publishbitrate_vc);
         pu_width = findViewById(R.id.pu_width);
         pu_height = findViewById(R.id.pu_height);
         videoCode = findViewById(R.id.svideoCode);
@@ -69,7 +71,8 @@ public class SendReady extends AppCompatActivity {
         bundle.putInt("framerate", Integer.parseInt(framerate.getText().toString()));
         bundle.putInt("publishbitrate", Integer.parseInt(publishbitrate.getText().toString()) * 1024);
         bundle.putInt("collectionbitrate", Integer.parseInt(collectionbitrate.getText().toString()) * 1024);
-        bundle.putInt("bitrate_vc", Integer.parseInt(bitrate_vc.getText().toString()) * 1024);
+        bundle.putInt("collectionbitrate_vc", Integer.parseInt(collectionbitrate_vc.getText().toString()) * 1024);
+        bundle.putInt("publishbitrate_vc", Integer.parseInt(publishbitrate_vc.getText().toString()) * 1024);
         bundle.putInt("pu_width", Integer.parseInt(pu_width.getText().toString()));
         bundle.putInt("pu_height", Integer.parseInt(pu_height.getText().toString()));
         bundle.putInt("pr_width", Integer.parseInt(pr_width.getText().toString()));

@@ -28,7 +28,7 @@ import com.library.stream.UdpControlInterface;
 import com.library.util.ImagUtil;
 import com.library.util.mLog;
 import com.library.vc.VoiceRecord;
-import com.library.vd.RecordEncoder;
+import com.library.vd.RecordEncoderVD;
 import com.library.vd.VDEncoder;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //视频编码
     private VDEncoder vdEncoder = null;
     //视频录制
-    private RecordEncoder recordEncoder = null;
+    private RecordEncoderVD recordEncoderVD = null;
     //音频采集
     private VoiceRecord voiceRecord;
     //UDP发送类
@@ -55,7 +55,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int frameRate;
     private int publishBitrate;
     private int collectionBitrate;
-    private int bitrate_vc;
+    private int publishbitrate_vc;
+    private int collectionbitrate_vc;
     private String codetype;
     //相机设备
     private CameraDevice cameraDevice;
@@ -82,7 +83,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
 
     public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
-                   int frameRate, int publishBitrate, int collectionBitrate, int bitrate_vc, String codetype, boolean rotate, String path, BaseSend baseSend,
+                   int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
+                   boolean rotate, String path, BaseSend baseSend,
                    UdpControlInterface udpControl) {
         this.context = context;
         this.publishSize = publishSize;
@@ -91,7 +93,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.publishBitrate = publishBitrate;
         this.collectionBitrate = collectionBitrate;
         this.frameRate = frameRate;
-        this.bitrate_vc = bitrate_vc;
+        this.collectionbitrate_vc = collectionbitrate_vc;
+        this.publishbitrate_vc = publishbitrate_vc;
         this.codetype = codetype;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
@@ -242,12 +245,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void initEncode() {
         if (vdEncoder == null) {
-            recordEncoder = new RecordEncoder(collectionSize, frameRate, collectionBitrate, writeMp4, codetype);
+            recordEncoderVD = new RecordEncoderVD(collectionSize, frameRate, collectionBitrate, writeMp4, codetype);
             vdEncoder = new VDEncoder(collectionSize, publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
-            voiceRecord = new VoiceRecord(baseSend, bitrate_vc, writeMp4);
+            voiceRecord = new VoiceRecord(baseSend, collectionbitrate_vc, publishbitrate_vc, writeMp4);
 
-            recordEncoder.star();
+            recordEncoderVD.star();
             vdEncoder.star();
             voiceRecord.star();
         }
@@ -357,7 +360,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                                 input, 90, false);
                     }
                     //录制编码器
-                    recordEncoder.addFrame(input);
+                    recordEncoderVD.addFrame(input);
                     //推流编码器
                     vdEncoder.addFrame(input);
                     image.close();
@@ -412,7 +415,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //销毁
     public void destroy() {
-        recordEncoder.destroy();
+        recordEncoderVD.destroy();
         vdEncoder.destroy();
         voiceRecord.destroy();
         baseSend.destroy();
@@ -431,7 +434,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private int frameRate = 15;
         private int publishBitrate = 600 * 1024;
         private int collectionBitrate = 600 * 1024;
-        private int bitrate_vc = 20 * 1024;
+        private int collectionbitrate_vc = 64 * 1024;
+        private int publishbitrate_vc = 20 * 1024;
         //推流分辨率,仅控制推流编码
         private Size publishSize = new Size(480, 320);
         //预览分辨率，仅控制预览
@@ -494,6 +498,16 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
+        public Buider setPublishBitrateVC(int publishbitrate_vc) {
+            this.publishbitrate_vc = Math.min(48 * 1024, publishbitrate_vc);//限制最大48，因为发送会合并5个包，过大会导致溢出
+            return this;
+        }
+
+        public Buider setCollectionBitrateVC(int collectionbitrate_vc) {
+            this.collectionbitrate_vc = collectionbitrate_vc;
+            return this;
+        }
+
         public Buider setVideoCode(String codetype) {
             this.codetype = codetype;
             return this;
@@ -520,14 +534,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
-        public Buider setBitrateVC(int bitrate_vc) {
-            this.bitrate_vc = Math.min(48 * 1024, bitrate_vc);//限制最大48，因为发送会合并5个包，过大会导致溢出
-            return this;
-        }
 
         public Publish build() {
             return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, bitrate_vc, codetype, rotate, path, baseSend, udpControl);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend, udpControl);
         }
     }
 }
