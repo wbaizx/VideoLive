@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.1.1'
+	        compile 'com.github.wbaizx:VideoLive:2.1.2'
 	}
 
 
@@ -42,7 +42,8 @@ Step 2：
                 .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
-                .setBitrateVC(32 * 1024)//音频采样率
+                .setCollectionBitrateVC(64*1024)//音频采集采样率
+                .setPublishBitrateVC(20*1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
                 .setCollectionSize(480, 320)//采集分辨率，如果系统不支持会自动选取最相近的
