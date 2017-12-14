@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.1.2'
+	        compile 'com.github.wbaizx:VideoLive:2.1.3'
 	}
 
 
@@ -87,6 +87,10 @@ Step 2：
        publish.starRecode();//停止录制
        
        publish.stopRecode();//开始录制
+
+  如果推流图片角度不对，可以通过调用方法调整
+
+        publish.adjustmentAngle();
 
   但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
 

@@ -81,6 +81,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private WriteMp4 writeMp4;
 
+    private int frontAngle = 270;
+    private int backAngle = 90;
+
 
     public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
                    int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
@@ -329,15 +332,23 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return imageReader.getSurface();
     }
 
+    public void adjustmentAngle() {
+        if (rotate) {
+            frontAngle = frontAngle == 270 ? 90 : 270;
+        } else {
+            backAngle = backAngle == 90 ? 270 : 90;
+        }
+    }
+
+
     private byte[] input;
-    private int length;
+    private byte[] i420;
     //耗时检测
 //    private long time = 0;
 
     //帧率控制策略
     private void startControlFrameRate() {
         //初始化长度
-        length = collectionSize.getWidth() * collectionSize.getHeight() * 3 / 2;
         controlFrameRateThread = new HandlerThread("FrameRateControl");
         controlFrameRateThread.start();
         frameHandler = new Handler(controlFrameRateThread.getLooper());
@@ -351,13 +362,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
 //                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
                     //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码
-                    input = new byte[length];
+                    i420 = ImagUtil.YUV420888toI420(image);
+                    input = new byte[i420.length];
                     if (rotate) {
-                        ImagUtil.rotateI420(ImagUtil.YUV420888toI420(image), collectionSize.getWidth(), collectionSize.getHeight(),
-                                input, 270, true);
+                        ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
+                                input, frontAngle, true);
                     } else {
-                        ImagUtil.rotateI420(ImagUtil.YUV420888toI420(image), collectionSize.getWidth(), collectionSize.getHeight(),
-                                input, 90, false);
+                        ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
+                                input, backAngle, false);
                     }
                     //录制编码器
                     recordEncoderVD.addFrame(input);
