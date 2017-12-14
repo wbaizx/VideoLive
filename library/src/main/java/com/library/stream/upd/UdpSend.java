@@ -113,6 +113,7 @@ public class UdpSend extends BaseSend {
         int time_vd_vaule = OtherUtil.getTime();
 
         while ((video.length - nowPosition) > sendUdplength) {
+            buffvideo.clear();
             //添加udp头
             buffvideo.put((byte) 1);//视频TAG
             buffvideo.putInt(videoNum++);//序号
@@ -129,10 +130,10 @@ public class UdpSend extends BaseSend {
             //UPD发送
             addbytes(buffvideo);
             isOne = false;
-            buffvideo.clear();
             nowPosition += sendUdplength;
         }
         if ((video.length - nowPosition) > 0) {
+            buffvideo.clear();
             //添加udp头
             buffvideo.put((byte) 1);//视频TAG
             buffvideo.putInt(videoNum++);//序号
@@ -148,7 +149,6 @@ public class UdpSend extends BaseSend {
             buffvideo.put(video, nowPosition, video.length - nowPosition);
             //UPD发送
             addbytes(buffvideo);
-            buffvideo.clear();
         }
     }
 
