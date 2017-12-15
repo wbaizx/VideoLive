@@ -14,7 +14,6 @@ import com.library.view.PlayerView;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterface, VideoCallback {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
@@ -28,9 +27,9 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private MediaCodec mCodec;
     private MediaFormat mediaFormat = null;
     //是否播放
-    private boolean isdecoder = false;
-    //控制标志
-    private boolean isdestroyed = false;
+    private boolean isDecoder = false;
+    private boolean isMediaCodecInit = false;
+    private boolean isSurfaceCreated = false;
 
     //解码器配置信息
     private byte[] information = null;
@@ -62,13 +61,9 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
      */
     @Override
     public void Information(byte[] important) {
-        if (information == null) {
-            information = important;
-            if (mediaFormat == null) {
-                beginCodec();
-            }
-        } else if (!Arrays.equals(important, information)) {
-            information = important;
+        information = important;
+        if (isSurfaceCreated) {
+            beginCodec();
         }
     }
 
@@ -80,30 +75,40 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if (information != null) {
-            beginCodec();
+        isSurfaceCreated = true;
+        beginCodec();
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        isSurfaceCreated = false;
+        isMediaCodecInit = false;
+        if (mCodec != null) {
+            mCodec.stop();
         }
     }
 
-    private void beginCodec() {
-        //初始化MediaFormat
-        if (mediaFormat == null) {
-            mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, 0, 0);//分辨率等信息由sps提供，这里可以随便设置
+    private synchronized void beginCodec() {
+        if (isSurfaceCreated && information != null) {
+            isSurfaceCreated = false;
+            if (mediaFormat == null) {
+                mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, 0, 0);//分辨率等信息由sps提供，这里可以随便设置
+            }
+            if (MIME_TYPE.equals(H264)) {
+                mediaFormat.setByteBuffer("csd-0", getH264SPS());
+                mediaFormat.setByteBuffer("csd-1", getH264PPS());
+
+            } else if (MIME_TYPE.equals(H265)) {
+                mediaFormat.setByteBuffer("csd-0", getH265information());
+            }
+
+            writeMp4.addTrack(mediaFormat, WriteMp4.video);
+
+            //配置MediaFormat以及需要显示的surface
+            mCodec.configure(mediaFormat, holder.getSurface(), null, 0);
+            mCodec.start();
+            isMediaCodecInit = true;
         }
-        if (MIME_TYPE.equals(H264)) {
-            mediaFormat.setByteBuffer("csd-0", getH264SPS());
-            mediaFormat.setByteBuffer("csd-1", getH264PPS());
-
-        } else if (MIME_TYPE.equals(H265)) {
-            mediaFormat.setByteBuffer("csd-0", getH265information());
-        }
-
-        writeMp4.addTrack(mediaFormat, WriteMp4.video);
-
-        //配置MediaFormat以及需要显示的surface
-        mCodec.configure(mediaFormat, holder.getSurface(), null, 0);
-        mCodec.start();
-        isdestroyed = true;
     }
 
     private ByteBuffer getH264SPS() {
@@ -162,28 +167,21 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         return null;
     }
 
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        isdestroyed = false;
-        if (mCodec != null) {
-            mCodec.stop();
-        }
-    }
-
     public void star() {
-        isdecoder = true;
+        isDecoder = true;
     }
 
     /**
      * 停止解码
      */
     public void stop() {
-        isdecoder = false;
+        isDecoder = false;
     }
 
     public void destroy() {
-        isdestroyed = false;
-        isdecoder = false;
+        isSurfaceCreated = false;
+        isMediaCodecInit = false;
+        isDecoder = false;
         mCodec.stop();
         mCodec.release();
         mCodec = null;
@@ -191,7 +189,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     @Override
     public void videoCallback(byte[] video) {
-        if (isdecoder && isdestroyed) {
+        if (isDecoder && isMediaCodecInit) {
             decoder(video);
         }
     }

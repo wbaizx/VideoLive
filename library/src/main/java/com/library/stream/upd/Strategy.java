@@ -74,7 +74,9 @@ public class Strategy {
                     }
                     mLog.log("playerInfromation_vd", "视频队列数--" + videoframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     VDtime = framesObject.getTime();
-                    cachingStrategyCallback.videoStrategy(framesObject.getData());
+                    if (cachingStrategyCallback != null) {
+                        cachingStrategyCallback.videoStrategy(framesObject.getData());
+                    }
                 } else {
                     isVideocode = false;//进入这个位置一定是videoframes.size() < 0，关闭开关标志
                     if (videoframes.size() > videomin) {
@@ -118,7 +120,9 @@ public class Strategy {
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference());
                     }
                     mLog.log("playerInfromation_vc", "音频队列数--" + voiceframes.size() + "--时间戳--" + framesObject.getTimedifference());
-                    cachingStrategyCallback.voiceStrategy(framesObject.getData());
+                    if (cachingStrategyCallback != null) {
+                        cachingStrategyCallback.voiceStrategy(framesObject.getData());
+                    }
                 } else {
                     VoiceHandler.postDelayed(this, voiceCarltontime);
                 }
@@ -153,6 +157,8 @@ public class Strategy {
     }
 
     public void destroy() {
+        isInBuffer = null;
+        cachingStrategyCallback = null;
         stop();
     }
 

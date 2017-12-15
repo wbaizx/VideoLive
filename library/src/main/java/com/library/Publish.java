@@ -399,7 +399,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     public void stopRecode() {
-        writeMp4.destroy();
+        writeMp4.stop();
     }
 
     //旋转

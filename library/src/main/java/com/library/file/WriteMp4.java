@@ -33,11 +33,11 @@ public class WriteMp4 {
     private long presentationTimeUsVE = 0;
 
     private boolean agreeWrite = false;
+    private boolean isSendReady = true;
     private boolean isReady = false;
 
-    private boolean shouldDestroy = false;
-    private boolean isCanDestroy = false;
-
+    private boolean shouldStop = false;
+    private boolean isCanStop = false;
     private boolean isCanStar = true;
 
     private int frameNum = 0;
@@ -58,10 +58,11 @@ public class WriteMp4 {
     private void setReady() {
         if (videoFormat != null && voiceFormat != null) {
             isReady = true;
-            if (writeCallback != null) {
+            if (writeCallback != null && isSendReady) {
+                isSendReady = false;
                 writeCallback.isReady();
+                mLog.log("app_WriteMp4", "文件录制准备就绪----------------");
             }
-            mLog.log("app_WriteMp4", "文件录制准备就绪----------------");
         }
     }
 
@@ -75,9 +76,9 @@ public class WriteMp4 {
                     frameNum++;
                     mLog.log("app_WriteMp4", "写了视频数据----------------" + bufferInfo.flags);
                     if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-                        isCanDestroy = true;
-                        if (shouldDestroy) {
-                            destroy();
+                        isCanStop = true;
+                        if (shouldStop) {
+                            stop();
                         }
                     }
                 }
@@ -106,8 +107,8 @@ public class WriteMp4 {
                     frameNum = 0;
                     agreeWrite = true;
                     isCanStar = false;
-                    isCanDestroy = false;
-                    shouldDestroy = false;
+                    isCanStop = false;
+                    shouldStop = false;
                     if (writeCallback != null) {
                         writeCallback.isStar();
                     }
@@ -116,7 +117,7 @@ public class WriteMp4 {
                     e.printStackTrace();
                 }
             } else {
-                shouldDestroy = false;
+                shouldStop = false;
             }
         }
     }
@@ -136,9 +137,9 @@ public class WriteMp4 {
         }
     }
 
-    public void destroy() {
+    public void stop() {
         if (agreeWrite) {
-            if (isCanDestroy) {
+            if (isCanStop) {
                 agreeWrite = false;
                 mMediaMuxer.release();
                 mMediaMuxer = null;
@@ -155,14 +156,20 @@ public class WriteMp4 {
                     }
                 }
             } else {
-                shouldDestroy = true;
+                shouldStop = true;
             }
         }
     }
 
+    public void destroy() {
+        stop();
+        writeCallback = null;
+    }
+
     public void setWriteCallback(WriteMp4.writeCallback writeCallback) {
         this.writeCallback = writeCallback;
-        if (isReady) {
+        if (isReady && isSendReady) {
+            isSendReady = false;
             writeCallback.isReady();
         }
     }

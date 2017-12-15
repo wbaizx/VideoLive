@@ -58,7 +58,7 @@ public class Player {
     }
 
     public void stopRecode() {
-        writeMp4.destroy();
+        writeMp4.stop();
     }
 
     public static class Buider {
