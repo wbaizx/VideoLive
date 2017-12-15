@@ -167,8 +167,13 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             frameBuffer.put(udpBytes.getData());
             oneFrame = udpBytes.getTime();
         } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
-            if (udpBytes.getTime() == oneFrame) {//因为一帧的时间戳相同，利用时间判断是否为同一帧
+            //因为一帧的时间戳相同，利用时间判断是否为同一帧，另外加上长度强行限制溢出
+            if (udpBytes.getTime() == oneFrame &&
+                    ((frameBuffer.position() + udpBytes.getData().length) < frameBuffer.capacity())) {
                 frameBuffer.put(udpBytes.getData());
+            } else {
+                frameBuffer.clear();
+                oneFrame = -1;
             }
         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
             if (udpBytes.getTime() == oneFrame) {//因为一帧的时间戳相同，利用时间判断是否为同一帧
@@ -246,11 +251,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void destroy() {
-        stopRevice();
         if (socket != null) {
             socket.close();
             socket = null;
         }
+        stopRevice();
     }
 
     /*

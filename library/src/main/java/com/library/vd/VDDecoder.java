@@ -82,9 +82,9 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         isSurfaceCreated = false;
-        isMediaCodecInit = false;
-        if (mCodec != null) {
+        if (isMediaCodecInit) {
             mCodec.stop();
+            isMediaCodecInit = false;
         }
     }
 
@@ -180,16 +180,20 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     public void destroy() {
         isSurfaceCreated = false;
-        isMediaCodecInit = false;
         isDecoder = false;
-        mCodec.stop();
-        mCodec.release();
-        mCodec = null;
+        if (isMediaCodecInit) {
+            isMediaCodecInit = false;
+            mCodec.stop();
+            mCodec.release();
+            mCodec = null;
+        }
     }
 
     @Override
     public void videoCallback(byte[] video) {
         if (isDecoder && isMediaCodecInit) {
+            //写文件
+            writeFile(video, video.length);
             decoder(video);
         }
     }
@@ -197,31 +201,33 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     private MediaCodec.BufferInfo debufferInfo = new MediaCodec.BufferInfo();
 
     public void decoder(byte[] video) {
-        //写文件
-        writeFile(video, video.length);
-        //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
-        int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
-        if (inputBufferIndex >= 0) {
-            ByteBuffer inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
-            //清空buffer
-            inputBuffer.clear();
-            //put需要解码的数据
-            inputBuffer.put(video, 0, video.length);
-            //解码
-            mCodec.queueInputBuffer(inputBufferIndex, 0, video.length, 0, 0);
-        } else {
-            mLog.log("dcoder_failure", "dcoder failure_VD");
-            return;
-        }
-        // 获取输出buffer index
-        int outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
+        try {
+            //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
+            int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
+            if (inputBufferIndex >= 0) {
+                ByteBuffer inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
+                //清空buffer
+                inputBuffer.clear();
+                //put需要解码的数据
+                inputBuffer.put(video, 0, video.length);
+                //解码
+                mCodec.queueInputBuffer(inputBufferIndex, 0, video.length, 0, 0);
+            } else {
+                mLog.log("dcoder_failure", "dcoder failure_VD");
+                return;
+            }
+            // 获取输出buffer index
+            int outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
 
-        //循环解码，直到数据全部解码完成
-        while (outputBufferIndex >= 0) {
-            //logger.d("outputBufferIndex = " + outputBufferIndex);
-            //true : 将解码的数据显示到surface上
-            mCodec.releaseOutputBuffer(outputBufferIndex, true);
-            outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
+            //循环解码，直到数据全部解码完成
+            while (outputBufferIndex >= 0) {
+                //logger.d("outputBufferIndex = " + outputBufferIndex);
+                //true : 将解码的数据显示到surface上
+                mCodec.releaseOutputBuffer(outputBufferIndex, true);
+                outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -47,9 +47,9 @@ public class Player {
     }
 
     public void destroy() {
+        baseRecive.destroy();
         vdDecoder.destroy();
         voiceTrack.destroy();
-        baseRecive.destroy();
         writeMp4.destroy();
     }
 

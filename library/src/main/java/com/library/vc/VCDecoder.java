@@ -62,6 +62,8 @@ public class VCDecoder implements VoiceCallback {
     @Override
     public void voiceCallback(byte[] voice) {
         if (isdecoder) {
+            //写文件
+            writeFile(voice, voice.length);
             //音频解码耗时较少，直接单线程顺序执行解码
             decoder(voice);
         }
@@ -71,8 +73,6 @@ public class VCDecoder implements VoiceCallback {
     private int outputBufferIndex;
 
     public void decoder(byte[] voice) {
-        //写文件
-        writeFile(voice, voice.length);
         try {
             //返回一个包含有效数据的input buffer的index,-1->不存在
             int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
