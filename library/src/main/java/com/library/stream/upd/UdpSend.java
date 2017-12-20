@@ -219,6 +219,8 @@ public class UdpSend extends BaseSend {
                             Thread.currentThread().interrupt();
                             e.printStackTrace();
                         }
+                    } else {
+                        OtherUtil.sleepShortTime();
                     }
                 }
                 mLog.log("interrupt_Thread", "中断线程");
