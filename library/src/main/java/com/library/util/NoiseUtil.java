@@ -5,6 +5,9 @@ package com.library.util;
  */
 
 public class NoiseUtil {
+    /**
+     * 算法降噪，但效果并不理想
+     */
     public static byte[] noise(byte[] src, int srclength) {
         byte[] bytes = new byte[srclength];
         srclength = srclength >> 1;
