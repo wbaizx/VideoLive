@@ -32,7 +32,7 @@ public class VoiceRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
         audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                MediaRecorder.AudioSource.MIC,//MediaRecorder.AudioSource.VOICE_COMMUNICATION降噪
                 samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
@@ -62,6 +62,8 @@ public class VoiceRecord {
                             continue;
                         }
                         byte[] bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
+                        //算法降噪
+//                        byte[] bytes = NoiseUtil.noise(buffer, bufferReadResult);
                         vencoder.encode(bytes);
                         recordEncoderVC.encode(bytes);
                     }
