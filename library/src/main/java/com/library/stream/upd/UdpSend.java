@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 public class UdpSend extends BaseSend {
     private boolean issend = false;
     private DatagramSocket socket = null;
-    private DatagramPacket packetsendPush;
+    private DatagramPacket packetsendPush = null;
     private int voiceNum = 0;
     private int videoNum = 0;
     private final int sendUdplength = 480;//视频包长度固定480
@@ -63,10 +63,12 @@ public class UdpSend extends BaseSend {
 
     @Override
     public void starsend() {
-        buffvoice.clear();
-        voiceSendNum = 0;
-        issend = true;
-        starsendThread();
+        if (packetsendPush != null) {
+            buffvoice.clear();
+            voiceSendNum = 0;
+            issend = true;
+            starsendThread();
+        }
     }
 
     @Override
@@ -203,21 +205,25 @@ public class UdpSend extends BaseSend {
         executorService.execute(new Runnable() {
             @Override
             public void run() {
+                byte[] data;
                 while (!Thread.currentThread().isInterrupted()) {//根据中断标志判断是否执行
                     if (sendQueue.size() > 0) {
-                        packetsendPush.setData(sendQueue.poll());
-                        try {
-                            socket.send(packetsendPush);
-                        } catch (IOException e) {
-                            mLog.log("senderror", "发送失败");
-                            e.printStackTrace();
-                        }
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            //sleep会响应中断抛出此异常，并且清除中断标志，所以在此处重新设置中断
-                            Thread.currentThread().interrupt();
-                            e.printStackTrace();
+                        data = sendQueue.poll();
+                        if (data != null) {
+                            packetsendPush.setData(data);
+                            try {
+                                socket.send(packetsendPush);
+                            } catch (IOException e) {
+                                mLog.log("senderror", "发送失败");
+                                e.printStackTrace();
+                            }
+                            try {
+                                Thread.sleep(1);
+                            } catch (InterruptedException e) {
+                                //sleep会响应中断抛出此异常，并且清除中断标志，所以在此处重新设置中断或者直接退出
+                                e.printStackTrace();
+                                break;
+                            }
                         }
                     } else {
                         OtherUtil.sleepShortTime();
