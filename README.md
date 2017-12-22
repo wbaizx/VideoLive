@@ -15,7 +15,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.1.5'
+	        compile 'com.github.wbaizx:VideoLive:2.2.0'
 	}
 
 
@@ -43,7 +43,7 @@ Step 2：
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64*1024)//音频采集采样率
-                .setMultiple(1)//音频放大倍数，可能导致爆音，倍数限制为1-8倍，1为原声
+                .setMultiple(1)//音频放大倍数，倍数限制为1-8倍，1为原声,可能导致爆音。
                 .setPublishBitrateVC(20*1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
