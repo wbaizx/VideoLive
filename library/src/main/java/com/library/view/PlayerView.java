@@ -28,7 +28,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
     private TextView loadtext;
     private ObjectAnimator rota;
     private IsOutBuffer isOutBuffer;
-    private boolean bufferAnimator = true;//缓冲动画标志，默认开启
+    private boolean bufferAnimator = true;
     private Handler handler;
     private UIRunnable uiRunnable;
 
@@ -38,18 +38,18 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
     }
 
     private void init(Context context) {
-        LayoutInflater.from(context).inflate(R.layout.player_view, this, true);//引用布局文件，使用XML文件来当做布局更加方便直观一些，使用了merge标签就必须使用这种方法加载布局
+        LayoutInflater.from(context).inflate(R.layout.player_view, this, true);
         loadimag = findViewById(R.id.loadimag);
         surfaceview = findViewById(R.id.surfaceview);
         loadtext = findViewById(R.id.loadtext);
 
         rota = ObjectAnimator.ofFloat(loadimag, "rotation", 0f, 360f);
-        rota.setDuration(1000);//设置动画时间
-        rota.setInterpolator(new LinearInterpolator());//设置动画插入器
-        rota.setRepeatCount(-1);//设置动画重复次数，这里-1代表无限
+        rota.setDuration(1000);
+        rota.setInterpolator(new LinearInterpolator());
+        rota.setRepeatCount(-1);
 
-        handler = new Handler(context.getMainLooper());//获取主线程消息队列，用于更新UI
-        uiRunnable = new UIRunnable();//初始化执行体
+        handler = new Handler(context.getMainLooper());
+        uiRunnable = new UIRunnable();
     }
 
     public SurfaceHolder getHolder() {
@@ -67,9 +67,6 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
         }
     }
 
-    /*
-    主线程消息队列执行的Runnable
-     */
     private class UIRunnable implements Runnable {
         private boolean isBuffer;
 
@@ -79,13 +76,13 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
                 if (loadimag.getVisibility() == GONE) {
                     loadimag.setVisibility(VISIBLE);
                     loadtext.setVisibility(VISIBLE);
-                    rota.start();//启动动画
+                    rota.start();
                 }
             } else {
                 if (loadimag.getVisibility() == VISIBLE) {
                     loadimag.setVisibility(GONE);
                     loadtext.setVisibility(GONE);
-                    rota.cancel();//关闭动画
+                    rota.cancel();
                 }
             }
         }

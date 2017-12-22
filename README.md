@@ -43,6 +43,7 @@ Step 2：
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64*1024)//音频采集采样率
+                .setMultiple(1)//音频放大倍数，可能导致爆音，倍数限制为1-8倍，1为原声
                 .setPublishBitrateVC(20*1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
@@ -82,11 +83,13 @@ Step 2：
 
   推流过程中可调用以下方法
        
-       publish.rotate();//旋转相机
-       
-       publish.starRecode();//停止录制
-       
-       publish.stopRecode();//开始录制
+        publish.rotate();//旋转相机
+
+        publish.starRecode();//停止录制
+
+        publish.stopRecode();//开始录制
+
+        publish.setVoiceIncreaseMultiple();//动态调整音量
 
   如果推流图片角度不对，可以通过调用方法调整
 

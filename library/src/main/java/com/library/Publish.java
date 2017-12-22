@@ -46,6 +46,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private RecordEncoderVD recordEncoderVD = null;
     //音频采集
     private VoiceRecord voiceRecord;
+    //音频放大倍数
+    private int multiple;
     //UDP发送类
     private BaseSend baseSend;
     //是否翻转，默认后置
@@ -87,11 +89,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
                    int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
-                   boolean rotate, String path, BaseSend baseSend,
-                   UdpControlInterface udpControl) {
+                   boolean rotate, String path, int multiple, BaseSend baseSend, UdpControlInterface udpControl) {
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
+        this.multiple = multiple;
         this.collectionSize = collectionSize;
         this.publishBitrate = publishBitrate;
         this.collectionBitrate = collectionBitrate;
@@ -252,7 +254,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             vdEncoder = new VDEncoder(collectionSize, publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, collectionbitrate_vc, publishbitrate_vc, writeMp4);
-
+            voiceRecord.setIncreaseMultiple(multiple);
             recordEncoderVD.star();
             vdEncoder.star();
             voiceRecord.star();
@@ -340,6 +342,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
+    public void setVoiceIncreaseMultiple(int multiple) {
+        if (voiceRecord != null) {
+            voiceRecord.setIncreaseMultiple(multiple);
+        }
+    }
 
     private byte[] input;
     private byte[] i420;
@@ -444,6 +451,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private Context context;
         //编码参数
         private int frameRate = 15;
+        private int multiple = 1;
         private int publishBitrate = 600 * 1024;
         private int collectionBitrate = 600 * 1024;
         private int collectionbitrate_vc = 64 * 1024;
@@ -547,9 +555,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
 
+        public Buider setMultiple(int multiple) {
+            this.multiple = multiple;
+            return this;
+        }
+
         public Publish build() {
             return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend, udpControl);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, multiple, baseSend, udpControl);
         }
     }
 }

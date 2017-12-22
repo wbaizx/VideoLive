@@ -395,6 +395,29 @@
                 android:text="Kpbs" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="音频放大倍数 :" />
+
+            <EditText
+                android:id="@+id/multiple"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:text="1"
+                android:textSize="15dp" />
+
+        </LinearLayout>
+
         <Button
             android:id="@+id/begin"
             android:layout_width="match_parent"

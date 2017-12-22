@@ -6,6 +6,7 @@ import android.media.MediaRecorder;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
+import com.library.util.VoiceUtil;
 
 import java.util.Arrays;
 
@@ -23,6 +24,8 @@ public class VoiceRecord {
     //音频录制编码
     private RecordEncoderVC recordEncoderVC;
 
+    private int multiple = 1;
+
     /*
      *初始化
      */
@@ -32,7 +35,7 @@ public class VoiceRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
         audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC,//MediaRecorder.AudioSource.VOICE_COMMUNICATION降噪
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,//降噪配置
                 samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
@@ -55,15 +58,19 @@ public class VoiceRecord {
                     audioRecord.startRecording();//开始录制
                     while (isrecord) {
                         /*
-                        两针间采集大概40ms，编码发送大概4ms，单线程顺序执行没有问题
+                        两针间采集大概40ms，编码发送大概10ms，单线程顺序执行没有问题
                          */
                         bufferReadResult = audioRecord.read(buffer, 0, recBufSize);
+
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;
                         }
-                        byte[] bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
-                        //算法降噪
-//                        byte[] bytes = NoiseUtil.noise(buffer, bufferReadResult);
+                        byte[] bytes;
+                        if (multiple == 1) {
+                            bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
+                        } else {
+                            bytes = VoiceUtil.increasePCM(buffer, bufferReadResult, multiple);
+                        }
                         vencoder.encode(bytes);
                         recordEncoderVC.encode(bytes);
                     }
@@ -72,6 +79,10 @@ public class VoiceRecord {
         }).start();
     }
 
+
+    public void setIncreaseMultiple(int multiple) {
+        this.multiple = Math.max(1, Math.min(8, multiple));
+    }
 
     public void destroy() {
         isrecord = false;
