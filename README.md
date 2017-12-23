@@ -20,10 +20,9 @@ Step 2：
 	}
 
 
-    视频直播和语音都是采用UDP协议发送，自行设置url和port。（需要5.0以上。仅支持硬编码）
+    视频直播和语音都是采用UDP协议发送，自行设置url和port。（需要5.0以上，仅支持硬编码）
 
-    服务器端需要事先知道接收方的IP（自行设置）。
-    
+
 
     相关权限
 
@@ -123,7 +122,7 @@ Step 2：
         android:layout_height="match_parent"
         android:layout_weight="1" />
         
-   需要让服务器知道自己是接收方并且知道自己的IP，这个自行完成
+   需要让服务器知道自己是接收方并且知道自己的IP，自行完成
           
         player = new Player.Buider((PlayerView) findViewById(R.id.playerView))
                 .setPullMode(new UdpRecive(8765))

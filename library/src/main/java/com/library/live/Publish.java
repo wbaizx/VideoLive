@@ -423,17 +423,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         writeMp4.setWriteCallback(writeCallback);
     }
 
-    //开始
     public void star() {
         baseSend.starsend();
     }
 
-    //停止
     public void stop() {
         baseSend.stopsend();
     }
 
-    //销毁
     public void destroy() {
         recordEncoderVD.destroy();
         vdEncoder.destroy();

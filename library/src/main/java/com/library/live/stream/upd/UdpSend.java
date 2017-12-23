@@ -59,6 +59,7 @@ public class UdpSend extends BaseSend {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -74,10 +75,6 @@ public class UdpSend extends BaseSend {
     @Override
     public void stopsend() {
         issend = false;
-        if (executorService != null) {
-            executorService.shutdownNow();
-            executorService = null;
-        }
     }
 
     @Override
@@ -86,6 +83,10 @@ public class UdpSend extends BaseSend {
         if (ismysocket) {
             socket.close();
             socket = null;
+        }
+        if (executorService != null) {
+            executorService.shutdownNow();
+            executorService = null;
         }
     }
 
@@ -201,35 +202,30 @@ public class UdpSend extends BaseSend {
     真正发送数据
      */
     private void starsendThread() {
-        executorService = Executors.newSingleThreadExecutor();
         executorService.execute(new Runnable() {
             @Override
             public void run() {
                 byte[] data;
-                while (!Thread.currentThread().isInterrupted()) {//根据中断标志判断是否执行
+                while (issend) {
                     if (sendQueue.size() > 0) {
                         data = sendQueue.poll();
                         if (data != null) {
                             packetsendPush.setData(data);
                             try {
                                 socket.send(packetsendPush);
+                                Thread.sleep(1);
                             } catch (IOException e) {
                                 mLog.log("senderror", "发送失败");
                                 e.printStackTrace();
-                            }
-                            try {
-                                Thread.sleep(1);
                             } catch (InterruptedException e) {
-                                //sleep会响应中断抛出此异常，并且清除中断标志，所以在此处重新设置中断或者直接退出
                                 e.printStackTrace();
-                                break;
                             }
                         }
                     } else {
                         OtherUtil.sleepShortTime();
                     }
                 }
-                mLog.log("interrupt_Thread", "中断线程");
+                mLog.log("interrupt_Thread", "关闭发送线程");
             }
         });
     }

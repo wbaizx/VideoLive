@@ -52,10 +52,10 @@ public class VoiceRecord {
             @Override
             public void run() {
                 if (audioRecord != null) {
-                    isrecord = true;
                     byte[] buffer = new byte[recBufSize];
                     int bufferReadResult;
                     audioRecord.startRecording();//开始录制
+                    isrecord = true;
                     while (isrecord) {
                         /*
                         两针间采集大概40ms，编码发送大概10ms，单线程顺序执行没有问题
@@ -86,7 +86,6 @@ public class VoiceRecord {
 
     public void destroy() {
         isrecord = false;
-        audioRecord.stop();
         audioRecord.release();
         audioRecord = null;
         recordEncoderVC.destroy();

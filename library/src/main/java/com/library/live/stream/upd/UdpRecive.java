@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 
 public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private DatagramSocket socket = null;
+    private boolean isrecive = false;
     private DatagramPacket packetreceive;
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
@@ -50,6 +51,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         packetreceive = new DatagramPacket(tmpBuf1, tmpBuf1.length);
         strategy = new Strategy();
         strategy.setCachingStrategyCallback(this);
+        executorService = Executors.newSingleThreadExecutor();
     }
 
     public UdpRecive() {
@@ -59,6 +61,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void starRevice() {
+        isrecive = true;
         videoList.clear();
         voiceList.clear();
         udpQueue.clear();
@@ -77,11 +80,10 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             handlerUdpThread.start();
             udpHandler = new Handler(handlerUdpThread.getLooper());
 
-            executorService = Executors.newSingleThreadExecutor();
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    while (!Thread.currentThread().isInterrupted()) {
+                    while (isrecive) {
                         try {
                             socket.receive(packetreceive);
                             OtherUtil.addQueue(udpQueue, Arrays.copyOfRange(packetreceive.getData(), 0, packetreceive.getLength()));
@@ -90,7 +92,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                             e.printStackTrace();
                         }
                     }
-                    mLog.log("interrupt_Thread", "中断线程");
+                    mLog.log("interrupt_Thread", "关闭接收线程");
                 }
             });
         }
@@ -104,6 +106,16 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             }
         }
     };
+
+    @Override
+    public void stopRevice() {
+        isrecive = false;
+        strategy.stop();
+        if (handlerUdpThread != null) {
+            udpHandler.removeCallbacksAndMessages(null);
+            handlerUdpThread.quitSafely();
+        }
+    }
 
     //丢包率计算
 //    int vdnum = 0;
@@ -153,7 +165,9 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     private int oldudptime_vd = 0;//记录上一个包的时间
     private int oneFrame = 0;//同帧标识符(使用时间戳当同帧标识)
+
     private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 80);
+
 
     /*
      将链表数据拼接成帧
@@ -189,7 +203,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             oldudptime_vd = udpBytes.getTime();
         }
     }
-
 
     /*
     检测关键帧，回调配置信息
@@ -237,25 +250,16 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     }
 
     @Override
-    public void stopRevice() {
-        strategy.stop();
-        if (handlerUdpThread != null) {
-            udpHandler.removeCallbacksAndMessages(null);
-            handlerUdpThread.quitSafely();
-        }
-        if (executorService != null) {
-            executorService.shutdownNow();//关闭线程池，并给所以线程发送中断
-            executorService = null;
-        }
-    }
-
-    @Override
     public void destroy() {
         if (socket != null) {
             socket.close();
             socket = null;
         }
         stopRevice();
+        if (executorService != null) {
+            executorService.shutdownNow();
+            executorService = null;
+        }
     }
 
     /*
