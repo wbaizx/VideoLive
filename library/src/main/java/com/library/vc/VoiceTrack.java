@@ -35,13 +35,13 @@ public class VoiceTrack implements VoicePlayer {
         vdecoder = new VCDecoder(samplerate, baseRecive, writeMp4);
         //注册回调接口
         vdecoder.register(this);
-        if (audioTrack != null) {
-            audioTrack.play();
-        }
     }
 
     public void star() {
-        vdecoder.star();
+        if (audioTrack != null) {
+            audioTrack.play();
+            vdecoder.star();
+        }
     }
 
     @Override
@@ -50,11 +50,13 @@ public class VoiceTrack implements VoicePlayer {
     }
 
     public void stop() {
-        vdecoder.stop();
+        if (audioTrack != null) {
+            vdecoder.stop();
+            audioTrack.stop();
+        }
     }
 
     public void destroy() {
-        audioTrack.stop();
         audioTrack.release();
         audioTrack = null;
         vdecoder.destroy();
