@@ -31,7 +31,7 @@ public class UdpSend extends BaseSend {
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
-    private ExecutorService executorService = null;//单例线程池，用于控制线程结束和执行
+    private ExecutorService executorService = null;
 
     private ArrayBlockingQueue<byte[]> sendQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 

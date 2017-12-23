@@ -25,6 +25,10 @@ public class Speak {
         speakRecord.destroy();
     }
 
+    public void setVoiceIncreaseMultiple(int multiple) {
+        speakRecord.setVoiceIncreaseMultiple(multiple);
+    }
+
     public static class Buider {
         private int collectionBitrate = 64 * 1024;
         private int publishBitrate = 20 * 1024;

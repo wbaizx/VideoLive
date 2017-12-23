@@ -13,7 +13,7 @@ import com.library.util.OtherUtil;
  */
 
 public class VoiceTrack implements VoicePlayer {
-    private VCDecoder vdecoder;
+    private VCDecoder vcdecoder;
     private AudioTrack audioTrack;
 
     public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
@@ -30,33 +30,37 @@ public class VoiceTrack implements VoicePlayer {
                 recBufSize,
                 AudioTrack.MODE_STREAM);
 
-        vdecoder = new VCDecoder(baseRecive, writeMp4);
+        vcdecoder = new VCDecoder(baseRecive, writeMp4);
         //注册回调接口
-        vdecoder.register(this);
+        vcdecoder.register(this);
     }
 
     public void star() {
         if (audioTrack != null) {
             audioTrack.play();
-            vdecoder.star();
+            vcdecoder.star();
         }
     }
 
     @Override
     public void voicePlayer(byte[] voicebyte) {
-        audioTrack.write(voicebyte, 0, voicebyte.length);
+        if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+            audioTrack.write(voicebyte, 0, voicebyte.length);
+        }
     }
 
     public void stop() {
         if (audioTrack != null) {
-            vdecoder.stop();
+            vcdecoder.stop();
             audioTrack.stop();
         }
     }
 
     public void destroy() {
-        audioTrack.release();
-        audioTrack = null;
-        vdecoder.destroy();
+        if (audioTrack != null) {
+            audioTrack.release();
+            audioTrack = null;
+        }
+        vcdecoder.destroy();
     }
 }

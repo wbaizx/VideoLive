@@ -36,7 +36,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private HandlerThread handlerUdpThread;
     private Handler udpHandler;
 
-    private ExecutorService executorService = null;//单例线程池，用于控制线程结束和执行
+    private ExecutorService executorService = null;
 
     private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 

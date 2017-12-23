@@ -17,7 +17,6 @@ import java.util.Arrays;
 
 public class VoiceRecord {
     private AudioRecord audioRecord;
-    private boolean isrecord = false;
     private int recBufSize;
     //音频推流编码
     private VCEncoder vencoder;
@@ -55,8 +54,7 @@ public class VoiceRecord {
                     byte[] buffer = new byte[recBufSize];
                     int bufferReadResult;
                     audioRecord.startRecording();//开始录制
-                    isrecord = true;
-                    while (isrecord) {
+                    while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         /*
                         两针间采集大概40ms，编码发送大概10ms，单线程顺序执行没有问题
                          */
@@ -85,7 +83,6 @@ public class VoiceRecord {
     }
 
     public void destroy() {
-        isrecord = false;
         audioRecord.release();
         audioRecord = null;
         recordEncoderVC.destroy();
