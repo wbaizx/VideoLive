@@ -9,6 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class OtherUtil {
     public static final int QueueNum = 300;
     public static final int waitTime = 0;
+    public static final int samplerate = 44100;
 
     public static int getTime() {
         return (int) (System.currentTimeMillis() % (long) 1000000000);

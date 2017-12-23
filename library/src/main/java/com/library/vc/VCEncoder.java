@@ -19,7 +19,7 @@ public class VCEncoder {
     private MediaCodec mediaCodec;
     private BaseSend baseSend;
 
-    public VCEncoder(int samplerate, int bitrate, int recBufSize, BaseSend baseSend) {
+    public VCEncoder(int bitrate, int recBufSize, BaseSend baseSend) {
         //UDP实例
         this.baseSend = baseSend;
         try {
@@ -31,7 +31,7 @@ public class VCEncoder {
         format.setString(MediaFormat.KEY_MIME, AAC_MIME);
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
-        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, samplerate);
+        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, OtherUtil.samplerate);
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, recBufSize * 2);
 

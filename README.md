@@ -85,11 +85,11 @@ Step 2：
        
         publish.rotate();//旋转相机
 
-        publish.starRecode();//停止录制
+        publish.starRecode();//开始录制
 
-        publish.stopRecode();//开始录制
+        publish.stopRecode();//停止录制
 
-        publish.setVoiceIncreaseMultiple();//动态调整音量
+        publish.setVoiceIncreaseMultiple();//动态调整音量(放大pcm音量，与设备音量无关)
 
   但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
 
@@ -193,12 +193,8 @@ Step 2：
 
   最后记住获取相关权限
 
-	  <uses-permission android:name="android.permission.CAMERA" />
-          <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-          <uses-permission android:name="android.permission.RECORD_AUDIO" />
-          <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
-	      
-   
-
-    

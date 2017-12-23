@@ -6,6 +6,7 @@ import android.media.MediaRecorder;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseSend;
+import com.library.util.OtherUtil;
 import com.library.util.VoiceUtil;
 
 import java.util.Arrays;
@@ -18,7 +19,6 @@ public class VoiceRecord {
     private AudioRecord audioRecord;
     private boolean isrecord = false;
     private int recBufSize;
-    private int samplerate = 44100;
     //音频推流编码
     private VCEncoder vencoder;
     //音频录制编码
@@ -31,17 +31,17 @@ public class VoiceRecord {
      */
     public VoiceRecord(BaseSend baseSend, int collectionbitrate_vc, int publishbitrate_vc, WriteMp4 writeMp4) {
         recBufSize = AudioRecord.getMinBufferSize(
-                samplerate,
+                OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
         audioRecord = new AudioRecord(
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,//降噪配置
-                samplerate,
+                OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
-        vencoder = new VCEncoder(samplerate, publishbitrate_vc, recBufSize, baseSend);
-        recordEncoderVC = new RecordEncoderVC(samplerate, collectionbitrate_vc, recBufSize, writeMp4);
+        vencoder = new VCEncoder(publishbitrate_vc, recBufSize, baseSend);
+        recordEncoderVC = new RecordEncoderVC(collectionbitrate_vc, recBufSize, writeMp4);
     }
 
     /*

@@ -75,7 +75,7 @@ public class UdpSend extends BaseSend {
     public void stopsend() {
         issend = false;
         if (executorService != null) {
-            executorService.shutdownNow();//关闭线程池，并给所以线程发送中断
+            executorService.shutdownNow();
             executorService = null;
         }
     }

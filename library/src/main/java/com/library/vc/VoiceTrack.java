@@ -6,33 +6,31 @@ import android.media.AudioTrack;
 
 import com.library.file.WriteMp4;
 import com.library.stream.BaseRecive;
+import com.library.util.OtherUtil;
 
 /**
  * Created by android1 on 2017/9/23.
  */
 
 public class VoiceTrack implements VoicePlayer {
-
-    private int samplerate = 44100;
     private VCDecoder vdecoder;
-
     private AudioTrack audioTrack;
 
     public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
         int recBufSize = AudioTrack.getMinBufferSize(
-                samplerate,
+                OtherUtil.samplerate,
                 AudioFormat.CHANNEL_OUT_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
 
         audioTrack = new AudioTrack(
                 AudioManager.STREAM_MUSIC,
-                samplerate,
+                OtherUtil.samplerate,
                 AudioFormat.CHANNEL_OUT_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize,
                 AudioTrack.MODE_STREAM);
 
-        vdecoder = new VCDecoder(samplerate, baseRecive, writeMp4);
+        vdecoder = new VCDecoder(baseRecive, writeMp4);
         //注册回调接口
         vdecoder.register(this);
     }
