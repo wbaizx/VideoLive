@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 
-import com.library.vd.VDEncoder;
+import com.library.live.vd.VDEncoder;
 
 public class SendReady extends AppCompatActivity {
     private EditText url;

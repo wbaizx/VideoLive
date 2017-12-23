@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 
-import com.library.vd.VDDecoder;
+import com.library.live.vd.VDDecoder;
 
 public class ReciveReady extends AppCompatActivity {
     private EditText port;

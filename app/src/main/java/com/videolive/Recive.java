@@ -6,9 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
-import com.library.Player;
-import com.library.stream.upd.UdpRecive;
-import com.library.view.PlayerView;
+import com.library.live.Player;
+import com.library.live.stream.upd.UdpRecive;
+import com.library.live.view.PlayerView;
 
 public class Recive extends AppCompatActivity {
     private Player player;

@@ -7,8 +7,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 
-import com.library.Publish;
-import com.library.stream.upd.UdpSend;
+import com.library.live.Publish;
+import com.library.live.stream.upd.UdpSend;
 
 public class Send extends AppCompatActivity {
     private Publish publish;

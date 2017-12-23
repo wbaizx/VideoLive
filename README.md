@@ -1,5 +1,6 @@
 # VideoLive
 视频直播库，视频H264,H265硬编码，音频AAC编码，使用UDP协议提供实时预览，传输和解码播放以及本地录制。
+也提供单独语音对讲功能。
 
 Add it in your root build.gradle at the end of repositories:
 
@@ -15,16 +16,24 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:2.2.0'
+	        compile 'com.github.wbaizx:VideoLive:3.0.0'
 	}
 
 
-    视频直播采用UDP协议发送，自行设置url和port。（需要5.0以上。仅支持硬编码）
+    视频直播和语音都是采用UDP协议发送，自行设置url和port。（需要5.0以上。仅支持硬编码）
 
     服务器端需要事先知道接收方的IP（自行设置）。
     
-    
-    使用示例：
+
+    相关权限
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    
+ 视频使用示例：
     
      推流端：
  
@@ -93,7 +102,7 @@ Step 2：
 
   但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
 
-        publish.setWriteCallback(new WriteMp4.writeCallback);
+        publish.setWriteCallback(new WriteCallback());
 
   如果推流图片角度不对，可以通过调用方法调整
 
@@ -108,7 +117,7 @@ Step 2：
 
       接收端：
       
-    <com.library.view.PlayerView
+    <com.library.live.view.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -181,7 +190,7 @@ Step 2：
   
    播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制,可以注册信号接收器获取）
 
-        player.setWriteCallback(new WriteMp4.writeCallback);
+        player.setWriteCallback(new WriteCallback());
    
         player.starRecode();//停止录制
 	
@@ -190,11 +199,4 @@ Step 2：
    销毁资源
            
          player.destroy();
-
-  最后记住获取相关权限
-
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
