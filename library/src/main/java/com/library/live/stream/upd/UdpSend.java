@@ -2,6 +2,7 @@ package com.library.live.stream.upd;
 
 import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
+import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
 
 import java.io.IOException;
@@ -13,8 +14,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by android1 on 2017/9/25.
@@ -31,7 +30,7 @@ public class UdpSend extends BaseSend {
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
 
-    private ExecutorService executorService = null;
+    private SingleThreadExecutor singleThreadExecutor = null;
 
     private ArrayBlockingQueue<byte[]> sendQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
@@ -59,7 +58,7 @@ public class UdpSend extends BaseSend {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        executorService = Executors.newSingleThreadExecutor();
+        singleThreadExecutor = new SingleThreadExecutor();
     }
 
     @Override
@@ -84,9 +83,9 @@ public class UdpSend extends BaseSend {
             socket.close();
             socket = null;
         }
-        if (executorService != null) {
-            executorService.shutdownNow();
-            executorService = null;
+        if (singleThreadExecutor != null) {
+            singleThreadExecutor.shutdownNow();
+            singleThreadExecutor = null;
         }
     }
 
@@ -202,7 +201,7 @@ public class UdpSend extends BaseSend {
     真正发送数据
      */
     private void starsendThread() {
-        executorService.execute(new Runnable() {
+        singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 byte[] data;

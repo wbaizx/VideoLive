@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import com.library.live.stream.BaseRecive;
 import com.library.live.stream.IsInBuffer;
 import com.library.util.OtherUtil;
+import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
 
 import java.io.IOException;
@@ -16,8 +17,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by android1 on 2017/9/23.
@@ -36,7 +35,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private HandlerThread handlerUdpThread;
     private Handler udpHandler;
 
-    private ExecutorService executorService = null;
+    private SingleThreadExecutor singleThreadExecutor = null;
 
     private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
@@ -51,7 +50,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         packetreceive = new DatagramPacket(tmpBuf1, tmpBuf1.length);
         strategy = new Strategy();
         strategy.setCachingStrategyCallback(this);
-        executorService = Executors.newSingleThreadExecutor();
+        singleThreadExecutor = new SingleThreadExecutor();
     }
 
     public UdpRecive() {
@@ -80,7 +79,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             handlerUdpThread.start();
             udpHandler = new Handler(handlerUdpThread.getLooper());
 
-            executorService.execute(new Runnable() {
+            singleThreadExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
                     while (isrecive) {
@@ -256,9 +255,9 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             socket = null;
         }
         stopRevice();
-        if (executorService != null) {
-            executorService.shutdownNow();
-            executorService = null;
+        if (singleThreadExecutor != null) {
+            singleThreadExecutor.shutdownNow();
+            singleThreadExecutor = null;
         }
     }
 
