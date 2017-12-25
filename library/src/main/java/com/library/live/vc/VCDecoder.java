@@ -103,7 +103,7 @@ public class VCDecoder implements VoiceCallback {
         }
     }
 
-    public void star() {
+    public void start() {
         isdecoder = true;
     }
 

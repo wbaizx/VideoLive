@@ -35,7 +35,7 @@ public class Recive extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (jiestar.getText().toString().equals("开始播放")) {
-                    player.star();
+                    player.start();
                     jiestar.setText("停止播放");
                 } else {
                     jiestar.setText("开始播放");
@@ -48,7 +48,7 @@ public class Recive extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (record.getText().toString().equals("开始录制")) {
-                    player.starRecode();
+                    player.startRecode();
                     record.setText("停止录制");
                 } else {
                     player.stopRecode();

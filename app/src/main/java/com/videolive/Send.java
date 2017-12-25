@@ -48,7 +48,7 @@ public class Send extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (tuistar.getText().toString().equals("开始推流")) {
-                    publish.star();
+                    publish.start();
                     tuistar.setText("停止推流");
                 } else {
                     publish.stop();
@@ -61,7 +61,7 @@ public class Send extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (record.getText().toString().equals("开始录制")) {
-                    publish.starRecode();
+                    publish.startRecode();
                     record.setText("停止录制");
                 } else {
                     publish.stopRecode();

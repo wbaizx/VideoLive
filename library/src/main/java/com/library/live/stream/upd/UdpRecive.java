@@ -59,13 +59,13 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     }
 
     @Override
-    public void starRevice() {
+    public void startRevice() {
         isrecive = true;
         videoList.clear();
         voiceList.clear();
         udpQueue.clear();
         frameBuffer.clear();
-        strategy.star();
+        strategy.start();
         starReciveUdp();
     }
 

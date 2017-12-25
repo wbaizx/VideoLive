@@ -27,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
         //SD卡读写权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             //权限已授权，功能操作
-            gostar();
+            gostart();
         } else {
             //未授权，提起权限申请
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
                 Toast.makeText(this, "没有权限", Toast.LENGTH_SHORT).show();
-                gostar();
+                gostart();
             } else {
                 //申请权限
                 ActivityCompat.requestPermissions(this, new String[]{
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void gostar() {
+    private void gostart() {
         push = findViewById(R.id.push);
         pull = findViewById(R.id.pull);
         push.setOnClickListener(new View.OnClickListener() {
@@ -69,11 +69,11 @@ public class MainActivity extends AppCompatActivity {
             //判断权限是否申请通过
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 //授权成功
-                gostar();
+                gostart();
             } else {
                 //授权失败
                 Toast.makeText(this, "没有权限", Toast.LENGTH_SHORT).show();
-                gostar();
+                gostart();
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);

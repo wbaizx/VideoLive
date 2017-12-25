@@ -60,12 +60,12 @@ public class SendReady extends AppCompatActivity {
         begin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                star();
+                start();
             }
         });
     }
 
-    private void star() {
+    private void start() {
         Intent intent = new Intent(this, Send.class);
         Bundle bundle = new Bundle();
         bundle.putString("url", url.getText().toString());

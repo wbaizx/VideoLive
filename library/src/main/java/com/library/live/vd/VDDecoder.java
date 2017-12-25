@@ -167,7 +167,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         return null;
     }
 
-    public void star() {
+    public void start() {
         isDecoder = true;
     }
 

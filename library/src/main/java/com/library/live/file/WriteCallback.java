@@ -7,7 +7,7 @@ package com.library.live.file;
 public interface WriteCallback {
     void isReady();
 
-    void isStar();
+    void isStart();
 
     void isDestroy();
 

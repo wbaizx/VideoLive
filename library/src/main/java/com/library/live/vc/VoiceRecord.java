@@ -46,7 +46,7 @@ public class VoiceRecord {
     /*
      * 得到语音原始数据
      */
-    public void star() {
+    public void start() {
         new Thread(new Runnable() {
             @Override
             public void run() {

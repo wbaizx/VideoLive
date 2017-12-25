@@ -130,7 +130,7 @@ public class Strategy {
         }
     };
 
-    public void star() {
+    public void start() {
         videoframes.clear();
         voiceframes.clear();
         iscode = true;

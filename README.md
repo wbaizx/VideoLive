@@ -83,7 +83,7 @@ Step 2：
 
   然后在需要推流的地方调用
          
-	 publish.star();
+	 publish.start();
          
   停止推流
          
@@ -93,7 +93,7 @@ Step 2：
        
         publish.rotate();//旋转相机
 
-        publish.starRecode();//开始录制
+        publish.startRecode();//开始录制
 
         publish.stopRecode();//停止录制
 
@@ -181,7 +181,7 @@ Step 2：
 
    调用播放
    
-         player.star();
+         player.start();
 	   
    停止播放
    
@@ -191,7 +191,7 @@ Step 2：
 
         player.setWriteCallback(new WriteCallback());
    
-        player.starRecode();//停止录制
+        player.startRecode();//停止录制
 	
         player.stopRecode();//开始录制
   

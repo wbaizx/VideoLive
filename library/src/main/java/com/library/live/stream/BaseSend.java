@@ -7,7 +7,7 @@ package com.library.live.stream;
 public abstract class BaseSend {
     protected UdpControlInterface udpControl = null;
 
-    public abstract void starsend();
+    public abstract void startsend();
 
     public abstract void stopsend();
 

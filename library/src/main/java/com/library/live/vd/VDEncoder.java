@@ -70,7 +70,7 @@ public class VDEncoder {
         OtherUtil.addQueue(YUVQueue, bytes);
     }
 
-    public void star() {
+    public void start() {
         YUVQueue.clear();
         isRuning = true;
         StartEncoderThread();

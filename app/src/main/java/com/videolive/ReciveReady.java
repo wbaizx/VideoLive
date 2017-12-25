@@ -30,12 +30,12 @@ public class ReciveReady extends AppCompatActivity {
         begin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                star();
+                start();
             }
         });
     }
 
-    private void star() {
+    private void start() {
         Intent intent = new Intent(this, Recive.class);
         Bundle bundle = new Bundle();
         if (videoCode.getCheckedRadioButtonId() == R.id.rh264) {

@@ -62,7 +62,7 @@ public class UdpSend extends BaseSend {
     }
 
     @Override
-    public void starsend() {
+    public void startsend() {
         if (packetsendPush != null) {
             buffvoice.clear();
             voiceSendNum = 0;

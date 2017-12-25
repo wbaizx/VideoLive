@@ -13,7 +13,7 @@ public class Speak {
         speakRecord = new SpeakRecord(collectionBitrate, collectionBitrate, multiple);
     }
 
-    public void star() {
+    public void start() {
         speakRecord.start();
     }
 

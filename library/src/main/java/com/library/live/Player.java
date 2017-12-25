@@ -34,10 +34,10 @@ public class Player {
         writeMp4.setWriteCallback(writeCallback);
     }
 
-    public void star() {
-        voiceTrack.star();
-        vdDecoder.star();
-        baseRecive.starRevice();
+    public void start() {
+        voiceTrack.start();
+        vdDecoder.start();
+        baseRecive.startRevice();
     }
 
     public void stop() {
@@ -54,8 +54,8 @@ public class Player {
         writeMp4.destroy();
     }
 
-    public void starRecode() {
-        writeMp4.star();
+    public void startRecode() {
+        writeMp4.start();
     }
 
     public void stopRecode() {

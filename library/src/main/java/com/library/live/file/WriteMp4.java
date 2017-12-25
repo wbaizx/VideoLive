@@ -93,7 +93,7 @@ public class WriteMp4 {
         }
     }
 
-    public void star() {
+    public void start() {
         if (isReady) {
             if (isCanStar) {
                 setPath();
@@ -110,7 +110,7 @@ public class WriteMp4 {
                     isCanStop = false;
                     shouldStop = false;
                     if (writeCallback != null) {
-                        writeCallback.isStar();
+                        writeCallback.isStart();
                     }
                     mLog.log("app_WriteMp4", "启动");
                 } catch (IOException e) {

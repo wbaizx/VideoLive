@@ -35,10 +35,10 @@ public class VoiceTrack implements VoicePlayer {
         vcdecoder.register(this);
     }
 
-    public void star() {
+    public void start() {
         if (audioTrack != null) {
             audioTrack.play();
-            vcdecoder.star();
+            vcdecoder.start();
         }
     }
 

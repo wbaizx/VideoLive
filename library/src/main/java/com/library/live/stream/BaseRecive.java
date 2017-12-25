@@ -13,7 +13,7 @@ public abstract class BaseRecive {
     protected VideoCallback videoCallback = null;
     protected int UdpPacketMin = 5;
 
-    public abstract void starRevice();
+    public abstract void startRevice();
 
     public abstract void stopRevice();
 
