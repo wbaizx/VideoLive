@@ -9,12 +9,10 @@ import com.library.talk.Listen;
 import com.library.talk.Speak;
 import com.library.talk.stream.ListenRecive;
 import com.library.talk.stream.SpeakSend;
-import com.library.common.UdpControlInterface;
 import com.videolive.R;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.Arrays;
 
 public class Voice extends AppCompatActivity {
     private Button startVoice;
@@ -42,24 +40,13 @@ public class Voice extends AppCompatActivity {
                 .setCollectionBitrate(getIntent().getExtras().getInt("collectionbitrate_vc"))
                 .setPublishBitrate(getIntent().getExtras().getInt("publishbitrate_vc"))
                 .setMultiple(getIntent().getExtras().getInt("multiple"))
-                .setUdpControl(new UdpControlInterface() {
-                    @Override
-                    public byte[] Control(byte[] bytes, int offset, int length) {
-                        return Arrays.copyOf(bytes, length);
-                    }
-                })
                 .build();
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))
                 .setUdpPacketCacheMin(2)
-                .setUdpControl(new UdpControlInterface() {
-                    @Override
-                    public byte[] Control(byte[] bytes, int offset, int length) {
-                        return Arrays.copyOf(bytes, length);
-                    }
-                })
-                .setVoiceFrameCacheMin(5).build();
+                .setVoiceFrameCacheMin(5)
+                .build();
 
 
         startVoice.setOnClickListener(new View.OnClickListener() {
@@ -74,6 +61,7 @@ public class Voice extends AppCompatActivity {
                 }
             }
         });
+
         reciveVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

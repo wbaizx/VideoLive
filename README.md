@@ -50,9 +50,9 @@ Step 2：
                 .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
-                .setCollectionBitrateVC(64*1024)//音频采集采样率
+                .setCollectionBitrateVC(64 * 1024)//音频采集采样率
                 .setMultiple(1)//音频放大倍数，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
-                .setPublishBitrateVC(20*1024)//音频推流采样率
+                .setPublishBitrateVC(20 * 1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
                 .setCollectionSize(480, 320)//采集分辨率，如果系统不支持会自动选取最相近的
@@ -197,3 +197,100 @@ Step 2：
            
          player.destroy();
 
+
+
+ 单独语音对讲使用示例：
+
+     发送端：
+
+        speak = new Speak.Buider()
+                .setPushMode(new SpeakSend("192.168.2.106", 8765))
+                .setCollectionBitrate(64 * 1024)//音频采集采样率
+                .setPublishBitrate(20 * 1024)//音频推流采样率
+                .setMultiple(1)//音频放大倍数，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
+                .build();
+
+
+  如果socket已经创建需要使用已经有的socket
+
+                .setPushMode(new SpeakSend(socket, "192.168.2.106",8765))
+
+  如果需要添加自己的协议同视频推流一样
+
+                .setUdpControl(new UdpControlInterface() {
+                    @Override
+                    public byte[] Control(byte[] bytes, int offset, int length) {
+                        return Arrays.copyOf(bytes, length);
+                    }
+                })
+
+  然后在需要推流的地方调用（不需要发送语音的时候最好关闭）
+
+        speak.start();
+
+  停止推流
+
+        speak.stop();
+
+  推流过程中可以动态调整音量
+
+        speak.setVoiceIncreaseMultiple(3);
+
+  注意如果同时视频推流和语音推流会出现冲突，如果正在视频推流，则不应该启动语音推流，如果已经启动，需调用stop方法关闭。
+  然后此时启动发送和关闭发送对应如下方法
+
+        speak.startJustSend();
+        speak.stopJustSend();
+
+  然后从视频的setUdpControl回调中通过音频tag取出语音数据，调用如下方法添加到发送队列
+
+        speak.addbytes(byte[]);
+
+   最后销毁资源
+
+        speak.destroy();
+
+
+
+     接收端：
+
+        listen = new Listen.Buider()
+                .setPullMode(new ListenRecive(8765))
+                .build();
+
+  同视频推流一样如果需要需要自行传入数据，则调用ListenRecive的无参构造，然后调用write传入数据
+
+        listenRecive.write();
+
+  还可以传入一个接收socket
+
+        new ListenRecive(socket)
+
+  然后控制策略
+
+                .setUdpPacketCacheMin(2)
+                .setVoiceFrameCacheMin(5)
+
+  包控制方式相同
+
+                  .setUdpControl(new UdpControlInterface() {
+                      @Override
+                      public byte[] Control(byte[] bytes, int offset, int length) {
+                          return Arrays.copyOf(bytes, length);
+                      }
+                  })
+
+  启动接收
+
+        listen.start();
+
+  停止接收
+
+        listen.stop();
+
+  销毁资源
+
+        listen.destroy();
+
+
+  讨厌写文档！
