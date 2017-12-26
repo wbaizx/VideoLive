@@ -11,10 +11,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.videolive.video.ReciveReady;
+import com.videolive.video.SendReady;
+import com.videolive.voice.VoiceReady;
+
 public class MainActivity extends AppCompatActivity {
     private final int REQUEST_CAMERA = 666;
     private Button push;
     private Button pull;
+    private Button voice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private void gostart() {
         push = findViewById(R.id.push);
         pull = findViewById(R.id.pull);
+        voice = findViewById(R.id.voice);
         push.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -58,6 +64,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, ReciveReady.class));
+            }
+        });
+        voice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, VoiceReady.class));
             }
         });
     }

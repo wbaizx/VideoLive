@@ -1,4 +1,4 @@
-package com.library.live.stream.upd;
+package com.library.common;
 
 import com.library.util.ByteUtil;
 

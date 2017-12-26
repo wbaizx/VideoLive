@@ -23,19 +23,18 @@ public class Strategy {
     private Handler VideoHandler;
     private Handler VoiceHandler;
 
-    private boolean iscode = false;//开始缓存标志
+    private boolean isStart = false;//开始播放标志(调用star的开始标志)
 
-    private boolean isVideocode = false;//开始播放标志
+    private boolean isVideoStart = false;//开始播放标志(真正开发播放的开始标志)
 
     private int VDtime;//视频帧绝对时间
 
     private int videomin = 6;//视频帧缓存达到播放条件
 
-    private int videoCarltontime = 400;//视频帧缓冲时间
-    private int voiceCarltontime = 400;//音频帧缓冲时间
-
     private final int frameControltime = 10;//帧时间控制
     private final int voiceFrameControltime = 100;//音视频帧同步时间差错范围
+    private boolean videoObservation = false;
+    private boolean voiceObservation = false;
 
     private IsInBuffer isInBuffer;
 
@@ -48,6 +47,10 @@ public class Strategy {
                 Math.max(20, Math.min(200, timedifference)),//视频帧时间差控制在20-180之间
                 time,
                 video));
+        if (videoObservation && videoframes.size() >= videomin) {//允许观察并且达到播放条件唤醒
+            videoObservation = false;
+            VideoHandler.post(videoRunnable);
+        }
     }
 
     public void addVoice(int timedifference, int time, byte[] voice) {
@@ -55,13 +58,17 @@ public class Strategy {
                 Math.max(1, Math.min(80, timedifference)),
                 time,
                 voice));//音频帧时间差控制在1-80之间
+        if (voiceObservation && isVideoStart) {//允许观察并且视频达到播放条件唤醒
+            voiceObservation = false;
+            VoiceHandler.post(voiceRunnable);
+        }
     }
 
     private Runnable videoRunnable = new Runnable() {
         @Override
         public void run() {
-            if (iscode) {
-                if (isVideocode && videoframes.size() > 0) {
+            if (isStart) {
+                if (isVideoStart && videoframes.size() > 0) {
                     FramesObject framesObject = videoframes.poll();
                     if (videoframes.size() > (videomin + 5)) {//帧缓存峰值为起始条件 +5，超过这个值则加快 frameControltime ms播放
                         while (videoframes.size() > (videomin + 35)) {//堆积数量超过峰值过多，丢弃部分
@@ -78,20 +85,20 @@ public class Strategy {
                         cachingStrategyCallback.videoStrategy(framesObject.getData());
                     }
                 } else {
-                    isVideocode = false;//进入这个位置一定是videoframes.size() < 0，关闭开关标志
-                    if (videoframes.size() > videomin) {
+                    if (videoframes.size() >= videomin) {
                         if (isInBuffer != null) {
                             //结束缓冲，回调给PlayerView
                             isInBuffer.isBuffer(false);
                         }
-                        isVideocode = true;
+                        isVideoStart = true;
                         VideoHandler.post(this);
                     } else {
+                        isVideoStart = false;
                         if (isInBuffer != null) {
                             //开始缓冲，回调给PlayerView
                             isInBuffer.isBuffer(true);
                         }
-                        VideoHandler.postDelayed(this, videoCarltontime);
+                        videoObservation = true;//允许视频观察
                     }
                 }
             }
@@ -101,8 +108,8 @@ public class Strategy {
     private Runnable voiceRunnable = new Runnable() {
         @Override
         public void run() {
-            if (iscode) {
-                if (isVideocode && voiceframes.size() > 0) {//这里为什么用视频标志来判断，因为视频不播放的时候不需要播放声音
+            if (isStart) {
+                if (isVideoStart && voiceframes.size() > 0) {//这里为什么用视频标志来判断，因为视频不播放的时候不需要播放声音
                     FramesObject framesObject = voiceframes.poll();
                     if ((framesObject.getTime() - VDtime) > voiceFrameControltime) {//音频帧快了，音频要慢一点
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference() + frameControltime);
@@ -124,7 +131,7 @@ public class Strategy {
                         cachingStrategyCallback.voiceStrategy(framesObject.getData());
                     }
                 } else {
-                    VoiceHandler.postDelayed(this, voiceCarltontime);
+                    voiceObservation = true;
                 }
             }
         }
@@ -133,7 +140,7 @@ public class Strategy {
     public void start() {
         videoframes.clear();
         voiceframes.clear();
-        iscode = true;
+        isStart = true;
 
         handlerVideoThread = new HandlerThread("VideoPlayer");
         handlerVoiceThread = new HandlerThread("VoicePlayer");
@@ -147,7 +154,7 @@ public class Strategy {
     }
 
     public void stop() {
-        iscode = false;
+        isStart = false;
         if (handlerVideoThread != null) {
             VideoHandler.removeCallbacksAndMessages(null);
             VoiceHandler.removeCallbacksAndMessages(null);
@@ -159,20 +166,11 @@ public class Strategy {
     public void destroy() {
         isInBuffer = null;
         cachingStrategyCallback = null;
-        stop();
     }
 
 
     public void setVideoFrameCacheMin(int videoFrameCacheMin) {
         videomin = videoFrameCacheMin;
-    }
-
-    public void setVideoCarltontime(int videoCarltontime) {
-        this.videoCarltontime = videoCarltontime;
-    }
-
-    public void setVoiceCarltontime(int voiceCarltontime) {
-        this.voiceCarltontime = voiceCarltontime;
     }
 
     /*

@@ -1,6 +1,8 @@
 package com.library.live.stream;
 
+import com.library.common.VoiceCallback;
 import com.library.live.vd.VideoInformationInterface;
+import com.library.common.UdpControlInterface;
 
 /**
  * Created by android1 on 2017/9/27.
@@ -46,9 +48,9 @@ public abstract class BaseRecive {
 
     /*
     子类可以通过这个方法获得一些策略参数，根据需要决定是否使用,
-    3个参数分别为 视频帧达到播放条件的缓存帧数，视频帧缓冲时间，音频帧缓冲时间
+    参数为:视频帧达到播放条件的缓存帧数
      */
-    public abstract void setOther(int videoFrameCacheMin, int videoCarltontime, int voiceCarltontime);
+    public abstract void setOther(int videoFrameCacheMin);
 
     /*
     缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用

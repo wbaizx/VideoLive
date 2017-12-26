@@ -25,7 +25,7 @@ import android.view.TextureView;
 import com.library.live.file.WriteCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseSend;
-import com.library.live.stream.UdpControlInterface;
+import com.library.common.UdpControlInterface;
 import com.library.live.vc.VoiceRecord;
 import com.library.live.vd.RecordEncoderVD;
 import com.library.live.vd.VDEncoder;
@@ -88,7 +88,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int backAngle = 90;
 
 
-    public Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
+    private Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
                    int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
                    boolean rotate, String path, int multiple, BaseSend baseSend, UdpControlInterface udpControl) {
         this.context = context;
@@ -329,7 +329,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     //超出限制丢弃
                     frameRateControlQueue.poll().close();
                 }
-                frameRateControlQueue.add(reader.acquireNextImage());
+                frameRateControlQueue.offer(reader.acquireNextImage());
             }
         }, camearHandler);
         return imageReader.getSurface();

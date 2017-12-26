@@ -1,4 +1,4 @@
-package com.library.live.stream;
+package com.library.common;
 
 /**
  * Created by android1 on 2017/10/12.

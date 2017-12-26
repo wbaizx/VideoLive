@@ -19,14 +19,6 @@ public class OtherUtil {
         return System.nanoTime() / 1000;
     }
 
-    public static void sleepLongTime() {
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void sleepShortTime() {
         try {
             Thread.sleep(1);
@@ -39,7 +31,7 @@ public class OtherUtil {
         if (queue.size() >= QueueNum - 1) {
             queue.poll();
         }
-        queue.add(obj);
+        queue.offer(obj);
     }
 
     /*

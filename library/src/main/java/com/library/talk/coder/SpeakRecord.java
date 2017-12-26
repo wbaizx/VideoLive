@@ -4,9 +4,11 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
+import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 import com.library.util.VoiceUtil;
+import com.library.util.mLog;
 
 import java.util.Arrays;
 
@@ -19,8 +21,9 @@ public class SpeakRecord {
     private AudioRecord audioRecord;
     private int multiple;
     private SingleThreadExecutor singleThreadExecutor = null;
+    private SpeakEncoder speakEncoder;
 
-    public SpeakRecord(int collectionBitrate, int collectionBitrate1, int multiple) {
+    public SpeakRecord(int collectionBitrate, int publishBitrate, int multiple, SpeakSend speakSend) {
         recBufSize = AudioRecord.getMinBufferSize(
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -34,6 +37,7 @@ public class SpeakRecord {
 
         this.multiple = multiple;
         singleThreadExecutor = new SingleThreadExecutor();
+        speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend);
     }
 
     public void start() {
@@ -70,8 +74,9 @@ public class SpeakRecord {
                     } else {
                         bytes = VoiceUtil.increasePCM(buffer, bufferReadResult, multiple);
                     }
-//                    vencoder.encode(bytes);
+                    speakEncoder.encode(bytes);
                 }
+                mLog.log("interrupt_Thread", "speak关闭线程");
             }
         });
     }
@@ -82,7 +87,10 @@ public class SpeakRecord {
 
     public void destroy() {
         singleThreadExecutor.shutdownNow();
-        audioRecord.release();
-        audioRecord = null;
+        if (audioRecord != null) {
+            audioRecord.release();
+            audioRecord = null;
+        }
+        speakEncoder.destroy();
     }
 }

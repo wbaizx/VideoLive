@@ -1,23 +1,22 @@
-package com.library.live.vc;
+package com.library.talk.coder;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 
 import com.library.common.VoicePlayer;
-import com.library.live.file.WriteMp4;
-import com.library.live.stream.BaseRecive;
+import com.library.talk.stream.ListenRecive;
 import com.library.util.OtherUtil;
 
 /**
- * Created by android1 on 2017/9/23.
+ * Created by android1 on 2017/12/25.
  */
 
-public class VoiceTrack implements VoicePlayer {
-    private VCDecoder vcdecoder;
+public class ListenTrack implements VoicePlayer {
     private AudioTrack audioTrack;
+    private ListenDecoder listenDecoder;
 
-    public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
+    public ListenTrack(ListenRecive listenRecive) {
         int recBufSize = AudioTrack.getMinBufferSize(
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_OUT_STEREO,
@@ -31,15 +30,15 @@ public class VoiceTrack implements VoicePlayer {
                 recBufSize,
                 AudioTrack.MODE_STREAM);
 
-        vcdecoder = new VCDecoder(baseRecive, writeMp4);
-        //注册回调接口
-        vcdecoder.register(this);
+        listenDecoder = new ListenDecoder();
+        listenRecive.setVoiceCallback(listenDecoder);
+        listenDecoder.register(this);
     }
 
     public void start() {
         if (audioTrack != null) {
             audioTrack.play();
-            vcdecoder.start();
+            listenDecoder.start();
         }
     }
 
@@ -50,9 +49,10 @@ public class VoiceTrack implements VoicePlayer {
         }
     }
 
+
     public void stop() {
         if (audioTrack != null) {
-            vcdecoder.stop();
+            listenDecoder.stop();
             audioTrack.stop();
         }
     }
@@ -62,6 +62,7 @@ public class VoiceTrack implements VoicePlayer {
             audioTrack.release();
             audioTrack = null;
         }
-        vcdecoder.destroy();
+        listenDecoder.destroy();
     }
 }
+

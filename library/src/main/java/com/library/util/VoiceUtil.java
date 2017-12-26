@@ -51,4 +51,17 @@ public class VoiceUtil {
         }
         return bytes;
     }
+
+    /**
+     * aac音频添加adts头
+     */
+    public static void addADTStoPacket(byte[] packet, int packetLen) {
+        packet[0] = (byte) 0xFF;
+        packet[1] = (byte) 0xF9;
+        packet[2] = (byte) (((2/*profile AAC LC*/ - 1) << 6) + (4/*freqIdx 44.1KHz*/ << 2) + (2/*chanCfgCPE*/ >> 2));
+        packet[3] = (byte) (((2/*chanCfgCPE*/ & 3) << 6) + (packetLen >> 11));
+        packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
+        packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
+        packet[6] = (byte) 0xFC;
+    }
 }

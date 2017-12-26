@@ -4,25 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.videolive.MainActivity">
-
-
-    <Button
-        android:id="@+id/push"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="视频推流端" />
+    tools:context="com.videolive.voice.Voice">
 
     <Button
-        android:id="@+id/pull"
+        android:id="@+id/startVoice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="视频播放端" />
-
+        android:text="开始对讲" />
     <Button
-        android:id="@+id/voice"
+        android:id="@+id/reciveVoice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="语音" />
+        android:text="开始接收" />
 
 </LinearLayout>

@@ -1,6 +1,6 @@
-package com.library.live.stream.upd;
+package com.library.talk.stream;
 
-import com.library.live.stream.BaseSend;
+import com.library.common.UdpControlInterface;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
@@ -16,26 +16,22 @@ import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
- * Created by android1 on 2017/9/25.
+ * Created by android1 on 2017/12/25.
  */
 
-public class UdpSend extends BaseSend {
-    private boolean issend = false;
+public class SpeakSend {
+    private boolean ismysocket = false;//用于判断是否需要销毁socket
     private DatagramSocket socket = null;
     private DatagramPacket packetsendPush = null;
-    private int voiceNum = 0;
-    private int videoNum = 0;
-    private final int sendUdplength = 480;//视频包长度固定480
-    private ByteBuffer buffvideo = ByteBuffer.allocate(548);
+    private SingleThreadExecutor singleThreadExecutor;
+    private boolean issend = false;
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
-    private boolean ismysocket = false;//用于判断是否需要销毁socket
     private int voiceSendNum = 0;//控制语音包合并发送，5个包发送一次
-
-    private SingleThreadExecutor singleThreadExecutor = null;
-
+    private int voiceNum = 0;//音频序号
     private ArrayBlockingQueue<byte[]> sendQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
+    private UdpControlInterface udpControl = null;
 
-    public UdpSend(String ip, int port) {
+    public SpeakSend(String ip, int port) {
         try {
             socket = new DatagramSocket(port);
             socket.setSendBufferSize(1024 * 1024);
@@ -47,7 +43,7 @@ public class UdpSend extends BaseSend {
     }
 
 
-    public UdpSend(DatagramSocket socket, String ip, int port) {
+    public SpeakSend(DatagramSocket socket, String ip, int port) {
         this.socket = socket;
         ismysocket = false;
         init(ip, port);
@@ -62,101 +58,31 @@ public class UdpSend extends BaseSend {
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
-    @Override
-    public void startsend() {
+    public void start() {
         if (packetsendPush != null) {
             buffvoice.clear();
             voiceSendNum = 0;
+            voiceNum = 0;
             issend = true;
             starsendThread();
         }
     }
 
-    @Override
-    public void stopsend() {
-        issend = false;
-    }
-
-    @Override
-    public void destroy() {
-        stopsend();
-        if (ismysocket) {
-            socket.close();
-            socket = null;
-        }
-        if (singleThreadExecutor != null) {
-            singleThreadExecutor.shutdownNow();
-            singleThreadExecutor = null;
+    public void startJustSend() {
+        if (packetsendPush != null) {
+            issend = true;
+            starsendThread();
         }
     }
 
-    @Override
-    public void addVideo(byte[] video) {
-        if (issend) {
-            writeVideo(video);
-        }
-    }
-
-    @Override
     public void addVoice(byte[] voice) {
         if (issend) {
             writeVoice(voice);
         }
     }
 
-    /**
-     * 发送视频
-     */
-    public void writeVideo(byte[] video) {
-        //当前截取位置
-        int nowPosition = 0;
-        //是否首次进入
-        boolean isOne = true;
-        //记录时间值
-        int time_vd_vaule = OtherUtil.getTime();
-
-        while ((video.length - nowPosition) > sendUdplength) {
-            buffvideo.clear();
-            //添加udp头
-            buffvideo.put((byte) 1);//视频TAG
-            buffvideo.putInt(videoNum++);//序号
-            //添加视频头
-            if (isOne) {
-                buffvideo.put((byte) 0);//起始帧
-            } else {
-                buffvideo.put((byte) 1);//中间帧
-            }
-            buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putShort((short) sendUdplength);//长度
-            //添加视频数据
-            buffvideo.put(video, nowPosition, sendUdplength);
-            //UPD发送
-            addbytes(buffvideo);
-            isOne = false;
-            nowPosition += sendUdplength;
-        }
-        if ((video.length - nowPosition) > 0) {
-            buffvideo.clear();
-            //添加udp头
-            buffvideo.put((byte) 1);//视频TAG
-            buffvideo.putInt(videoNum++);//序号
-            //添加视频头
-            if (isOne) {
-                buffvideo.put((byte) 3);//完整帧
-            } else {
-                buffvideo.put((byte) 2);//结束帧
-            }
-            buffvideo.putInt(time_vd_vaule);//时戳
-            buffvideo.putShort((short) (video.length - nowPosition));//长度
-            //添加视频数据
-            buffvideo.put(video, nowPosition, video.length - nowPosition);
-            //UPD发送
-            addbytes(buffvideo);
-        }
-    }
-
-    /**
-     * 发送音频
+    /*
+    发送音频
      */
     public void writeVoice(byte[] voice) {
         if (voiceSendNum == 0) {
@@ -187,12 +113,24 @@ public class UdpSend extends BaseSend {
         }
     }
 
-    private synchronized void addbytes(ByteBuffer buff) {
+    private void addbytes(ByteBuffer buff) {
         if (udpControl != null) {
-            //如果自定义UPD发送
+            //自定义发送
             OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position() - 0));
         } else {
             OtherUtil.addQueue(sendQueue, Arrays.copyOfRange(buff.array(), 0, buff.position()));//复制数组
+        }
+    }
+
+    /**
+     * 对于startJustSend模式,对外提供一个数据输入的方法
+     */
+    public void addbytes(byte[] voice) {
+        if (udpControl != null) {
+            //自定义发送
+            OtherUtil.addQueue(sendQueue, udpControl.Control(voice, 0, voice.length));
+        } else {
+            OtherUtil.addQueue(sendQueue, voice);
         }
     }
 
@@ -222,8 +160,29 @@ public class UdpSend extends BaseSend {
                         OtherUtil.sleepShortTime();
                     }
                 }
-                mLog.log("interrupt_Thread", "关闭发送线程");
+                mLog.log("interrupt_Thread", "speak关闭发送线程");
             }
         });
     }
+
+    public void stop() {
+        issend = false;
+    }
+
+    public void destroy() {
+        stop();
+        if (ismysocket) {
+            socket.close();
+            socket = null;
+        }
+        if (singleThreadExecutor != null) {
+            singleThreadExecutor.shutdownNow();
+            singleThreadExecutor = null;
+        }
+    }
+
+    public void setUdpControl(UdpControlInterface udpControl) {
+        this.udpControl = udpControl;
+    }
+
 }

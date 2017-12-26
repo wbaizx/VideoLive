@@ -22,11 +22,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Send"
+            android:name=".video.Send"
             android:hardwareAccelerated="true" />
-        <activity android:name=".Recive" />
-        <activity android:name=".SendReady" />
-        <activity android:name=".ReciveReady" />
+        <activity android:name=".video.Recive" />
+        <activity android:name=".video.SendReady" />
+        <activity android:name=".video.ReciveReady" />
+        <activity android:name=".voice.VoiceReady" />
+        <activity android:name=".voice.Voice"></activity>
     </application>
 
 </manifest>

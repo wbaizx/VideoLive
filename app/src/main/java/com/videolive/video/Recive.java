@@ -1,4 +1,4 @@
-package com.videolive;
+package com.videolive.video;
 
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,6 +9,7 @@ import android.widget.Button;
 import com.library.live.Player;
 import com.library.live.stream.upd.UdpRecive;
 import com.library.live.view.PlayerView;
+import com.videolive.R;
 
 public class Recive extends AppCompatActivity {
     private Player player;

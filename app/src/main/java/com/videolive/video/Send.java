@@ -1,4 +1,4 @@
-package com.videolive;
+package com.videolive.video;
 
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,6 +9,7 @@ import android.widget.Button;
 
 import com.library.live.Publish;
 import com.library.live.stream.upd.UdpSend;
+import com.videolive.R;
 
 public class Send extends AppCompatActivity {
     private Publish publish;

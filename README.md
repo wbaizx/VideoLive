@@ -20,7 +20,7 @@ Step 2：
 	}
 
 
-    视频直播和语音都是采用UDP协议发送，自行设置url和port。（需要5.0以上，仅支持硬编码）
+    视频直播和语音都是采用UDP协议发送，自行设置url和port。（需要5.0以上，仅支持硬编码，分包和命名不规范的地方望谅解0.0）
 
 
 
@@ -134,8 +134,6 @@ Step 2：
 
                 .setUdpPacketCacheMin(5)//udp包缓存数量,以音频为基准
                 .setVideoFrameCacheMin(6)//视频帧达到播放条件的缓存帧数
-                .setVideoCarltontime(400)//视频帧缓冲时间
-                .setVoiceCarltontime(400)//音频帧缓冲时间
 
    可以关闭默认缓冲动画
 
@@ -147,7 +145,7 @@ Step 2：
                     @Override
                     public void isBuffer(boolean isBuffer) {
                         /*
-                        isBuffer为true开始缓冲，为false表示结束缓冲，注意开始缓冲可能会多次回调。
+                        isBuffer为true开始缓冲，为false表示结束缓冲。
                         另外更新ui注意，此处回调在线程中。
                          */
                     }

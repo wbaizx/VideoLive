@@ -8,6 +8,7 @@ import android.util.Size;
 import com.library.live.file.WriteMp4;
 import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
+import com.library.util.SingleThreadExecutor;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,6 +26,7 @@ public class RecordEncoderVD {
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     private int width;
     private int height;
+    private SingleThreadExecutor singleThreadExecutor;
 
     public RecordEncoderVD(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
         this.writeMp4 = writeMp4;
@@ -44,6 +46,7 @@ public class RecordEncoderVD {
         }
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mediaCodec.start();
+        singleThreadExecutor = new SingleThreadExecutor();
     }
 
     /*
@@ -60,46 +63,49 @@ public class RecordEncoderVD {
     }
 
     public void StartEncoderThread() {
-        new Thread(new Runnable() {
+        singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 byte[] input = new byte[width * height * 3 / 2];
+                byte[] take;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
-                    if (YUVQueue.size() > 0) {
-                        ImagUtil.yuvI420ToNV12(YUVQueue.poll(), input, width, height);
-                        try {
-                            int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
-                            if (inputBufferIndex >= 0) {
-                                ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
-                                inputBuffer.clear();
-                                inputBuffer.put(input);
-                                mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, OtherUtil.getFPS(), 0);
-                            }
-
-                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-
-                            if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-                                writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
-                            }
-                            while (outputBufferIndex >= 0) {
-
-                                //写文件
-                                writeMp4.write(WriteMp4.video, mediaCodec.getOutputBuffer(outputBufferIndex), bufferInfo);
-
-                                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-                            }
-                        } catch (Throwable t) {
-                            t.printStackTrace();
+                    try {
+                        take = YUVQueue.take();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                    ImagUtil.yuvI420ToNV12(take, input, width, height);
+                    try {
+                        int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
+                        if (inputBufferIndex >= 0) {
+                            ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+                            inputBuffer.clear();
+                            inputBuffer.put(input);
+                            mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, OtherUtil.getFPS(), 0);
                         }
-                    } else {
-                        OtherUtil.sleepLongTime();
+
+                        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+
+                        if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
+                            writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
+                        }
+                        while (outputBufferIndex >= 0) {
+
+                            //写文件
+                            writeMp4.write(WriteMp4.video, mediaCodec.getOutputBuffer(outputBufferIndex), bufferInfo);
+
+                            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+                        }
+                    } catch (Throwable t) {
+                        t.printStackTrace();
                     }
                 }
             }
-        }).start();
+        });
     }
 
     public void destroy() {
@@ -107,5 +113,6 @@ public class RecordEncoderVD {
         mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
+        singleThreadExecutor.shutdownNow();
     }
 }

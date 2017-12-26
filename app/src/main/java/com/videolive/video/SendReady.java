@@ -1,4 +1,4 @@
-package com.videolive;
+package com.videolive.video;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 
 import com.library.live.vd.VDEncoder;
+import com.videolive.R;
 
 public class SendReady extends AppCompatActivity {
     private EditText url;

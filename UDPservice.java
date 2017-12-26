@@ -6,11 +6,14 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UDPservice {
 
 	private DatagramSocket server = null;
 	private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<byte[]>(100);
+	private ExecutorService executorService;
 	
 	public static void main(String[] args) {
 		UDPservice udPservice = new UDPservice();
@@ -26,8 +29,9 @@ public class UDPservice {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+		executorService = Executors.newFixedThreadPool(2);
 		
-		new Thread(new Runnable() {
+		executorService.execute(new Runnable() {
 			public void run() {
 				byte[] recvbuf = new byte[1024];
 				DatagramPacket recvPacket = new DatagramPacket(recvbuf,recvbuf.length);
@@ -60,13 +64,12 @@ public class UDPservice {
 					if(udpQueue.size()>98){
 						udpQueue.poll();
 					}
-					udpQueue.add(Arrays.copyOfRange(recvbuf, 0, recvPacket.getLength()));
+					udpQueue.offer(Arrays.copyOfRange(recvbuf, 0, recvPacket.getLength()));
 				}
 			}
-		}).start();
+		});
 		
-		
-		new Thread(new Runnable() {
+		executorService.execute(new Runnable() {
 			
 			public void run() {
 				// TODO Auto-generated method stub
@@ -76,21 +79,27 @@ public class UDPservice {
 				} catch (UnknownHostException e1) {
 					e1.printStackTrace();
 				}
+				byte[] data;
 				while(true){
-					if(udpQueue.size()>0){
-						sendPacket.setData(udpQueue.poll());
-						try {
-							server.send(sendPacket);
-							Thread.sleep(1);
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+					try {
+						data = udpQueue.take();
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+						break;
+					}
+					sendPacket.setData(data);
+					try {
+						server.send(sendPacket);
+						Thread.sleep(1);
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
 				}
 			}
-		}).start();
+		});
 
 	}
 

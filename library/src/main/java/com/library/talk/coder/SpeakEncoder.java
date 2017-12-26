@@ -1,10 +1,10 @@
-package com.library.live.vc;
+package com.library.talk.coder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
-import com.library.live.stream.BaseSend;
+import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
 import com.library.util.VoiceUtil;
 
@@ -12,17 +12,16 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Created by android1 on 2017/9/22.
+ * Created by android1 on 2017/12/25.
  */
 
-public class VCEncoder {
+public class SpeakEncoder {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
     private MediaCodec mediaCodec;
-    private BaseSend baseSend;
+    private SpeakSend speakSend;
 
-    public VCEncoder(int bitrate, int recBufSize, BaseSend baseSend) {
-        //UDP实例
-        this.baseSend = baseSend;
+    public SpeakEncoder(int bitrate, int recBufSize, SpeakSend speakSend) {
+        this.speakSend = speakSend;
         try {
             mediaCodec = MediaCodec.createEncoderByType(AAC_MIME);
         } catch (IOException e) {
@@ -68,7 +67,7 @@ public class VCEncoder {
                 VoiceUtil.addADTStoPacket(outData, bufferInfo.size + 7);
                 outputBuffer.get(outData, 7, bufferInfo.size);
                 //添加将要发送的音频数据
-                baseSend.addVoice(outData);
+                speakSend.addVoice(outData);
 
                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                 outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
@@ -79,8 +78,11 @@ public class VCEncoder {
     }
 
     public void destroy() {
-        mediaCodec.stop();
-        mediaCodec.release();
-        mediaCodec = null;
+        if (mediaCodec != null) {
+            mediaCodec.stop();
+            mediaCodec.release();
+            mediaCodec = null;
+        }
     }
 }
+

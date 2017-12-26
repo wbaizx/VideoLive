@@ -1,13 +1,11 @@
-package com.library.live.vc;
+package com.library.talk.coder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
-import com.library.common.VoicePlayer;
-import com.library.live.file.WriteMp4;
-import com.library.live.stream.BaseRecive;
 import com.library.common.VoiceCallback;
+import com.library.common.VoicePlayer;
 import com.library.util.OtherUtil;
 import com.library.util.mLog;
 
@@ -15,22 +13,18 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Created by android1 on 2017/9/23.
+ * Created by android1 on 2017/12/25.
  */
 
-public class VCDecoder implements VoiceCallback {
+public class ListenDecoder implements VoiceCallback {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
 
     private MediaCodec mDecoder;
-    private WriteMp4 writeMp4;
     private boolean isdecoder = false;
     private VoicePlayer voicePlayer;
 
-    public VCDecoder(BaseRecive baseRecive, WriteMp4 writeMp4) {
-        baseRecive.setVoiceCallback(this);
-        this.writeMp4 = writeMp4;
+    public ListenDecoder() {
         try {
-            //需要解码数据的类型
             //初始化解码器
             mDecoder = MediaCodec.createDecoderByType(AAC_MIME);
             MediaFormat mediaFormat = new MediaFormat();
@@ -43,8 +37,6 @@ public class VCDecoder implements VoiceCallback {
 
             byte[] data = new byte[]{(byte) 0x12, (byte) 0x10};
             mediaFormat.setByteBuffer("csd-0", ByteBuffer.wrap(data));
-
-            writeMp4.addTrack(mediaFormat, WriteMp4.voice);
 
             //解码器配置
             mDecoder.configure(mediaFormat, null, null, 0);
@@ -61,8 +53,6 @@ public class VCDecoder implements VoiceCallback {
     @Override
     public void voiceCallback(byte[] voice) {
         if (isdecoder) {
-            //写文件
-            writeFile(voice, voice.length);
             //音频解码耗时较少，直接单线程顺序执行解码
             decoder(voice);
         }
@@ -108,23 +98,6 @@ public class VCDecoder implements VoiceCallback {
         isdecoder = true;
     }
 
-
-    private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-    private ByteBuffer writebuffer = ByteBuffer.allocate(548);
-
-    /*
-    写入文件
-     */
-    private void writeFile(byte[] output, int length) {
-        writebuffer.clear();
-        writebuffer.put(output);
-        bufferInfo.size = length;
-        bufferInfo.offset = 0;
-        bufferInfo.presentationTimeUs = OtherUtil.getFPS();
-        bufferInfo.flags = MediaCodec.CRYPTO_MODE_UNENCRYPTED;
-        writeMp4.write(WriteMp4.voice, writebuffer, bufferInfo);
-    }
-
     /*
      * 释放资源
      */
@@ -140,4 +113,5 @@ public class VCDecoder implements VoiceCallback {
         mDecoder = null;
     }
 }
+
 

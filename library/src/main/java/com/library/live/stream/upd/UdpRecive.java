@@ -7,6 +7,7 @@ import com.library.live.stream.BaseRecive;
 import com.library.live.stream.IsInBuffer;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
+import com.library.common.UdpBytes;
 import com.library.util.mLog;
 
 import java.io.IOException;
@@ -69,8 +70,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         starReciveUdp();
     }
 
-    /*
-     接收UDP包
+    /**
+     * 接收UDP包
      */
     private void starReciveUdp() {
         //如果socket为空，则需要手动调用write方法送入数据
@@ -139,7 +140,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //            vdnum++;
 
             //从排好序的队列中取出数据
-            if (videoList.size() > (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
+            if (videoList.size() >= (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
                 //由于与读取的并发操作存在问题,这里单线程执行
                 mosaicVideoFrame(videoList.removeFirst());
             }
@@ -155,7 +156,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //            vcnum++;
 
             //从排好序的队列中取出数据
-            if (voiceList.size() > UdpPacketMin) {
+            if (voiceList.size() >= UdpPacketMin) {
                 //由于与读取的并发操作存在问题,这里单线程执行
                 mosaicVoiceFrame(voiceList.removeFirst());
             }
@@ -230,8 +231,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    /*
-    有序插入数据
+    /**
+     * 有序插入数据
      */
     private void addudp(LinkedList<UdpBytes> list, UdpBytes udpbyte) {
         if (list.size() == 0) {
@@ -255,6 +256,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             socket = null;
         }
         stopRevice();
+        strategy.destroy();
         if (singleThreadExecutor != null) {
             singleThreadExecutor.shutdownNow();
             singleThreadExecutor = null;
@@ -266,10 +268,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     3个参数分别为 视频帧达到播放条件的缓存帧数，视频帧缓冲时间，音频帧缓冲时间
      */
     @Override
-    public void setOther(int videoFrameCacheMin, int videoCarltontime, int voiceCarltontime) {
+    public void setOther(int videoFrameCacheMin) {
         strategy.setVideoFrameCacheMin(videoFrameCacheMin);
-        strategy.setVideoCarltontime(videoCarltontime);
-        strategy.setVoiceCarltontime(voiceCarltontime);
     }
 
     @Override

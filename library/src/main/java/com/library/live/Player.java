@@ -3,7 +3,7 @@ package com.library.live;
 import com.library.live.file.WriteCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseRecive;
-import com.library.live.stream.UdpControlInterface;
+import com.library.common.UdpControlInterface;
 import com.library.live.vc.VoiceTrack;
 import com.library.live.vd.VDDecoder;
 import com.library.live.view.PlayerView;
@@ -19,7 +19,7 @@ public class Player {
     private WriteMp4 writeMp4;
     private PlayerView playerView;
 
-    public Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
+    private Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
         this.baseRecive = baseRecive;
         this.playerView = playerView;
         this.baseRecive.setUdpControl(udpControl);
@@ -72,8 +72,6 @@ public class Player {
 
         private int udpPacketCacheMin = 5;//udp包最小缓存数量，用于udp包排序
         private int videoFrameCacheMin = 6;//视频帧达到播放标准的数量
-        private int videoCarltontime = 400;//视频帧缓冲时间
-        private int voiceCarltontime = 400;//音频帧缓冲时间
 
         private IsOutBuffer isOutBuffer = null;//缓冲接口回调
 
@@ -112,15 +110,6 @@ public class Player {
             return this;
         }
 
-        public Buider setVideoCarltontime(int videoCarltontime) {
-            this.videoCarltontime = videoCarltontime;
-            return this;
-        }
-
-        public Buider setVoiceCarltontime(int voiceCarltontime) {
-            this.voiceCarltontime = voiceCarltontime;
-            return this;
-        }
 
         public Buider setIsOutBuffer(IsOutBuffer isOutBuffer) {
             this.isOutBuffer = isOutBuffer;
@@ -136,7 +125,7 @@ public class Player {
             baseRecive.setUdpPacketCacheMin(udpPacketCacheMin);
             baseRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
             playerView.setIsOutBuffer(isOutBuffer);//给playerView设置isOutBuffer接口用以将缓冲状态回调给客户端
-            baseRecive.setOther(videoFrameCacheMin, videoCarltontime, voiceCarltontime);
+            baseRecive.setOther(videoFrameCacheMin);
             return new Player(playerView, codetype, baseRecive, udpControl, path);
         }
     }

@@ -7,6 +7,7 @@ import android.media.MediaRecorder;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
+import com.library.util.SingleThreadExecutor;
 import com.library.util.VoiceUtil;
 
 import java.util.Arrays;
@@ -24,6 +25,7 @@ public class VoiceRecord {
     private RecordEncoderVC recordEncoderVC;
 
     private int multiple = 1;
+    private SingleThreadExecutor singleThreadExecutor;
 
     /*
      *初始化
@@ -41,13 +43,14 @@ public class VoiceRecord {
                 recBufSize);
         vencoder = new VCEncoder(publishbitrate_vc, recBufSize, baseSend);
         recordEncoderVC = new RecordEncoderVC(collectionbitrate_vc, recBufSize, writeMp4);
+        singleThreadExecutor = new SingleThreadExecutor();
     }
 
     /*
      * 得到语音原始数据
      */
     public void start() {
-        new Thread(new Runnable() {
+        singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 if (audioRecord != null) {
@@ -74,7 +77,7 @@ public class VoiceRecord {
                     }
                 }
             }
-        }).start();
+        });
     }
 
 
@@ -83,9 +86,12 @@ public class VoiceRecord {
     }
 
     public void destroy() {
-        audioRecord.release();
-        audioRecord = null;
+        if (audioRecord != null) {
+            audioRecord.release();
+            audioRecord = null;
+        }
         recordEncoderVC.destroy();
         vencoder.destroy();
+        singleThreadExecutor.shutdownNow();
     }
 }

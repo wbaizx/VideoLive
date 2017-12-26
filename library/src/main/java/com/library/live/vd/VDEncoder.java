@@ -9,6 +9,7 @@ import com.library.live.stream.BaseSend;
 import com.library.util.ByteUtil;
 import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
+import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ public class VDEncoder {
     private int cHeight;
     private int pWidth;
     private int pHeight;
+    private SingleThreadExecutor singleThreadExecutor;
 
     public VDEncoder(Size csize, Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
         //UPD实例
@@ -54,6 +56,7 @@ public class VDEncoder {
         }
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mediaCodec.start();
+        singleThreadExecutor = new SingleThreadExecutor();
     }
 
     public void destroy() {
@@ -61,6 +64,7 @@ public class VDEncoder {
         mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
+        singleThreadExecutor.shutdownNow();
     }
 
     /*
@@ -77,69 +81,72 @@ public class VDEncoder {
     }
 
     public void StartEncoderThread() {
-        new Thread(new Runnable() {
+        singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 byte[] data = new byte[pWidth * pHeight * 3 / 2];
                 byte[] input = new byte[pWidth * pHeight * 3 / 2];
                 byte[] outData;
+                byte[] take;
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
                 while (isRuning) {
-                    if (YUVQueue.size() > 0) {
-                        if (cWidth == pWidth && cHeight == pHeight) {
-                            ImagUtil.yuvI420ToNV12(YUVQueue.poll(), input, pWidth, pHeight);
-                        } else {
-                            //两个分辨率不同才进行缩放
-                            ImagUtil.scaleI420(YUVQueue.poll(), cWidth, cHeight, data, pWidth, pHeight, 0);
-                            ImagUtil.yuvI420ToNV12(data, input, pWidth, pHeight);
-                        }
-                        try {
-                            int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
-                            if (inputBufferIndex >= 0) {
-                                ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
-                                inputBuffer.clear();
-                                inputBuffer.put(input);
-                                mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, OtherUtil.getFPS(), 0);
-                            }
-
-                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-                            while (outputBufferIndex >= 0) {
-                                outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
-
-                                if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
-                                    //sps pps信息
-                                    outData = new byte[bufferInfo.size];
-                                    outputBuffer.get(outData);
-                                    information = outData;
-                                    mLog.log("publish_sps_pps", ByteUtil.byte_to_16(information));
-                                } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-                                    //关键帧
-                                    outData = new byte[bufferInfo.size + information.length];
-                                    System.arraycopy(information, 0, outData, 0, information.length);
-                                    outputBuffer.get(outData, information.length, bufferInfo.size);
-                                    //交给发送器等待发送
-                                    baseSend.addVideo(outData);
-                                } else {
-                                    //普通帧
-                                    //添加将要发送的视频数据
-                                    outData = new byte[bufferInfo.size];
-                                    outputBuffer.get(outData);
-                                    mLog.log("publish_frame_length", "普通帧长度为  --   " + outData.length);
-                                    baseSend.addVideo(outData);
-                                }
-                                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-                                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-                            }
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                        }
+                    try {
+                        take = YUVQueue.take();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                    if (cWidth == pWidth && cHeight == pHeight) {
+                        ImagUtil.yuvI420ToNV12(take, input, pWidth, pHeight);
                     } else {
-                        OtherUtil.sleepLongTime();
+                        //两个分辨率不同才进行缩放
+                        ImagUtil.scaleI420(take, cWidth, cHeight, data, pWidth, pHeight, 0);
+                        ImagUtil.yuvI420ToNV12(data, input, pWidth, pHeight);
+                    }
+                    try {
+                        int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
+                        if (inputBufferIndex >= 0) {
+                            ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+                            inputBuffer.clear();
+                            inputBuffer.put(input);
+                            mediaCodec.queueInputBuffer(inputBufferIndex, 0, input.length, OtherUtil.getFPS(), 0);
+                        }
+
+                        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+                        while (outputBufferIndex >= 0) {
+                            outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
+
+                            if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
+                                //sps pps信息
+                                outData = new byte[bufferInfo.size];
+                                outputBuffer.get(outData);
+                                information = outData;
+                                mLog.log("publish_sps_pps", ByteUtil.byte_to_16(information));
+                            } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
+                                //关键帧
+                                outData = new byte[bufferInfo.size + information.length];
+                                System.arraycopy(information, 0, outData, 0, information.length);
+                                outputBuffer.get(outData, information.length, bufferInfo.size);
+                                //交给发送器等待发送
+                                baseSend.addVideo(outData);
+                            } else {
+                                //普通帧
+                                //添加将要发送的视频数据
+                                outData = new byte[bufferInfo.size];
+                                outputBuffer.get(outData);
+                                mLog.log("publish_frame_length", "普通帧长度为  --   " + outData.length);
+                                baseSend.addVideo(outData);
+                            }
+                            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+                        }
+                    } catch (Throwable t) {
+                        t.printStackTrace();
                     }
                 }
             }
-        }).start();
+        });
     }
 }
