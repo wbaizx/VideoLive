@@ -85,7 +85,6 @@ public class ListenRecive implements ListenCachingStrategyCallback {
      * 接收UDP包
      */
     private void starReciveUdp() {
-        //如果socket为空，则需要手动调用write方法送入数据
         if (socket != null) {
             handlerListenThread = new HandlerThread("Listen");
             handlerListenThread.start();
@@ -103,7 +102,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
                             e.printStackTrace();
                         }
                     }
-                    mLog.log("interrupt_Thread", "关闭接收线程");
+                    mLog.log("interrupt_Thread", "ListenRecive关闭线程");
                 }
             });
         }
@@ -120,17 +119,19 @@ public class ListenRecive implements ListenCachingStrategyCallback {
 
 
     public void write(byte[] bytes) {
-        if (udpControl != null) {
-            bytes = udpControl.Control(bytes, 0, bytes.length - 0);
-        }
-        UdpBytes udpBytes = new UdpBytes(bytes);
-        if (udpBytes.getTag() == (byte) 0x00) {
-            if (udpBytes.getNum() == 0) {//如果收到序号0包，清空排序队列
-                voiceList.clear();
+        if (isrecive) {
+            if (udpControl != null) {
+                bytes = udpControl.Control(bytes, 0, bytes.length - 0);
             }
-            addudp(voiceList, udpBytes);
-            if (voiceList.size() >= UdpPacketMin) {
-                mosaicVoiceFrame(voiceList.removeFirst());
+            UdpBytes udpBytes = new UdpBytes(bytes);
+            if (udpBytes.getTag() == (byte) 0x00) {
+                if (udpBytes.getNum() == 0) {//如果收到序号0包，清空排序队列
+                    voiceList.clear();
+                }
+                addudp(voiceList, udpBytes);
+                if (voiceList.size() >= UdpPacketMin) {
+                    mosaicVoiceFrame(voiceList.removeFirst());
+                }
             }
         }
     }

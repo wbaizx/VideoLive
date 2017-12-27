@@ -30,8 +30,6 @@ public class VCDecoder implements VoiceCallback {
         baseRecive.setVoiceCallback(this);
         this.writeMp4 = writeMp4;
         try {
-            //需要解码数据的类型
-            //初始化解码器
             mDecoder = MediaCodec.createDecoderByType(AAC_MIME);
             MediaFormat mediaFormat = new MediaFormat();
             mediaFormat.setString(MediaFormat.KEY_MIME, AAC_MIME);
@@ -46,7 +44,6 @@ public class VCDecoder implements VoiceCallback {
 
             writeMp4.addTrack(mediaFormat, WriteMp4.voice);
 
-            //解码器配置
             mDecoder.configure(mediaFormat, null, null, 0);
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,9 +58,7 @@ public class VCDecoder implements VoiceCallback {
     @Override
     public void voiceCallback(byte[] voice) {
         if (isdecoder) {
-            //写文件
             writeFile(voice, voice.length);
-            //音频解码耗时较少，直接单线程顺序执行解码
             decoder(voice);
         }
     }
@@ -73,10 +68,8 @@ public class VCDecoder implements VoiceCallback {
 
     public void decoder(byte[] voice) {
         try {
-            //返回一个包含有效数据的input buffer的index,-1->不存在
             int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufIndex >= 0) {
-                //获取当前的ByteBuffer
                 ByteBuffer dstBuf = mDecoder.getInputBuffer(inputBufIndex);
                 dstBuf.clear();
                 dstBuf.put(voice, 0, voice.length);

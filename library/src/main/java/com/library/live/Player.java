@@ -1,9 +1,9 @@
 package com.library.live;
 
+import com.library.common.UdpControlInterface;
 import com.library.live.file.WriteCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseRecive;
-import com.library.common.UdpControlInterface;
 import com.library.live.vc.VoiceTrack;
 import com.library.live.vd.VDDecoder;
 import com.library.live.view.PlayerView;
@@ -23,7 +23,6 @@ public class Player {
         this.baseRecive = baseRecive;
         this.playerView = playerView;
         this.baseRecive.setUdpControl(udpControl);
-        //文件录入类
         writeMp4 = new WriteMp4(path);
 
         vdDecoder = new VDDecoder(playerView, codetype, baseRecive, writeMp4);
@@ -60,6 +59,10 @@ public class Player {
 
     public void stopRecode() {
         writeMp4.stop();
+    }
+
+    public void write(byte[] bytes) {
+        baseRecive.write(bytes);
     }
 
     public static class Buider {

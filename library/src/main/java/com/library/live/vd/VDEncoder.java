@@ -136,7 +136,6 @@ public class VDEncoder {
                                 //添加将要发送的视频数据
                                 outData = new byte[bufferInfo.size];
                                 outputBuffer.get(outData);
-                                mLog.log("publish_frame_length", "普通帧长度为  --   " + outData.length);
                                 baseSend.addVideo(outData);
                             }
                             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);

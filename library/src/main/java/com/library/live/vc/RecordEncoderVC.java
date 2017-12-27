@@ -16,7 +16,6 @@ import java.nio.ByteBuffer;
 
 public class RecordEncoderVC {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
-    //文件录入类
     private WriteMp4 writeMp4;
     private MediaCodec mediaCodec;
 

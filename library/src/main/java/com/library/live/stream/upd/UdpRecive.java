@@ -3,11 +3,11 @@ package com.library.live.stream.upd;
 import android.os.Handler;
 import android.os.HandlerThread;
 
+import com.library.common.UdpBytes;
 import com.library.live.stream.BaseRecive;
 import com.library.live.stream.IsInBuffer;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
-import com.library.common.UdpBytes;
 import com.library.util.mLog;
 
 import java.io.IOException;
@@ -74,7 +74,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
      * 接收UDP包
      */
     private void starReciveUdp() {
-        //如果socket为空，则需要手动调用write方法送入数据
         if (socket != null) {
             handlerUdpThread = new HandlerThread("Udp");
             handlerUdpThread.start();
@@ -122,43 +121,41 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //    int vcnum = 0;
 
     //添加解码数据
+    @Override
     public void write(byte[] bytes) {
-        if (udpControl != null) {
-            bytes = udpControl.Control(bytes, 0, bytes.length - 0);
-        }
-        UdpBytes udpBytes = new UdpBytes(bytes);
+        if (isrecive) {
+            if (udpControl != null) {
+                bytes = udpControl.Control(bytes, 0, bytes.length - 0);
+            }
+            UdpBytes udpBytes = new UdpBytes(bytes);
 
-        if (udpBytes.getTag() == (byte) 0x01) {
-            //按序号有序插入
-            addudp(videoList, udpBytes);
+            if (udpBytes.getTag() == (byte) 0x01) {
+                addudp(videoList, udpBytes);
 
-            //计算丢包率--------------------------------
+                //计算丢包率--------------------------------
 //            if ((vdnum % 500) == 0) {//每500个包输出一次
 //                mLog.log("UdpLoss", "视频丢包率 :  " +
 //                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
 //            }
 //            vdnum++;
 
-            //从排好序的队列中取出数据
-            if (videoList.size() >= (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
-                //由于与读取的并发操作存在问题,这里单线程执行
-                mosaicVideoFrame(videoList.removeFirst());
-            }
-        } else if (udpBytes.getTag() == (byte) 0x00) {
-            //按序号有序插入
-            addudp(voiceList, udpBytes);
+                //从排好序的队列中取出数据
+                if (videoList.size() >= (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
+                    mosaicVideoFrame(videoList.removeFirst());
+                }
+            } else if (udpBytes.getTag() == (byte) 0x00) {
+                addudp(voiceList, udpBytes);
 
-            //计算丢包率--------------------------------
+                //计算丢包率--------------------------------
 //            if ((vcnum % 50) == 0) {//每50个包输出一次
 //                mLog.log("UdpLoss", "音频丢包率 :  " +
 //                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
 //            }
 //            vcnum++;
 
-            //从排好序的队列中取出数据
-            if (voiceList.size() >= UdpPacketMin) {
-                //由于与读取的并发操作存在问题,这里单线程执行
-                mosaicVoiceFrame(voiceList.removeFirst());
+                if (voiceList.size() >= UdpPacketMin) {
+                    mosaicVoiceFrame(voiceList.removeFirst());
+                }
             }
         }
     }
@@ -173,7 +170,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
      将链表数据拼接成帧
      */
     private void mosaicVideoFrame(UdpBytes udpBytes) {
-        //获取并移除数据
         if (udpBytes.getFrameTag() == (byte) 0x00) {//帧头
             frameBuffer.clear();
             //将帧头（480字节）信息回调给解码器，提取例如SPS，PPS之类的信息
@@ -190,7 +186,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                 oneFrame = -1;
             }
         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
-            if (udpBytes.getTime() == oneFrame) {//因为一帧的时间戳相同，利用时间判断是否为同一帧
+            if (udpBytes.getTime() == oneFrame) {
                 frameBuffer.put(udpBytes.getData());
                 //完整一帧，交个策略处理
                 strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(),

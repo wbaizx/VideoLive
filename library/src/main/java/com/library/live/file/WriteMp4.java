@@ -61,7 +61,6 @@ public class WriteMp4 {
             if (writeCallback != null && isSendReady) {
                 isSendReady = false;
                 writeCallback.isReady();
-                mLog.log("app_WriteMp4", "文件录制准备就绪----------------");
             }
         }
     }
@@ -74,7 +73,6 @@ public class WriteMp4 {
 
                     mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
                     frameNum++;
-                    mLog.log("app_WriteMp4", "写了视频数据----------------" + bufferInfo.flags);
                     if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                         isCanStop = true;
                         if (shouldStop) {
@@ -87,7 +85,6 @@ public class WriteMp4 {
                     presentationTimeUsVE = bufferInfo.presentationTimeUs;
 
                     mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
-                    mLog.log("app_WriteMp4", "写了音频数据----" + bufferInfo.flags);
                 }
             }
         }
@@ -112,7 +109,7 @@ public class WriteMp4 {
                     if (writeCallback != null) {
                         writeCallback.isStart();
                     }
-                    mLog.log("app_WriteMp4", "启动");
+                    mLog.log("app_WriteMp4", "文件录制启动");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -146,7 +143,7 @@ public class WriteMp4 {
                 if (writeCallback != null) {
                     writeCallback.isDestroy();
                 }
-                mLog.log("app_WriteMp4", "关闭");
+                mLog.log("app_WriteMp4", "文件录制关闭");
                 isCanStar = true;
                 //文件过短删除
                 if (frameNum < 20) {

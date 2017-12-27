@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 
 import com.library.util.OtherUtil;
-import com.library.util.mLog;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -18,7 +17,7 @@ public class ListenStrategy {
     private HandlerThread handlerVoiceThread;
     private Handler VoiceHandler;
     private boolean isStart = false;//开始播放标志(调用star的开始标志)
-    private boolean isVoiceStart = false;//开始播放标志(真正开发播放的开始标志)
+    private boolean isVoiceStart = false;//开始播放标志(真正播放的开始标志)
     private int voicemin = 5;//音频帧缓存达到播放条件
     private boolean voiceObservation = false;
 
@@ -57,14 +56,12 @@ public class ListenStrategy {
                     FramesObject framesObject = voiceframes.poll();
                     if (voiceframes.size() > (voicemin + 10)) {//帧缓存峰值为起始条件 +5，超过这个值则加快播放
                         while (voiceframes.size() > (voicemin + 40)) {//堆积数量超过峰值过多，丢弃部分
-                            mLog.log("playerInfromation_vc_listen_loss", "音频帧过多加大延时，丢弃部分");
                             voiceframes.poll();
                         }
                         VoiceHandler.post(this);
                     } else {
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference());
                     }
-                    mLog.log("playerInfromation_listen_vc", "音频队列数--" + voiceframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     if (listenCachingStrategyCallback != null) {
                         listenCachingStrategyCallback.voiceStrategy(framesObject.getData());
                     }

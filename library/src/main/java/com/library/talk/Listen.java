@@ -36,6 +36,10 @@ public class Listen {
         listenTrack.destroy();
     }
 
+    public void write(byte[] bytes) {
+        listenRecive.write(bytes);
+    }
+
 
     public static class Buider {
         private ListenRecive listenRecive;

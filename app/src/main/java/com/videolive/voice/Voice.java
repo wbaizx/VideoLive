@@ -48,7 +48,6 @@ public class Voice extends AppCompatActivity {
                 .setVoiceFrameCacheMin(5)
                 .build();
 
-
         startVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

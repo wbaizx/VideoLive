@@ -105,14 +105,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.ispreview = ispreview;
-        //文件录入类
         writeMp4 = new WriteMp4(path);
 
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
 
-        //发送实例
         this.baseSend = baseSend;
         this.baseSend.setUdpControl(udpControl);
         startControlFrameRate();
@@ -127,7 +125,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        //初始化并打开相机
         initCamera();
     }
 
@@ -148,10 +145,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
     初始化并打开相机
      */
     private void initCamera() {
-        //获取摄像头的管理者CameraManager
         CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        //遍历所有摄像头
         try {
+            //遍历所有摄像头
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
                 //查找符合当前选择的摄像头
@@ -184,7 +180,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                             public void onError(@NonNull CameraDevice cameraDevice, int i) {
 
                             }
-                        }, null);//创建在线程
+                        }, null);//创建在当前线程
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -281,7 +277,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(CameraCaptureSession session) {
-
                     //设置反复捕获数据的请求，这样预览界面就会一直有数据显示
                     try {
                         session.setRepeatingRequest(mCaptureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {

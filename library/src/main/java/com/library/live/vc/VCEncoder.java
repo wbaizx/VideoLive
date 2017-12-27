@@ -21,7 +21,6 @@ public class VCEncoder {
     private BaseSend baseSend;
 
     public VCEncoder(int bitrate, int recBufSize, BaseSend baseSend) {
-        //UDP实例
         this.baseSend = baseSend;
         try {
             mediaCodec = MediaCodec.createEncoderByType(AAC_MIME);

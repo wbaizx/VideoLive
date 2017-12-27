@@ -27,9 +27,6 @@ public class VoiceRecord {
     private int multiple = 1;
     private SingleThreadExecutor singleThreadExecutor;
 
-    /*
-     *初始化
-     */
     public VoiceRecord(BaseSend baseSend, int collectionbitrate_vc, int publishbitrate_vc, WriteMp4 writeMp4) {
         recBufSize = AudioRecord.getMinBufferSize(
                 OtherUtil.samplerate,

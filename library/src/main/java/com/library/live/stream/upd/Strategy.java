@@ -5,7 +5,6 @@ import android.os.HandlerThread;
 
 import com.library.live.stream.IsInBuffer;
 import com.library.util.OtherUtil;
-import com.library.util.mLog;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -25,7 +24,7 @@ public class Strategy {
 
     private boolean isStart = false;//开始播放标志(调用star的开始标志)
 
-    private boolean isVideoStart = false;//开始播放标志(真正开发播放的开始标志)
+    private boolean isVideoStart = false;//开始播放标志(真正播放的开始标志)
 
     private int VDtime;//视频帧绝对时间
 
@@ -72,14 +71,12 @@ public class Strategy {
                     FramesObject framesObject = videoframes.poll();
                     if (videoframes.size() > (videomin + 5)) {//帧缓存峰值为起始条件 +5，超过这个值则加快 frameControltime ms播放
                         while (videoframes.size() > (videomin + 35)) {//堆积数量超过峰值过多，丢弃部分
-                            mLog.log("playerInfromation_vd_loss", "视频帧过多加大延时，丢弃部分");
                             videoframes.poll();
                         }
                         VideoHandler.postDelayed(this, framesObject.getTimedifference() - frameControltime);
                     } else {
                         VideoHandler.postDelayed(this, framesObject.getTimedifference());
                     }
-                    mLog.log("playerInfromation_vd", "视频队列数--" + videoframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     VDtime = framesObject.getTime();
                     if (cachingStrategyCallback != null) {
                         cachingStrategyCallback.videoStrategy(framesObject.getData());
@@ -109,13 +106,12 @@ public class Strategy {
         @Override
         public void run() {
             if (isStart) {
-                if (isVideoStart && voiceframes.size() > 0) {//这里为什么用视频标志来判断，因为视频不播放的时候不需要播放声音
+                if (isVideoStart && voiceframes.size() > 0) {
                     FramesObject framesObject = voiceframes.poll();
-                    if ((framesObject.getTime() - VDtime) > voiceFrameControltime) {//音频帧快了，音频要慢一点
+                    if ((framesObject.getTime() - VDtime) > voiceFrameControltime) {//音频帧快了
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference() + frameControltime);
-                    } else if ((VDtime - framesObject.getTime()) > voiceFrameControltime) {//音频帧慢了，音频要快一点
+                    } else if ((VDtime - framesObject.getTime()) > voiceFrameControltime) {//音频帧慢了
                         if ((VDtime - framesObject.getTime()) > (voiceFrameControltime * 3)) {//音频帧过慢
-                            mLog.log("playerInfromation_vc_loss", "音频帧过慢，丢弃部分");
                             while (voiceframes.size() > 0) {
                                 if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime + frameControltime) {
                                     break;
@@ -126,7 +122,6 @@ public class Strategy {
                     } else {
                         VoiceHandler.postDelayed(this, framesObject.getTimedifference());
                     }
-                    mLog.log("playerInfromation_vc", "音频队列数--" + voiceframes.size() + "--时间戳--" + framesObject.getTimedifference());
                     if (cachingStrategyCallback != null) {
                         cachingStrategyCallback.voiceStrategy(framesObject.getData());
                     }

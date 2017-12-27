@@ -25,7 +25,6 @@ public class ListenDecoder implements VoiceCallback {
 
     public ListenDecoder() {
         try {
-            //初始化解码器
             mDecoder = MediaCodec.createDecoderByType(AAC_MIME);
             MediaFormat mediaFormat = new MediaFormat();
             mediaFormat.setString(MediaFormat.KEY_MIME, AAC_MIME);
@@ -38,7 +37,6 @@ public class ListenDecoder implements VoiceCallback {
             byte[] data = new byte[]{(byte) 0x12, (byte) 0x10};
             mediaFormat.setByteBuffer("csd-0", ByteBuffer.wrap(data));
 
-            //解码器配置
             mDecoder.configure(mediaFormat, null, null, 0);
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,7 +51,6 @@ public class ListenDecoder implements VoiceCallback {
     @Override
     public void voiceCallback(byte[] voice) {
         if (isdecoder) {
-            //音频解码耗时较少，直接单线程顺序执行解码
             decoder(voice);
         }
     }
@@ -63,10 +60,8 @@ public class ListenDecoder implements VoiceCallback {
 
     public void decoder(byte[] voice) {
         try {
-            //返回一个包含有效数据的input buffer的index,-1->不存在
             int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufIndex >= 0) {
-                //获取当前的ByteBuffer
                 ByteBuffer dstBuf = mDecoder.getInputBuffer(inputBufIndex);
                 dstBuf.clear();
                 dstBuf.put(voice, 0, voice.length);

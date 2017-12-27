@@ -74,12 +74,12 @@ public class UdpBytes {
         return data;
     }
 
-    //视频独有---------获取帧标记
+    //视频帧标记
     public int getFrameTag() {
         return frameTag;
     }
 
-    //音频独有---------定位到下一帧
+    //音频定位下一帧
     public void nextVoice() {
         time = ByteUtil.byte_to_int(bytes[lengthnum], bytes[lengthnum + 1], bytes[lengthnum + 2], bytes[lengthnum + 3]);
         //6是音频协议字长，data得到的是包中下一帧音频

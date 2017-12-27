@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.0'
+	        compile 'com.github.wbaizx:VideoLive:3.0.1'
 	}
 
 
@@ -130,6 +130,10 @@ Step 2：
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
+   如果程序中其他位置已经使用了相同端口的socket，需要使用UdpRecive的无参构造并手动调用player.write喂数据给解码器
+
+        player.write(byte[]);//注意此处送入的数据和setUdpControl控制不要冲突
+
    如果想要控制缓存策略可以在构建时设置如下参数
 
                 .setUdpPacketCacheMin(5)//udp包缓存数量,以音频为基准
@@ -151,11 +155,6 @@ Step 2：
                     }
                 })
 
-   如果程序中其他位置已经使用了相同端口的socket，需要自行接收数据并送入解码器
-       
-        1.UdpRecive udpRecive = new UdpRecive();(无参)
-        2.设置setPullMode方法参数为UdpRecive实例。 setPullMode(udpRecive)
-        3.得到数据后调用udpRecive.write(bytes); 注意bytes的处理不要和setUdpControl冲突(只用处理一方)
 
    如果需要去掉自己添加的协议
                 
@@ -258,9 +257,9 @@ Step 2：
                 .setPullMode(new ListenRecive(8765))
                 .build();
 
-  同视频推流一样如果需要需要自行传入数据，则调用ListenRecive的无参构造，然后调用write传入数据
+  同视频推流一样如果需要需要自行传入数据，则使用ListenRecive的无参构造，然后调用listen.write传入数据
 
-        listenRecive.write();
+        listen.write(byte[]);//注意此处送入的数据和setUdpControl控制不要冲突
 
   还可以传入一个接收socket
 

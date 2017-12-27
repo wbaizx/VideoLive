@@ -15,6 +15,11 @@ public abstract class BaseRecive {
     protected VideoCallback videoCallback = null;
     protected int UdpPacketMin = 5;
 
+    /**
+     * 手动送入数据的方法
+     */
+    public abstract void write(byte[] bytes);
+
     public abstract void startRevice();
 
     public abstract void stopRevice();

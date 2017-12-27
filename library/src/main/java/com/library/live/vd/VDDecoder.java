@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterface, VideoCallback {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
     public static final String H265 = MediaFormat.MIMETYPE_VIDEO_HEVC;
-    //解码格式
     private String MIME_TYPE = H264;
 
     //解码分辨率
@@ -44,7 +43,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         this.writeMp4 = writeMp4;
         MIME_TYPE = codetype;
         try {
-            //根据需要解码的类型创建解码器
             mCodec = MediaCodec.createDecoderByType(MIME_TYPE);
         } catch (IOException e) {
             e.printStackTrace();
@@ -104,7 +102,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
             writeMp4.addTrack(mediaFormat, WriteMp4.video);
 
-            //配置MediaFormat以及需要显示的surface
             mCodec.configure(mediaFormat, holder.getSurface(), null, 0);
             mCodec.start();
             isMediaCodecInit = true;
@@ -202,26 +199,19 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     public void decoder(byte[] video) {
         try {
-            //-1表示一直等待；0表示不等待；其他大于0的参数表示等待毫秒数
             int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufferIndex >= 0) {
                 ByteBuffer inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
-                //清空buffer
                 inputBuffer.clear();
-                //put需要解码的数据
                 inputBuffer.put(video, 0, video.length);
-                //解码
                 mCodec.queueInputBuffer(inputBufferIndex, 0, video.length, 0, 0);
             } else {
                 mLog.log("dcoder_failure", "dcoder failure_VD");
                 return;
             }
-            // 获取输出buffer index
             int outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
 
-            //循环解码，直到数据全部解码完成
             while (outputBufferIndex >= 0) {
-                //logger.d("outputBufferIndex = " + outputBufferIndex);
                 //true : 将解码的数据显示到surface上
                 mCodec.releaseOutputBuffer(outputBufferIndex, true);
                 outputBufferIndex = mCodec.dequeueOutputBuffer(debufferInfo, OtherUtil.waitTime);
