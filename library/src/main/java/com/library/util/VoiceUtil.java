@@ -15,8 +15,7 @@ public class VoiceUtil {
     public static byte[] noise(byte[] src, int srclength) {
         byte[] bytes = new byte[srclength];
         srclength = srclength >> 1;
-        short dest;
-        for (int i = 0; i < srclength; i++) {
+        for (int i = 0, dest; i < srclength; i++) {
             dest = (short) (((short) ((src[i * 2] & 0xff) | ((src[2 * i + 1] & 0xff) << 8))) >> 2);
             bytes[i * 2] = (byte) dest;
             bytes[i * 2 + 1] = (byte) (dest >> 8);
@@ -24,6 +23,7 @@ public class VoiceUtil {
         return bytes;
     }
 
+//    decibel = (int) (10 * Math.log10(v / (double) bufferReadResult));
 
     /**
      * PCM放大
@@ -36,10 +36,8 @@ public class VoiceUtil {
     public static byte[] increasePCM(byte[] src, int srclength, int multiple) {
         byte[] bytes = new byte[srclength];
         srclength = srclength >> 1;
-        int dest;
-        for (int i = 0; i < srclength; i++) {
-            dest = (short) ((src[i * 2] & 0xff) | (src[2 * i + 1] & 0xff) << 8);
-            dest = dest * multiple;
+        for (int i = 0, dest; i < srclength; i++) {
+            dest = (short) ((src[i * 2] & 0xff) | (src[2 * i + 1] & 0xff) << 8) * multiple;
             //爆音处理
             if (dest > 32766) {
                 dest = 32766;
