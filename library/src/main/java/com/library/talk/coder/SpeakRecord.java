@@ -3,7 +3,6 @@ package com.library.talk.coder;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
-import android.util.Log;
 
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
@@ -78,7 +77,6 @@ public class SpeakRecord {
             a += Math.abs((short) ((buffer[i * 2] & 0xff) | (buffer[2 * i + 1] & 0xff) << 8));
         }
         decibel = a / (double) length;
-        Log.d("ewfawfawe",(int) (20 * Math.log10(Math.max(1, Math.min(32767, decibel))))+"----------------------");
     }
 
     public int getDecibel() {

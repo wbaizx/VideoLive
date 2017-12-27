@@ -20,7 +20,6 @@ public class Voice extends AppCompatActivity {
     private Speak speak;
     private Listen listen;
     private DatagramSocket socket = null;
-    int a = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +51,6 @@ public class Voice extends AppCompatActivity {
         startVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                listen.setVoiceIncreaseMultiple(a++);
                 if (startVoice.getText().toString().equals("开始对讲")) {
                     speak.start();
                     startVoice.setText("停止对讲");
