@@ -142,23 +142,22 @@ public class SpeakSend {
             @Override
             public void run() {
                 byte[] data;
-                while (issend) {
-                    try {
+                try {
+                    while (issend) {
                         data = sendQueue.take();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        break;
-                    }
-                    if (data != null) {
-                        packetsendPush.setData(data);
-                        try {
-                            socket.send(packetsendPush);
-                        } catch (IOException e) {
-                            mLog.log("senderror", "发送失败");
-                            e.printStackTrace();
+                        if (data != null) {
+                            packetsendPush.setData(data);
+                            try {
+                                socket.send(packetsendPush);
+                            } catch (IOException e) {
+                                mLog.log("senderror", "发送失败");
+                                e.printStackTrace();
+                            }
+                            Thread.sleep(1);
                         }
-                        OtherUtil.sleepShortTime();
                     }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
                 mLog.log("interrupt_Thread", "speak关闭发送线程");
             }
