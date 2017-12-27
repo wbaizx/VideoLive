@@ -93,15 +93,14 @@ public class RecordEncoderVD {
                             writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.video);
                         }
                         while (outputBufferIndex >= 0) {
-
                             //写文件
                             writeMp4.write(WriteMp4.video, mediaCodec.getOutputBuffer(outputBufferIndex), bufferInfo);
 
                             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
                         }
-                    } catch (Throwable t) {
-                        t.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }

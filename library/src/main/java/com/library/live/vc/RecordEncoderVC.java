@@ -46,33 +46,37 @@ public class RecordEncoderVC {
    音频数据编码，音频数据处理较少，直接编码
     */
     public void encode(byte[] result) {
-        inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
-        if (inputBufferIndex >= 0) {
-            ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
-            inputBuffer.clear();
-            inputBuffer.put(result);
-            mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, OtherUtil.getFPS(), 0);
-        }
+        try {
+            inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
+            if (inputBufferIndex >= 0) {
+                ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+                inputBuffer.clear();
+                inputBuffer.put(result);
+                mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, OtherUtil.getFPS(), 0);
+            }
 
-        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-
-        if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-            writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
-        }
-
-        while (outputBufferIndex >= 0) {
-            ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
-            outputBuffer.position(bufferInfo.offset);
-            outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
-
-            byte[] outData = new byte[bufferInfo.size + 7];
-            addADTStoPacket(outData, bufferInfo.size + 7);
-            outputBuffer.get(outData, 7, bufferInfo.size);
-            //写文件
-            writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
-
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+
+            if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
+                writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
+            }
+
+            while (outputBufferIndex >= 0) {
+                ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
+                outputBuffer.position(bufferInfo.offset);
+                outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
+
+                byte[] outData = new byte[bufferInfo.size + 7];
+                addADTStoPacket(outData, bufferInfo.size + 7);
+                outputBuffer.get(outData, 7, bufferInfo.size);
+                //写文件
+                writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
+
+                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
