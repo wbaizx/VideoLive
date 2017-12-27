@@ -23,7 +23,6 @@ public class VoiceUtil {
         return bytes;
     }
 
-//    decibel = (int) (10 * Math.log10(v / (double) bufferReadResult));
 
     /**
      * PCM放大
@@ -33,6 +32,9 @@ public class VoiceUtil {
      * @return
      */
     public static byte[] increasePCM(byte[] src, int multiple) {
+        if (multiple == 1) {
+            return src;
+        }
         byte[] bytes = new byte[src.length];
         int datalength = src.length >> 1;
         for (int i = 0, dest; i < datalength; i++) {

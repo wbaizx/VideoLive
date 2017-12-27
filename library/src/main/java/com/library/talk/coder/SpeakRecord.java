@@ -3,6 +3,7 @@ package com.library.talk.coder;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.util.Log;
 
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
@@ -20,6 +21,7 @@ public class SpeakRecord {
     private AudioRecord audioRecord;
     private SingleThreadExecutor singleThreadExecutor = null;
     private SpeakEncoder speakEncoder;
+    private int decibel = 0;
 
     public SpeakRecord(int collectionBitrate, int publishBitrate, SpeakSend speakSend) {
         recBufSize = AudioRecord.getMinBufferSize(
@@ -65,6 +67,13 @@ public class SpeakRecord {
                     if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                         continue;
                     }
+
+//                    int v = 0;
+//                    for (int i = 0; i < bufferReadResult; i++) {
+//                        v += buffer[i] * buffer[i];
+//                    }
+//                    decibel = (int) (10 * Math.log10(v / (double) bufferReadResult));
+//                    Log.d("efweaf",decibel+"");
                     speakEncoder.encode(Arrays.copyOfRange(buffer, 0, bufferReadResult));
                 }
                 mLog.log("interrupt_Thread", "speak关闭线程");
@@ -79,5 +88,9 @@ public class SpeakRecord {
             audioRecord = null;
         }
         speakEncoder.destroy();
+    }
+
+    public int getDecibel() {
+        return Math.max(0, decibel);
     }
 }

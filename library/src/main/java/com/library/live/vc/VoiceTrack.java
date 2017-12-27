@@ -52,11 +52,8 @@ public class VoiceTrack implements VoicePlayer {
     @Override
     public void voicePlayer(byte[] voicebyte) {
         if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
-            if (multiple == 1) {
-                audioTrack.write(voicebyte, 0, voicebyte.length);
-            } else {
-                audioTrack.write(VoiceUtil.increasePCM(voicebyte, multiple), 0, voicebyte.length);
-            }
+            //控制音频音量
+            audioTrack.write(VoiceUtil.increasePCM(voicebyte, multiple), 0, voicebyte.length);
         }
     }
 
