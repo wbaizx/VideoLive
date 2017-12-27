@@ -46,14 +46,14 @@ public class SpeakEncoder {
     /*
     音频数据编码，音频数据处理较少，直接编码
      */
-    public void encode(byte[] result) {
+    public void encode(byte[] result, int length) {
         try {
             inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufferIndex >= 0) {
                 ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
                 inputBuffer.clear();
-                inputBuffer.put(result);
-                mediaCodec.queueInputBuffer(inputBufferIndex, 0, result.length, OtherUtil.getFPS(), 0);
+                inputBuffer.put(result, 0, length);
+                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, OtherUtil.getFPS(), 0);
             }
 
             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);

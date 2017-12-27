@@ -9,8 +9,6 @@ import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 
-import java.util.Arrays;
-
 /**
  * Created by android1 on 2017/9/22.
  */
@@ -61,9 +59,8 @@ public class VoiceRecord {
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;
                         }
-                        byte[] bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
-                        vencoder.encode(bytes);
-                        recordEncoderVC.encode(bytes);
+                        vencoder.encode(buffer, bufferReadResult);
+                        recordEncoderVC.encode(buffer, bufferReadResult);
                     }
                 }
             }

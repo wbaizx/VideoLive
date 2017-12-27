@@ -28,6 +28,10 @@ public class Speak {
         speakSend.stop();
     }
 
+    public int getDecibel() {
+        return speakRecord.getDecibel();
+    }
+
     public void startJustSend() {
         speakSend.startJustSend();
     }

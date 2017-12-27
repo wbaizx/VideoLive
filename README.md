@@ -242,6 +242,10 @@ Step 2：
 
         speak.addbytes(byte[]);
 
+  获取音量分贝大小（0-90）
+
+        speak.getDecibel();
+
    最后销毁资源
 
         speak.destroy();

@@ -20,7 +20,8 @@ public class Voice extends AppCompatActivity {
     private Speak speak;
     private Listen listen;
     private DatagramSocket socket = null;
-int a=2;
+    int a = 2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

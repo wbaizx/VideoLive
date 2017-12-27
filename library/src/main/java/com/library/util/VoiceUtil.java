@@ -35,20 +35,19 @@ public class VoiceUtil {
         if (multiple == 1) {
             return src;
         }
-        byte[] bytes = new byte[src.length];
         int datalength = src.length >> 1;
         for (int i = 0, dest; i < datalength; i++) {
             dest = (short) ((src[i * 2] & 0xff) | (src[2 * i + 1] & 0xff) << 8) * multiple;
             //爆音处理
-            if (dest > 32766) {
-                dest = 32766;
-            } else if (dest < -32767) {
-                dest = -32767;
+            if (dest > 32767) {
+                dest = 32767;
+            } else if (dest < -32768) {
+                dest = -32768;
             }
-            bytes[i * 2] = (byte) dest;
-            bytes[i * 2 + 1] = (byte) (dest >> 8);
+            src[i * 2] = (byte) dest;
+            src[i * 2 + 1] = (byte) (dest >> 8);
         }
-        return bytes;
+        return src;
     }
 
     /**

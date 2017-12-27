@@ -10,8 +10,6 @@ import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
 
-import java.util.Arrays;
-
 /**
  * Created by android1 on 2017/12/23.
  */
@@ -21,7 +19,7 @@ public class SpeakRecord {
     private AudioRecord audioRecord;
     private SingleThreadExecutor singleThreadExecutor = null;
     private SpeakEncoder speakEncoder;
-    private int decibel = 0;
+    private double decibel = 0;//平均振幅,用于计算分贝
 
     public SpeakRecord(int collectionBitrate, int publishBitrate, SpeakSend speakSend) {
         recBufSize = AudioRecord.getMinBufferSize(
@@ -34,7 +32,6 @@ public class SpeakRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
-
         singleThreadExecutor = new SingleThreadExecutor();
         speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend);
     }
@@ -67,18 +64,25 @@ public class SpeakRecord {
                     if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                         continue;
                     }
-
-//                    int v = 0;
-//                    for (int i = 0; i < bufferReadResult; i++) {
-//                        v += buffer[i] * buffer[i];
-//                    }
-//                    decibel = (int) (10 * Math.log10(v / (double) bufferReadResult));
-//                    Log.d("efweaf",decibel+"");
-                    speakEncoder.encode(Arrays.copyOfRange(buffer, 0, bufferReadResult));
+                    speakEncoder.encode(buffer, bufferReadResult);
+                    setDecibel(buffer, bufferReadResult / 2);
                 }
                 mLog.log("interrupt_Thread", "speak关闭线程");
             }
         });
+    }
+
+    private void setDecibel(byte[] buffer, int length) {
+        long a = 0;
+        for (int i = 0; i < length; i++) {
+            a += Math.abs((short) ((buffer[i * 2] & 0xff) | (buffer[2 * i + 1] & 0xff) << 8));
+        }
+        decibel = a / (double) length;
+        Log.d("ewfawfawe",(int) (20 * Math.log10(Math.max(1, Math.min(32767, decibel))))+"----------------------");
+    }
+
+    public int getDecibel() {
+        return (int) (20 * Math.log10(Math.max(1, Math.min(32767, decibel))));
     }
 
     public void destroy() {
@@ -88,9 +92,5 @@ public class SpeakRecord {
             audioRecord = null;
         }
         speakEncoder.destroy();
-    }
-
-    public int getDecibel() {
-        return Math.max(0, decibel);
     }
 }
