@@ -7,6 +7,7 @@ import android.media.AudioTrack;
 import com.library.common.VoicePlayer;
 import com.library.talk.stream.ListenRecive;
 import com.library.util.OtherUtil;
+import com.library.util.VoiceUtil;
 
 /**
  * Created by android1 on 2017/12/25.
@@ -15,6 +16,7 @@ import com.library.util.OtherUtil;
 public class ListenTrack implements VoicePlayer {
     private AudioTrack audioTrack;
     private ListenDecoder listenDecoder;
+    private int multiple;
 
     public ListenTrack(ListenRecive listenRecive) {
         int recBufSize = AudioTrack.getMinBufferSize(
@@ -42,10 +44,18 @@ public class ListenTrack implements VoicePlayer {
         }
     }
 
+    public void setVoiceIncreaseMultiple(int multiple) {
+        this.multiple = Math.max(1, Math.min(8, multiple));
+    }
+
     @Override
     public void voicePlayer(byte[] voicebyte) {
         if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
-            audioTrack.write(voicebyte, 0, voicebyte.length);
+            if (multiple == 1) {
+                audioTrack.write(voicebyte, 0, voicebyte.length);
+            } else {
+                audioTrack.write(VoiceUtil.increasePCM(voicebyte, multiple), 0, voicebyte.length);
+            }
         }
     }
 

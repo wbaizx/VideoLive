@@ -42,7 +42,6 @@ public class Send extends AppCompatActivity {
                 .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
-                .setMultiple(getIntent().getExtras().getInt("multiple"))
                 .build();
 
         tuistar.setOnClickListener(new View.OnClickListener() {

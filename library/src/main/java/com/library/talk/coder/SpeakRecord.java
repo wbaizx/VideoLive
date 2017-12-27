@@ -7,7 +7,6 @@ import android.media.MediaRecorder;
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
-import com.library.util.VoiceUtil;
 import com.library.util.mLog;
 
 import java.util.Arrays;
@@ -19,11 +18,10 @@ import java.util.Arrays;
 public class SpeakRecord {
     private int recBufSize;
     private AudioRecord audioRecord;
-    private int multiple;
     private SingleThreadExecutor singleThreadExecutor = null;
     private SpeakEncoder speakEncoder;
 
-    public SpeakRecord(int collectionBitrate, int publishBitrate, int multiple, SpeakSend speakSend) {
+    public SpeakRecord(int collectionBitrate, int publishBitrate, SpeakSend speakSend) {
         recBufSize = AudioRecord.getMinBufferSize(
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -35,7 +33,6 @@ public class SpeakRecord {
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
 
-        this.multiple = multiple;
         singleThreadExecutor = new SingleThreadExecutor();
         speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend);
     }
@@ -68,21 +65,11 @@ public class SpeakRecord {
                     if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                         continue;
                     }
-                    byte[] bytes;
-                    if (multiple == 1) {
-                        bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
-                    } else {
-                        bytes = VoiceUtil.increasePCM(buffer, bufferReadResult, multiple);
-                    }
-                    speakEncoder.encode(bytes);
+                    speakEncoder.encode(Arrays.copyOfRange(buffer, 0, bufferReadResult));
                 }
                 mLog.log("interrupt_Thread", "speak关闭线程");
             }
         });
-    }
-
-    public void setVoiceIncreaseMultiple(int multiple) {
-        this.multiple = Math.max(1, Math.min(8, multiple));
     }
 
     public void destroy() {

@@ -51,7 +51,6 @@ Step 2：
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64 * 1024)//音频采集采样率
-                .setMultiple(1)//音频放大倍数，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
                 .setPublishBitrateVC(20 * 1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
@@ -97,8 +96,6 @@ Step 2：
 
         publish.stopRecode();//停止录制
 
-        publish.setVoiceIncreaseMultiple();//动态调整音量(放大pcm音量，与设备音量无关)
-
   但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
 
         publish.setWriteCallback(new WriteCallback());
@@ -127,12 +124,17 @@ Step 2：
         player = new Player.Buider((PlayerView) findViewById(R.id.playerView))
                 .setPullMode(new UdpRecive(8765))
                 .setVideoCode(VDDecoder.H264)//设置解码方式
+                .setMultiple(1)//音频调节，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
    如果程序中其他位置已经使用了相同端口的socket，需要使用UdpRecive的无参构造并手动调用player.write喂数据给解码器
 
-        player.write(byte[]);//注意此处送入的数据和setUdpControl控制不要冲突
+        player.write(byte[]);
+
+   动态调节音量
+
+        player.setVoiceIncreaseMultiple();//动态调整音量(放大pcm音量，与设备音量无关)
 
    如果想要控制缓存策略可以在构建时设置如下参数
 
@@ -206,7 +208,6 @@ Step 2：
                 .setPushMode(new SpeakSend("192.168.2.106", 8765))
                 .setCollectionBitrate(64 * 1024)//音频采集采样率
                 .setPublishBitrate(20 * 1024)//音频推流采样率
-                .setMultiple(1)//音频放大倍数，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
                 .build();
 
 
@@ -231,10 +232,6 @@ Step 2：
 
         speak.stop();
 
-  推流过程中可以动态调整音量
-
-        speak.setVoiceIncreaseMultiple(3);
-
   注意如果同时视频推流和语音推流会出现冲突，如果正在视频推流，则不应该启动语音推流，如果已经启动，需调用stop方法关闭。
   然后此时启动发送和关闭发送对应如下方法
 
@@ -254,12 +251,13 @@ Step 2：
      接收端：
 
         listen = new Listen.Buider()
-                .setPullMode(new ListenRecive(8765))
+                .setPullMode(new ListenRecive(socket))
+                .setMultiple(1)//音频调节，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
                 .build();
 
-  同视频推流一样如果需要需要自行传入数据，则使用ListenRecive的无参构造，然后调用listen.write传入数据
+  同视频推流一样如果需要需要自行传入数据，则调用ListenRecive的无参构造，然后调用write传入数据
 
-        listen.write(byte[]);//注意此处送入的数据和setUdpControl控制不要冲突
+        listenRecive.write();
 
   还可以传入一个接收socket
 
@@ -278,6 +276,10 @@ Step 2：
                           return Arrays.copyOf(bytes, length);
                       }
                   })
+
+  动态调节音量
+
+        listen.setVoiceIncreaseMultiple(3);//动态调整音量(放大pcm音量，与设备音量无关)
 
   启动接收
 

@@ -20,7 +20,7 @@ public class Voice extends AppCompatActivity {
     private Speak speak;
     private Listen listen;
     private DatagramSocket socket = null;
-
+int a=2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,18 +39,19 @@ public class Voice extends AppCompatActivity {
                 .setPushMode(new SpeakSend(socket, getIntent().getExtras().getString("url"), getIntent().getExtras().getInt("port")))
                 .setCollectionBitrate(getIntent().getExtras().getInt("collectionbitrate_vc"))
                 .setPublishBitrate(getIntent().getExtras().getInt("publishbitrate_vc"))
-                .setMultiple(getIntent().getExtras().getInt("multiple"))
                 .build();
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))
                 .setUdpPacketCacheMin(2)
                 .setVoiceFrameCacheMin(5)
+                .setMultiple(getIntent().getExtras().getInt("multiple"))
                 .build();
 
         startVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                listen.setVoiceIncreaseMultiple(a++);
                 if (startVoice.getText().toString().equals("开始对讲")) {
                     speak.start();
                     startVoice.setText("停止对讲");

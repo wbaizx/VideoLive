@@ -8,7 +8,6 @@ import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
-import com.library.util.VoiceUtil;
 
 import java.util.Arrays;
 
@@ -24,7 +23,6 @@ public class VoiceRecord {
     //音频录制编码
     private RecordEncoderVC recordEncoderVC;
 
-    private int multiple = 1;
     private SingleThreadExecutor singleThreadExecutor;
 
     public VoiceRecord(BaseSend baseSend, int collectionbitrate_vc, int publishbitrate_vc, WriteMp4 writeMp4) {
@@ -63,12 +61,7 @@ public class VoiceRecord {
                         if (bufferReadResult == AudioRecord.ERROR_INVALID_OPERATION || bufferReadResult == AudioRecord.ERROR_BAD_VALUE || bufferReadResult == 0 || bufferReadResult == -1) {
                             continue;
                         }
-                        byte[] bytes;
-                        if (multiple == 1) {
-                            bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
-                        } else {
-                            bytes = VoiceUtil.increasePCM(buffer, bufferReadResult, multiple);
-                        }
+                        byte[] bytes = Arrays.copyOfRange(buffer, 0, bufferReadResult);
                         vencoder.encode(bytes);
                         recordEncoderVC.encode(bytes);
                     }
@@ -77,10 +70,6 @@ public class VoiceRecord {
         });
     }
 
-
-    public void setIncreaseMultiple(int multiple) {
-        this.multiple = Math.max(1, Math.min(8, multiple));
-    }
 
     public void destroy() {
         if (audioRecord != null) {

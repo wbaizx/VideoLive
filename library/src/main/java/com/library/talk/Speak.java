@@ -12,10 +12,10 @@ public class Speak {
     private SpeakRecord speakRecord;
     private SpeakSend speakSend;
 
-    public Speak(int collectionBitrate, int publishBitrate, int multiple, UdpControlInterface udpControl, SpeakSend speakSend) {
+    public Speak(int collectionBitrate, int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend) {
         this.speakSend = speakSend;
         speakSend.setUdpControl(udpControl);
-        speakRecord = new SpeakRecord(collectionBitrate, publishBitrate, multiple, speakSend);
+        speakRecord = new SpeakRecord(collectionBitrate, publishBitrate, speakSend);
     }
 
     public void start() {
@@ -45,14 +45,9 @@ public class Speak {
         speakSend.destroy();
     }
 
-    public void setVoiceIncreaseMultiple(int multiple) {
-        speakRecord.setVoiceIncreaseMultiple(multiple);
-    }
-
     public static class Buider {
         private int collectionBitrate = 64 * 1024;
         private int publishBitrate = 20 * 1024;
-        private int multiple = 1;
         private SpeakSend speakSend;
         private UdpControlInterface udpControl;
 
@@ -71,10 +66,6 @@ public class Speak {
             return this;
         }
 
-        public Buider setMultiple(int multiple) {
-            this.multiple = multiple;
-            return this;
-        }
 
         public Buider setUdpControl(UdpControlInterface udpControl) {
             this.udpControl = udpControl;
@@ -82,7 +73,7 @@ public class Speak {
         }
 
         public Speak build() {
-            return new Speak(collectionBitrate, publishBitrate, multiple, udpControl, speakSend);
+            return new Speak(collectionBitrate, publishBitrate, udpControl, speakSend);
         }
     }
 }

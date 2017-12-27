@@ -12,8 +12,9 @@ public class Listen {
     private ListenTrack listenTrack;
     private ListenRecive listenRecive;
 
-    private Listen(ListenRecive listenRecive, int udpPacketCacheMin, int voiceFrameCacheMin, UdpControlInterface udpControl) {
+    private Listen(ListenRecive listenRecive, int udpPacketCacheMin, int voiceFrameCacheMin, UdpControlInterface udpControl, int multiple) {
         listenTrack = new ListenTrack(listenRecive);
+        listenTrack.setVoiceIncreaseMultiple(multiple);
         listenRecive.setUdpControl(udpControl);
         listenRecive.setUdpPacketMin(udpPacketCacheMin);
         listenRecive.setVoiceFrameCacheMin(voiceFrameCacheMin);
@@ -30,6 +31,9 @@ public class Listen {
         listenTrack.stop();
     }
 
+    public void setVoiceIncreaseMultiple(int multiple) {
+        listenTrack.setVoiceIncreaseMultiple(multiple);
+    }
 
     public void destroy() {
         listenRecive.destroy();
@@ -46,9 +50,15 @@ public class Listen {
         private int udpPacketCacheMin = 2;
         private int voiceFrameCacheMin = 5;
         private UdpControlInterface udpControl;
+        private int multiple = 1;
 
         public Buider setPullMode(ListenRecive listenRecive) {
             this.listenRecive = listenRecive;
+            return this;
+        }
+
+        public Buider setMultiple(int multiple) {
+            this.multiple = multiple;
             return this;
         }
 
@@ -68,7 +78,7 @@ public class Listen {
         }
 
         public Listen build() {
-            return new Listen(listenRecive, udpPacketCacheMin, voiceFrameCacheMin, udpControl);
+            return new Listen(listenRecive, udpPacketCacheMin, voiceFrameCacheMin, udpControl, multiple);
         }
     }
 }

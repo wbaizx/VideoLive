@@ -29,6 +29,7 @@ public class Recive extends AppCompatActivity {
         player = new Player.Buider((PlayerView) findViewById(R.id.playerView))
                 .setPullMode(new UdpRecive(getIntent().getExtras().getInt("port")))
                 .setVideoCode(getIntent().getExtras().getString("videoCode"))
+                .setMultiple(getIntent().getExtras().getInt("multiple"))
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
                 .build();
 

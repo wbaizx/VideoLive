@@ -19,7 +19,7 @@ public class Player {
     private WriteMp4 writeMp4;
     private PlayerView playerView;
 
-    private Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path) {
+    private Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, String path, int multiple) {
         this.baseRecive = baseRecive;
         this.playerView = playerView;
         this.baseRecive.setUdpControl(udpControl);
@@ -27,6 +27,11 @@ public class Player {
 
         vdDecoder = new VDDecoder(playerView, codetype, baseRecive, writeMp4);
         voiceTrack = new VoiceTrack(baseRecive, writeMp4);
+        voiceTrack.setIncreaseMultiple(multiple);
+    }
+
+    public void setVoiceIncreaseMultiple(int multiple) {
+        voiceTrack.setIncreaseMultiple(multiple);
     }
 
     public void setWriteCallback(WriteCallback writeCallback) {
@@ -72,6 +77,7 @@ public class Player {
         private UdpControlInterface udpControl = null;
         //录制地址
         private String path = null;
+        private int multiple = 1;
 
         private int udpPacketCacheMin = 5;//udp包最小缓存数量，用于udp包排序
         private int videoFrameCacheMin = 6;//视频帧达到播放标准的数量
@@ -103,6 +109,11 @@ public class Player {
             return this;
         }
 
+        public Buider setMultiple(int multiple) {
+            this.multiple = multiple;
+            return this;
+        }
+
         public Buider setUdpPacketCacheMin(int udpPacketCacheMin) {
             this.udpPacketCacheMin = udpPacketCacheMin;
             return this;
@@ -129,7 +140,7 @@ public class Player {
             baseRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
             playerView.setIsOutBuffer(isOutBuffer);//给playerView设置isOutBuffer接口用以将缓冲状态回调给客户端
             baseRecive.setOther(videoFrameCacheMin);
-            return new Player(playerView, codetype, baseRecive, udpControl, path);
+            return new Player(playerView, codetype, baseRecive, udpControl, path, multiple);
         }
     }
 }

@@ -8,6 +8,7 @@ import com.library.common.VoicePlayer;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseRecive;
 import com.library.util.OtherUtil;
+import com.library.util.VoiceUtil;
 
 /**
  * Created by android1 on 2017/9/23.
@@ -16,6 +17,7 @@ import com.library.util.OtherUtil;
 public class VoiceTrack implements VoicePlayer {
     private VCDecoder vcdecoder;
     private AudioTrack audioTrack;
+    private int multiple = 1;
 
     public VoiceTrack(BaseRecive baseRecive, WriteMp4 writeMp4) {
         int recBufSize = AudioTrack.getMinBufferSize(
@@ -43,10 +45,18 @@ public class VoiceTrack implements VoicePlayer {
         }
     }
 
+    public void setIncreaseMultiple(int multiple) {
+        this.multiple = Math.max(1, Math.min(8, multiple));
+    }
+
     @Override
     public void voicePlayer(byte[] voicebyte) {
         if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
-            audioTrack.write(voicebyte, 0, voicebyte.length);
+            if (multiple == 1) {
+                audioTrack.write(voicebyte, 0, voicebyte.length);
+            } else {
+                audioTrack.write(VoiceUtil.increasePCM(voicebyte, multiple), 0, voicebyte.length);
+            }
         }
     }
 

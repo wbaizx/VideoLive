@@ -16,6 +16,7 @@ public class ReciveReady extends AppCompatActivity {
     private EditText port;
     private RadioGroup videoCode;
     private Button begin;
+    private EditText multiple;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +25,7 @@ public class ReciveReady extends AppCompatActivity {
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
+        multiple = findViewById(R.id.multiple);
         port = findViewById(R.id.port);
         videoCode = findViewById(R.id.rvideoCode);
         begin = findViewById(R.id.begin);
@@ -39,6 +41,7 @@ public class ReciveReady extends AppCompatActivity {
     private void start() {
         Intent intent = new Intent(this, Recive.class);
         Bundle bundle = new Bundle();
+        bundle.putInt("multiple", Integer.parseInt(multiple.getText().toString()));
         if (videoCode.getCheckedRadioButtonId() == R.id.rh264) {
             bundle.putString("videoCode", VDDecoder.H264);
         } else {

@@ -28,15 +28,14 @@ public class VoiceUtil {
     /**
      * PCM放大
      *
-     * @param src       原数据
-     * @param srclength 原数据长度
-     * @param multiple  放大倍数
+     * @param src      原数据
+     * @param multiple 放大倍数
      * @return
      */
-    public static byte[] increasePCM(byte[] src, int srclength, int multiple) {
-        byte[] bytes = new byte[srclength];
-        srclength = srclength >> 1;
-        for (int i = 0, dest; i < srclength; i++) {
+    public static byte[] increasePCM(byte[] src, int multiple) {
+        byte[] bytes = new byte[src.length];
+        int datalength = src.length >> 1;
+        for (int i = 0, dest; i < datalength; i++) {
             dest = (short) ((src[i * 2] & 0xff) | (src[2 * i + 1] & 0xff) << 8) * multiple;
             //爆音处理
             if (dest > 32766) {
