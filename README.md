@@ -32,7 +32,7 @@ Step 2：
     <uses-permission android:name="android.permission.INTERNET" />
 
     
- 视频使用示例：
+# 视频使用示例：
     
      推流端：
  
@@ -200,7 +200,7 @@ Step 2：
 
 
 
- 单独语音对讲使用示例：
+# 单独语音对讲使用示例：
 
      发送端：
 
