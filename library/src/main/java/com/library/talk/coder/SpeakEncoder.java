@@ -23,9 +23,9 @@ public class SpeakEncoder {
     private WriteMp3 writeMp3;
     private MediaFormat format;
 
-    public SpeakEncoder(int bitrate, int recBufSize, SpeakSend speakSend, WriteMp3 writeMp3) {
+    public SpeakEncoder(int bitrate, int recBufSize, SpeakSend speakSend, String path) {
         this.speakSend = speakSend;
-        this.writeMp3 = writeMp3;
+        writeMp3 = new WriteMp3(path);
         try {
             mediaCodec = MediaCodec.createEncoderByType(AAC_MIME);
         } catch (IOException e) {
@@ -48,6 +48,14 @@ public class SpeakEncoder {
 
     public void stop() {
         mediaCodec.stop();
+    }
+
+    public void startRecord() {
+        writeMp3.start();
+    }
+
+    public void stopRecord() {
+        writeMp3.stop();
     }
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
@@ -101,6 +109,7 @@ public class SpeakEncoder {
             mediaCodec.release();
             mediaCodec = null;
         }
+        writeMp3.destroy();
     }
 }
 

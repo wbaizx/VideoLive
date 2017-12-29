@@ -23,7 +23,6 @@ import android.view.Surface;
 import android.view.TextureView;
 
 import com.library.common.UdpControlInterface;
-import com.library.common.WriteCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseSend;
 import com.library.live.vc.VoiceRecord;
@@ -402,10 +401,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
         initCamera();
         //最后来设置标志，防止最后几帧数据旋转错误
         rotate = !rotate;
-    }
-
-    public void setWriteCallback(WriteCallback writeCallback) {
-        writeMp4.setWriteCallback(writeCallback);
     }
 
     public void start() {

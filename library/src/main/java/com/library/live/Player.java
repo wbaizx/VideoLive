@@ -1,7 +1,6 @@
 package com.library.live;
 
 import com.library.common.UdpControlInterface;
-import com.library.common.WriteCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseRecive;
 import com.library.live.vc.VoiceTrack;
@@ -34,9 +33,6 @@ public class Player {
         voiceTrack.setIncreaseMultiple(multiple);
     }
 
-    public void setWriteCallback(WriteCallback writeCallback) {
-        writeMp4.setWriteCallback(writeCallback);
-    }
 
     public void start() {
         voiceTrack.start();

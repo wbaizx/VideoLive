@@ -1,9 +1,7 @@
 package com.library.talk;
 
 import com.library.common.UdpControlInterface;
-import com.library.common.WriteCallback;
 import com.library.talk.coder.SpeakRecord;
-import com.library.talk.file.WriteMp3;
 import com.library.talk.stream.SpeakSend;
 
 /**
@@ -13,13 +11,11 @@ import com.library.talk.stream.SpeakSend;
 public class Speak {
     private SpeakRecord speakRecord;
     private SpeakSend speakSend;
-    private WriteMp3 writeMp3;
 
-    public Speak( int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String path) {
+    public Speak(int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String path) {
         this.speakSend = speakSend;
         speakSend.setUdpControl(udpControl);
-        writeMp3 = new WriteMp3(path);
-        speakRecord = new SpeakRecord(publishBitrate, speakSend, writeMp3);
+        speakRecord = new SpeakRecord(publishBitrate, speakSend, path);
     }
 
     public void start() {
@@ -32,16 +28,13 @@ public class Speak {
         speakSend.stop();
     }
 
-    public void setWriteCallback(WriteCallback writeCallback) {
-        writeMp3.setWriteCallback(writeCallback);
+
+    public void startRecord() {
+        speakRecord.startRecord();
     }
 
-    public void startRecode() {
-        writeMp3.start();
-    }
-
-    public void stopRecode() {
-        writeMp3.stop();
+    public void stopRecord() {
+        speakRecord.stopRecord();
     }
 
     public int getDecibel() {
@@ -63,7 +56,6 @@ public class Speak {
     public void destroy() {
         speakRecord.destroy();
         speakSend.destroy();
-        writeMp3.destroy();
     }
 
     public static class Buider {

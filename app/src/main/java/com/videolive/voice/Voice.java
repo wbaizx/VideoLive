@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.library.common.WriteCallback;
 import com.library.talk.Listen;
 import com.library.talk.Speak;
 import com.library.talk.stream.ListenRecive;
@@ -44,27 +43,6 @@ public class Voice extends AppCompatActivity {
                 .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")
                 .build();
 
-        speak.setWriteCallback(new WriteCallback() {
-            @Override
-            public void isReady() {
-                Log.d("wefweafa", "11111");
-            }
-
-            @Override
-            public void isStart() {
-                Log.d("wefweafa", "22222");
-            }
-
-            @Override
-            public void isDestroy() {
-                Log.d("wefweafa", "33333");
-            }
-
-            @Override
-            public void fileShort() {
-                Log.d("wefweafa", "44444");
-            }
-        });
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))
@@ -78,9 +56,11 @@ public class Voice extends AppCompatActivity {
             public void onClick(View view) {
                 if (startVoice.getText().toString().equals("开始对讲")) {
                     speak.start();
+                    speak.startRecord();
                     startVoice.setText("停止对讲");
                 } else {
                     speak.stop();
+                    speak.stopRecord();
                     startVoice.setText("开始对讲");
                 }
             }

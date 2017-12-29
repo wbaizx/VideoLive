@@ -6,7 +6,6 @@ import android.media.MediaMuxer;
 import android.os.Environment;
 import android.text.TextUtils;
 
-import com.library.common.WriteCallback;
 import com.library.util.mLog;
 
 import java.io.File;
@@ -25,16 +24,14 @@ public class WriteMp3 {
     private boolean isHasPath = false;
     private MediaFormat voiceFormat = null;
 
-    private WriteCallback writeCallback;
-
     private int voiceTrackIndex;
     private long presentationTimeUsVE = 0;
 
     private boolean agreeWrite = false;
-    private boolean isSendReady = true;
-    private boolean isReady = false;
+    private boolean isShouldStart = false;
 
     private int frameNum = 0;
+    private Object lock = new Object();
 
     public WriteMp3(String path) {
         if (!TextUtils.isEmpty(path) && !path.equals("")) {
@@ -45,14 +42,32 @@ public class WriteMp3 {
 
     public void addTrack(MediaFormat mediaFormat) {
         voiceFormat = mediaFormat;
-        setReady();
+        if (isShouldStart) {
+            start();
+        } else {
+            isShouldStart = true;
+        }
     }
 
-    private void setReady() {
-        isReady = true;
-        if (writeCallback != null && isSendReady) {
-            isSendReady = false;
-            writeCallback.isReady();
+    public void start() {
+        synchronized (lock) {
+            if (voiceFormat != null && mMediaMuxer == null && isShouldStart) {
+                isShouldStart = false;
+                setPath();
+                try {
+                    mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                    voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
+                    mMediaMuxer.start();
+                    presentationTimeUsVE = 0;
+                    frameNum = 0;
+                    agreeWrite = true;
+                    mLog.log("app_WriteMp3", "文件录制启动");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                isShouldStart = true;
+            }
         }
     }
 
@@ -62,26 +77,6 @@ public class WriteMp3 {
                 presentationTimeUsVE = bufferInfo.presentationTimeUs;
                 mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
                 frameNum++;
-            }
-        }
-    }
-
-    public void start() {
-        if (isReady) {
-            setPath();
-            try {
-                mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-                voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
-                mMediaMuxer.start();
-                presentationTimeUsVE = 0;
-                frameNum = 0;
-                agreeWrite = true;
-                if (writeCallback != null) {
-                    writeCallback.isStart();
-                }
-                mLog.log("app_WriteMp3", "文件录制启动");
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -99,39 +94,33 @@ public class WriteMp3 {
             }
             path = dirpath + File.separator + System.currentTimeMillis() + ".mp3";
         }
-        mLog.log("app_WriteMp3", path);
     }
 
     public void stop() {
-        if (agreeWrite) {
-            agreeWrite = false;
-            mMediaMuxer.release();
-            mMediaMuxer = null;
-            if (writeCallback != null) {
-                writeCallback.isDestroy();
-            }
-            mLog.log("app_WriteMp3", "文件录制关闭");
-            //文件过短删除
-            if (frameNum < 10) {
-                new File(path).delete();
-                if (writeCallback != null) {
-                    writeCallback.fileShort();
+        synchronized (lock) {
+            if (agreeWrite) {
+                try {
+                    mMediaMuxer.release();
+                    mLog.log("app_WriteMp3", "文件录制关闭");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    agreeWrite = false;
+                    mMediaMuxer = null;
+                    //文件过短或异常，删除文件
+                    File file = new File(path);
+                    if (frameNum < 10 && file.exists()) {
+                        file.delete();
+                    }
                 }
+            } else {
+                isShouldStart = false;
             }
         }
     }
 
     public void destroy() {
         stop();
-        writeCallback = null;
-    }
-
-    public void setWriteCallback(WriteCallback writeCallback) {
-        this.writeCallback = writeCallback;
-        if (isReady && isSendReady) {
-            isSendReady = false;
-            writeCallback.isReady();
-        }
     }
 }
 

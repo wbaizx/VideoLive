@@ -6,7 +6,6 @@ import android.media.MediaMuxer;
 import android.os.Environment;
 import android.text.TextUtils;
 
-import com.library.common.WriteCallback;
 import com.library.util.mLog;
 
 import java.io.File;
@@ -28,22 +27,16 @@ public class WriteMp4 {
     private MediaFormat videoFormat = null;
     private MediaFormat voiceFormat = null;
 
-    private WriteCallback writeCallback;
-
     private int videoTrackIndex;
     private int voiceTrackIndex;
     private long presentationTimeUsVD = 0;
     private long presentationTimeUsVE = 0;
 
     private boolean agreeWrite = false;
-    private boolean isSendReady = true;
     private boolean isReady = false;
 
-    private boolean shouldStop = false;
-    private boolean isCanStop = false;
-    private boolean isCanStar = true;
-
     private int frameNum = 0;
+    private Object lock = new Object();
 
     public WriteMp4(String path) {
         if (!TextUtils.isEmpty(path) && !path.equals("")) {
@@ -58,38 +51,23 @@ public class WriteMp4 {
         } else if (flag == voice) {
             voiceFormat = mediaFormat;
         }
-        setReady();
-    }
-
-    private void setReady() {
         if (videoFormat != null && voiceFormat != null) {
             isReady = true;
-            if (writeCallback != null && isSendReady) {
-                isSendReady = false;
-                writeCallback.isReady();
-            }
         }
     }
+
 
     public void write(int flag, ByteBuffer outputBuffer, MediaCodec.BufferInfo bufferInfo) {
         if (agreeWrite) {
             if (flag == video) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVD) {//容错
                     presentationTimeUsVD = bufferInfo.presentationTimeUs;
-
                     mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
                     frameNum++;
-                    if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-                        isCanStop = true;
-                        if (shouldStop) {
-                            stop();
-                        }
-                    }
                 }
             } else if (flag == voice) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVE) {//容错
                     presentationTimeUsVE = bufferInfo.presentationTimeUs;
-
                     mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
                 }
             }
@@ -98,29 +76,23 @@ public class WriteMp4 {
 
     public void start() {
         if (isReady) {
-            if (isCanStar) {
-                setPath();
-                try {
-                    mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-                    videoTrackIndex = mMediaMuxer.addTrack(videoFormat);
-                    voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
-                    mMediaMuxer.start();
-                    presentationTimeUsVE = 0;
-                    presentationTimeUsVD = 0;
-                    frameNum = 0;
-                    agreeWrite = true;
-                    isCanStar = false;
-                    isCanStop = false;
-                    shouldStop = false;
-                    if (writeCallback != null) {
-                        writeCallback.isStart();
+            synchronized (lock) {
+                if (mMediaMuxer == null) {
+                    setPath();
+                    try {
+                        mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                        videoTrackIndex = mMediaMuxer.addTrack(videoFormat);
+                        voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
+                        mMediaMuxer.start();
+                        presentationTimeUsVE = 0;
+                        presentationTimeUsVD = 0;
+                        frameNum = 0;
+                        agreeWrite = true;
+                        mLog.log("app_WriteMp4", "文件录制启动");
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    mLog.log("app_WriteMp4", "文件录制启动");
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-            } else {
-                shouldStop = false;
             }
         }
     }
@@ -141,39 +113,27 @@ public class WriteMp4 {
     }
 
     public void stop() {
-        if (agreeWrite) {
-            if (isCanStop) {
-                agreeWrite = false;
-                mMediaMuxer.release();
-                mMediaMuxer = null;
-                if (writeCallback != null) {
-                    writeCallback.isDestroy();
-                }
-                mLog.log("app_WriteMp4", "文件录制关闭");
-                isCanStar = true;
-                //文件过短删除
-                if (frameNum < 20) {
-                    new File(path).delete();
-                    if (writeCallback != null) {
-                        writeCallback.fileShort();
+        synchronized (lock) {
+            if (mMediaMuxer != null) {
+                try {
+                    mMediaMuxer.release();
+                    mLog.log("app_WriteMp4", "文件录制关闭");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    agreeWrite = false;
+                    mMediaMuxer = null;
+                    //文件过短或异常，删除文件
+                    File file = new File(path);
+                    if (frameNum < 20 && file.exists()) {
+                        file.delete();
                     }
                 }
-            } else {
-                shouldStop = true;
             }
         }
     }
 
     public void destroy() {
         stop();
-        writeCallback = null;
-    }
-
-    public void setWriteCallback(WriteCallback writeCallback) {
-        this.writeCallback = writeCallback;
-        if (isReady && isSendReady) {
-            isSendReady = false;
-            writeCallback.isReady();
-        }
     }
 }
