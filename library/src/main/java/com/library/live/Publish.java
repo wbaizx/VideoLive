@@ -247,7 +247,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
             vdEncoder = new VDEncoder(collectionSize, publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
             voiceRecord = new VoiceRecord(baseSend, collectionbitrate_vc, publishbitrate_vc, writeMp4);
-            recordEncoderVD.start();
             vdEncoder.start();
             voiceRecord.start();
         }
@@ -387,10 +386,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
 
     public void startRecode() {
+        voiceRecord.startRecode();
+        recordEncoderVD.start();
         writeMp4.start();
     }
 
     public void stopRecode() {
+        voiceRecord.stopRecode();
+        recordEncoderVD.stop();
         writeMp4.stop();
     }
 

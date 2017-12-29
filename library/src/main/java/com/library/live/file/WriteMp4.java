@@ -33,8 +33,7 @@ public class WriteMp4 {
     private long presentationTimeUsVE = 0;
 
     private boolean agreeWrite = false;
-    private boolean isReady = false;
-
+    private boolean isShouldStart = false;
     private int frameNum = 0;
     private Object lock = new Object();
 
@@ -52,10 +51,38 @@ public class WriteMp4 {
             voiceFormat = mediaFormat;
         }
         if (videoFormat != null && voiceFormat != null) {
-            isReady = true;
+            if (isShouldStart) {
+                start();
+            } else {
+                isShouldStart = true;
+            }
         }
     }
 
+
+    public void start() {
+        synchronized (lock) {
+            if (voiceFormat != null && videoFormat != null && mMediaMuxer == null && isShouldStart) {
+                isShouldStart = false;
+                setPath();
+                try {
+                    mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                    videoTrackIndex = mMediaMuxer.addTrack(videoFormat);
+                    voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
+                    mMediaMuxer.start();
+                    presentationTimeUsVE = 0;
+                    presentationTimeUsVD = 0;
+                    frameNum = 0;
+                    agreeWrite = true;
+                    mLog.log("app_WriteMp4", "文件录制启动");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                isShouldStart = true;
+            }
+        }
+    }
 
     public void write(int flag, ByteBuffer outputBuffer, MediaCodec.BufferInfo bufferInfo) {
         if (agreeWrite) {
@@ -69,29 +96,6 @@ public class WriteMp4 {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVE) {//容错
                     presentationTimeUsVE = bufferInfo.presentationTimeUs;
                     mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
-                }
-            }
-        }
-    }
-
-    public void start() {
-        if (isReady) {
-            synchronized (lock) {
-                if (mMediaMuxer == null) {
-                    setPath();
-                    try {
-                        mMediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-                        videoTrackIndex = mMediaMuxer.addTrack(videoFormat);
-                        voiceTrackIndex = mMediaMuxer.addTrack(voiceFormat);
-                        mMediaMuxer.start();
-                        presentationTimeUsVE = 0;
-                        presentationTimeUsVD = 0;
-                        frameNum = 0;
-                        agreeWrite = true;
-                        mLog.log("app_WriteMp4", "文件录制启动");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
         }
@@ -114,7 +118,7 @@ public class WriteMp4 {
 
     public void stop() {
         synchronized (lock) {
-            if (mMediaMuxer != null) {
+            if (agreeWrite) {
                 try {
                     mMediaMuxer.release();
                     mLog.log("app_WriteMp4", "文件录制关闭");
@@ -129,6 +133,8 @@ public class WriteMp4 {
                         file.delete();
                     }
                 }
+            } else {
+                isShouldStart = false;
             }
         }
     }

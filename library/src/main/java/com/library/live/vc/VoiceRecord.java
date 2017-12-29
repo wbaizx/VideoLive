@@ -73,8 +73,16 @@ public class VoiceRecord {
             audioRecord.release();
             audioRecord = null;
         }
-        recordEncoderVC.destroy();
         vencoder.destroy();
+        recordEncoderVC.destroy();
         singleThreadExecutor.shutdownNow();
+    }
+
+    public void startRecode() {
+        recordEncoderVC.startRecode();
+    }
+
+    public void stopRecode() {
+        recordEncoderVC.stopRecode();
     }
 }

@@ -18,6 +18,8 @@ public class RecordEncoderVC {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
     private WriteMp4 writeMp4;
     private MediaCodec mediaCodec;
+    private MediaFormat format;
+    private boolean isCanEncoder = false;
 
     public RecordEncoderVC(int bitrate, int recBufSize, WriteMp4 writeMp4) {
         this.writeMp4 = writeMp4;
@@ -26,57 +28,67 @@ public class RecordEncoderVC {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        MediaFormat format = new MediaFormat();
+        format = new MediaFormat();
         format.setString(MediaFormat.KEY_MIME, AAC_MIME);
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
         format.setInteger(MediaFormat.KEY_SAMPLE_RATE, OtherUtil.samplerate);
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, recBufSize * 2);
-
-        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mediaCodec.start();
     }
 
     private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
     private int outputBufferIndex;
     private int inputBufferIndex;
 
+    public void startRecode() {
+        mediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mediaCodec.start();
+        isCanEncoder = true;
+    }
+
+    public void stopRecode() {
+        isCanEncoder = false;
+        mediaCodec.stop();
+    }
+
     /*
    音频数据编码，音频数据处理较少，直接编码
     */
     public void encode(byte[] result, int length) {
-        try {
-            inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
-            if (inputBufferIndex >= 0) {
-                ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
-                inputBuffer.clear();
-                inputBuffer.put(result, 0, length);
-                mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, OtherUtil.getFPS(), 0);
-            }
+        if (isCanEncoder) {
+            try {
+                inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
+                if (inputBufferIndex >= 0) {
+                    ByteBuffer inputBuffer = mediaCodec.getInputBuffer(inputBufferIndex);
+                    inputBuffer.clear();
+                    inputBuffer.put(result, 0, length);
+                    mediaCodec.queueInputBuffer(inputBufferIndex, 0, length, OtherUtil.getFPS(), 0);
+                }
 
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
-
-            if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
-                writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
-            }
-
-            while (outputBufferIndex >= 0) {
-                ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
-                outputBuffer.position(bufferInfo.offset);
-                outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
-
-                byte[] outData = new byte[bufferInfo.size + 7];
-                addADTStoPacket(outData, bufferInfo.size + 7);
-                outputBuffer.get(outData, 7, bufferInfo.size);
-                //写文件
-                writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
-
-                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                 outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+
+                if (MediaCodec.INFO_OUTPUT_FORMAT_CHANGED == outputBufferIndex) {
+                    writeMp4.addTrack(mediaCodec.getOutputFormat(), WriteMp4.voice);
+                }
+
+                while (outputBufferIndex >= 0) {
+                    ByteBuffer outputBuffer = mediaCodec.getOutputBuffer(outputBufferIndex);
+                    outputBuffer.position(bufferInfo.offset);
+                    outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
+
+                    byte[] outData = new byte[bufferInfo.size + 7];
+                    addADTStoPacket(outData, bufferInfo.size + 7);
+                    outputBuffer.get(outData, 7, bufferInfo.size);
+                    //写文件
+                    writeMp4.write(WriteMp4.voice, outputBuffer, bufferInfo);
+
+                    mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                    outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -91,8 +103,9 @@ public class RecordEncoderVC {
     }
 
     public void destroy() {
-        mediaCodec.release();
-        mediaCodec = null;
+        if (mediaCodec != null) {
+            mediaCodec.release();
+            mediaCodec = null;
+        }
     }
-
 }

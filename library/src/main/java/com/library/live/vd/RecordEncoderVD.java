@@ -27,13 +27,14 @@ public class RecordEncoderVD {
     private int width;
     private int height;
     private SingleThreadExecutor singleThreadExecutor;
+    private MediaFormat mediaFormat;
 
     public RecordEncoderVD(Size csize, int framerate, int collectionBitrate, WriteMp4 writeMp4, String codetype) {
         this.writeMp4 = writeMp4;
         //由于图片旋转过，所以高度宽度需要对调
         width = csize.getHeight();
         height = csize.getWidth();
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
+        mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, collectionBitrate);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
@@ -44,8 +45,6 @@ public class RecordEncoderVD {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        mediaCodec.start();
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
@@ -53,13 +52,22 @@ public class RecordEncoderVD {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        OtherUtil.addQueue(YUVQueue, bytes);
+        if(isRuning){
+            OtherUtil.addQueue(YUVQueue, bytes);
+        }
     }
 
     public void start() {
+        mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mediaCodec.start();
         YUVQueue.clear();
         isRuning = true;
         StartEncoderThread();
+    }
+
+    public void stop() {
+        isRuning = false;
+        mediaCodec.stop();
     }
 
     public void StartEncoderThread() {
@@ -108,7 +116,7 @@ public class RecordEncoderVD {
     }
 
     public void destroy() {
-        isRuning = false;
+        stop();
         mediaCodec.release();
         mediaCodec = null;
         singleThreadExecutor.shutdownNow();
