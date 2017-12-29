@@ -180,7 +180,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         isDecoder = false;
         if (isMediaCodecInit) {
             isMediaCodecInit = false;
-            mCodec.stop();
             mCodec.release();
             mCodec = null;
         }

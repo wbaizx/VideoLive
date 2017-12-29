@@ -128,7 +128,6 @@ public class VCDecoder implements VoiceCallback {
     public void destroy() {
         isdecoder = false;
         voicePlayer = null;
-        mDecoder.stop();
         mDecoder.release();
         mDecoder = null;
     }

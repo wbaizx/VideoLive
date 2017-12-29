@@ -91,7 +91,6 @@ public class RecordEncoderVC {
     }
 
     public void destroy() {
-        mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
     }

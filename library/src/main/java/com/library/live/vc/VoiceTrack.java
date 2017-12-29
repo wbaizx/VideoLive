@@ -39,7 +39,7 @@ public class VoiceTrack implements VoicePlayer {
     }
 
     public void start() {
-        if (audioTrack != null) {
+        if (audioTrack != null && audioTrack.getPlayState() == AudioTrack.PLAYSTATE_STOPPED) {
             audioTrack.play();
             vcdecoder.start();
         }
@@ -58,7 +58,7 @@ public class VoiceTrack implements VoicePlayer {
     }
 
     public void stop() {
-        if (audioTrack != null) {
+        if (audioTrack != null && audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
             vcdecoder.stop();
             audioTrack.stop();
         }

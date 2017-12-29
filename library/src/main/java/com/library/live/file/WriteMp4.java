@@ -4,7 +4,9 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Environment;
+import android.text.TextUtils;
 
+import com.library.common.WriteCallback;
 import com.library.util.mLog;
 
 import java.io.File;
@@ -22,6 +24,7 @@ public class WriteMp4 {
 
     private final String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive";
     private String path = null;
+    private boolean isHasPath = false;
     private MediaFormat videoFormat = null;
     private MediaFormat voiceFormat = null;
 
@@ -43,7 +46,10 @@ public class WriteMp4 {
     private int frameNum = 0;
 
     public WriteMp4(String path) {
-        this.path = path;
+        if (!TextUtils.isEmpty(path) && !path.equals("")) {
+            this.path = path;
+            isHasPath = true;
+        }
     }
 
     public void addTrack(MediaFormat mediaFormat, int flag) {
@@ -120,17 +126,17 @@ public class WriteMp4 {
     }
 
     private void setPath() {
-        if (path == null) {
+        if (isHasPath) {
+            File file = new File(path);
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
             File dirfile = new File(dirpath);
             if (!dirfile.exists()) {
                 dirfile.mkdirs();
             }
             path = dirpath + File.separator + System.currentTimeMillis() + ".mp4";
-        } else {
-            File file = new File(path);
-            if (file.exists()) {
-                file.delete();
-            }
         }
     }
 

@@ -1,7 +1,9 @@
 package com.library.talk;
 
 import com.library.common.UdpControlInterface;
+import com.library.common.WriteCallback;
 import com.library.talk.coder.SpeakRecord;
+import com.library.talk.file.WriteMp3;
 import com.library.talk.stream.SpeakSend;
 
 /**
@@ -11,11 +13,13 @@ import com.library.talk.stream.SpeakSend;
 public class Speak {
     private SpeakRecord speakRecord;
     private SpeakSend speakSend;
+    private WriteMp3 writeMp3;
 
-    public Speak(int collectionBitrate, int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend) {
+    public Speak( int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String path) {
         this.speakSend = speakSend;
         speakSend.setUdpControl(udpControl);
-        speakRecord = new SpeakRecord(collectionBitrate, publishBitrate, speakSend);
+        writeMp3 = new WriteMp3(path);
+        speakRecord = new SpeakRecord(publishBitrate, speakSend, writeMp3);
     }
 
     public void start() {
@@ -26,6 +30,18 @@ public class Speak {
     public void stop() {
         speakRecord.stop();
         speakSend.stop();
+    }
+
+    public void setWriteCallback(WriteCallback writeCallback) {
+        writeMp3.setWriteCallback(writeCallback);
+    }
+
+    public void startRecode() {
+        writeMp3.start();
+    }
+
+    public void stopRecode() {
+        writeMp3.stop();
     }
 
     public int getDecibel() {
@@ -47,21 +63,17 @@ public class Speak {
     public void destroy() {
         speakRecord.destroy();
         speakSend.destroy();
+        writeMp3.destroy();
     }
 
     public static class Buider {
-        private int collectionBitrate = 64 * 1024;
         private int publishBitrate = 20 * 1024;
         private SpeakSend speakSend;
         private UdpControlInterface udpControl;
+        private String path = null;
 
         public Buider setPushMode(SpeakSend speakSend) {
             this.speakSend = speakSend;
-            return this;
-        }
-
-        public Buider setCollectionBitrate(int collectionBitrate) {
-            this.collectionBitrate = collectionBitrate;
             return this;
         }
 
@@ -76,8 +88,13 @@ public class Speak {
             return this;
         }
 
+        public Buider setVoicePath(String path) {
+            this.path = path;
+            return this;
+        }
+
         public Speak build() {
-            return new Speak(collectionBitrate, publishBitrate, udpControl, speakSend);
+            return new Speak(publishBitrate, udpControl, speakSend, path);
         }
     }
 }

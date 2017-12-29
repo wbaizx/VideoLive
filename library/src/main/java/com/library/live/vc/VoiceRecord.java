@@ -29,7 +29,7 @@ public class VoiceRecord {
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT);
         audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC,//降噪配置
+                MediaRecorder.AudioSource.MIC,
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT,

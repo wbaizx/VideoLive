@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
+import com.library.talk.file.WriteMp3;
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
@@ -20,7 +21,7 @@ public class SpeakRecord {
     private SpeakEncoder speakEncoder;
     private double decibel = 0;//平均振幅,用于计算分贝
 
-    public SpeakRecord(int collectionBitrate, int publishBitrate, SpeakSend speakSend) {
+    public SpeakRecord(int publishBitrate, SpeakSend speakSend, WriteMp3 writeMp3) {
         recBufSize = AudioRecord.getMinBufferSize(
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -32,19 +33,21 @@ public class SpeakRecord {
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
         singleThreadExecutor = new SingleThreadExecutor();
-        speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend);
+        speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend, writeMp3);
     }
 
     public void start() {
-        if (audioRecord != null) {
+        if (audioRecord != null && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED) {
+            speakEncoder.start();
             audioRecord.startRecording();
             startRecord();
         }
     }
 
     public void stop() {
-        if (audioRecord != null) {
+        if (audioRecord != null && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
             audioRecord.stop();
+            speakEncoder.stop();
         }
     }
 

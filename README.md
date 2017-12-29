@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.1'
+	        compile 'com.github.wbaizx:VideoLive:3.0.2'
 	}
 
 
@@ -34,7 +34,7 @@ Step 2：
     
 ## 视频使用示例：
     
-     ### 推流端：
+    ### 推流端：
  
     <TextureView
         android:id="@+id/textureView"
@@ -110,8 +110,7 @@ Step 2：
 
 
 
-
-      ### 接收端：
+    ### 接收端：
       
     <com.library.live.view.PlayerView
         android:id="@+id/playerView"
@@ -201,14 +200,13 @@ Step 2：
     
 ## 单独语音对讲使用示例：
 
-     ### 发送端：
+    ### 发送端：
 
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend("192.168.2.106", 8765))
-                .setCollectionBitrate(64 * 1024)//音频采集采样率
                 .setPublishBitrate(20 * 1024)//音频推流采样率
+                .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
-
 
   如果socket已经创建需要使用已经有的socket
 
@@ -231,6 +229,14 @@ Step 2：
 
         speak.stop();
 
+  关于录制同样需要在收到录制准备就绪信号后才可以调用，录制就绪信号会在第一次启动语音推流之后才会收到，另外录制应当与推流同步启动同步关闭
+
+        speak.setWriteCallback(new WriteCallback());
+
+        speak.startRecode();//开始录制
+
+        speak.stopRecode();//停止录制
+
   注意如果同时视频推流和语音推流会出现冲突，如果正在视频推流，则不应该启动语音推流，如果已经启动，需调用stop方法关闭。
   然后此时启动发送和关闭发送对应如下方法
 
@@ -251,7 +257,7 @@ Step 2：
 
 
 
-     ### 接收端：
+    ### 接收端：
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))

@@ -109,7 +109,6 @@ public class RecordEncoderVD {
 
     public void destroy() {
         isRuning = false;
-        mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
         singleThreadExecutor.shutdownNow();

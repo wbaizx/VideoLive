@@ -78,7 +78,6 @@ public class VCEncoder {
     }
 
     public void destroy() {
-        mediaCodec.stop();
         mediaCodec.release();
         mediaCodec = null;
     }

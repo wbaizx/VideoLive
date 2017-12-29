@@ -1,10 +1,13 @@
 package com.videolive.voice;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.library.common.WriteCallback;
 import com.library.talk.Listen;
 import com.library.talk.Speak;
 import com.library.talk.stream.ListenRecive;
@@ -37,9 +40,31 @@ public class Voice extends AppCompatActivity {
 
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend(socket, getIntent().getExtras().getString("url"), getIntent().getExtras().getInt("port")))
-                .setCollectionBitrate(getIntent().getExtras().getInt("collectionbitrate_vc"))
                 .setPublishBitrate(getIntent().getExtras().getInt("publishbitrate_vc"))
+                .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")
                 .build();
+
+        speak.setWriteCallback(new WriteCallback() {
+            @Override
+            public void isReady() {
+                Log.d("wefweafa", "11111");
+            }
+
+            @Override
+            public void isStart() {
+                Log.d("wefweafa", "22222");
+            }
+
+            @Override
+            public void isDestroy() {
+                Log.d("wefweafa", "33333");
+            }
+
+            @Override
+            public void fileShort() {
+                Log.d("wefweafa", "44444");
+            }
+        });
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))
