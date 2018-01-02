@@ -3,7 +3,6 @@ package com.videolive.voice;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -42,7 +41,6 @@ public class Voice extends AppCompatActivity {
                 .setPublishBitrate(getIntent().getExtras().getInt("publishbitrate_vc"))
                 .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")
                 .build();
-
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))

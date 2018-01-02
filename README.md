@@ -245,7 +245,7 @@ Step 2：
 ### 接收端：
 
         listen = new Listen.Buider()
-                .setPullMode(new ListenRecive(socket))
+                .setPullMode(new ListenRecive(8765))
                 .setMultiple(1)//音频调节，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
                 .build();
 
