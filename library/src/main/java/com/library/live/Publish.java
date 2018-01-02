@@ -355,13 +355,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码
                     i420 = ImagUtil.YUV420888toI420(image);
                     input = new byte[i420.length];
-                    if (rotate) {
-                        ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
-                                input, frontAngle, true);
-                    } else {
-                        ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
-                                input, backAngle, false);
-                    }
+                    ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
+                            input, rotate ? frontAngle : backAngle, rotate);
                     //录制编码器
                     recordEncoderVD.addFrame(input);
                     //推流编码器

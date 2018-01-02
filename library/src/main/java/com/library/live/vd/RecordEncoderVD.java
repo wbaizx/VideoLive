@@ -58,9 +58,9 @@ public class RecordEncoderVD {
     }
 
     public void start() {
+        YUVQueue.clear();
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mediaCodec.start();
-        YUVQueue.clear();
         isRuning = true;
         StartEncoderThread();
     }

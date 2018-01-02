@@ -190,7 +190,7 @@ public class UdpSend extends BaseSend {
     private synchronized void addbytes(ByteBuffer buff) {
         if (udpControl != null) {
             //如果自定义UPD发送
-            OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position() - 0));
+            OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position()));
         } else {
             OtherUtil.addQueue(sendQueue, Arrays.copyOfRange(buff.array(), 0, buff.position()));//复制数组
         }

@@ -7,10 +7,10 @@ import android.view.SurfaceHolder;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseRecive;
 import com.library.live.stream.VideoCallback;
+import com.library.live.view.PlayerView;
 import com.library.util.ByteUtil;
 import com.library.util.OtherUtil;
 import com.library.util.mLog;
-import com.library.live.view.PlayerView;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -33,14 +33,11 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     //解码器配置信息
     private byte[] information = null;
 
-    private WriteMp4 writeMp4;
-
     /**
      * 初始化解码器
      */
-    public VDDecoder(PlayerView playerView, String codetype, BaseRecive baseRecive, WriteMp4 writeMp4) {
+    public VDDecoder(PlayerView playerView, String codetype, BaseRecive baseRecive) {
         this.holder = playerView.getHolder();
-        this.writeMp4 = writeMp4;
         MIME_TYPE = codetype;
         try {
             mCodec = MediaCodec.createDecoderByType(MIME_TYPE);
@@ -99,8 +96,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
             } else if (MIME_TYPE.equals(H265)) {
                 mediaFormat.setByteBuffer("csd-0", getH265information());
             }
-
-            writeMp4.addTrack(mediaFormat, WriteMp4.video);
 
             mCodec.configure(mediaFormat, holder.getSurface(), null, 0);
             mCodec.start();
@@ -188,8 +183,6 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     @Override
     public void videoCallback(byte[] video) {
         if (isDecoder && isMediaCodecInit) {
-            //写文件
-            writeFile(video, video.length);
             decoder(video);
         }
     }
@@ -218,54 +211,5 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-
-    private MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-    private ByteBuffer writebuffer = ByteBuffer.allocate(1024 * 80);
-
-    /*
-    写入文件
-     */
-    private void writeFile(byte[] output, int length) {
-        writebuffer.clear();
-        if (MIME_TYPE.equals(H264)) {
-//        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2后面00 00 00 01 65为帧数据开始，普通帧为41
-            if (output[4] == (byte) 0x67) {//KEY
-                for (int i = 5; i < length; i++) {
-                    if (output[i] == (byte) 0x00
-                            && output[i + 1] == (byte) 0x00
-                            && output[i + 2] == (byte) 0x00
-                            && output[i + 3] == (byte) 0x01
-                            && output[i + 4] == (byte) 0x65) {
-                        bufferInfo.set(0, length - i, OtherUtil.getFPS(), MediaCodec.BUFFER_FLAG_KEY_FRAME);
-                        writebuffer.put(output, i, length - i);
-                        break;
-                    }
-                }
-            } else {//NO KEY
-                bufferInfo.set(0, length, OtherUtil.getFPS(), MediaCodec.CRYPTO_MODE_UNENCRYPTED);
-                writebuffer.put(output);
-            }
-        } else if (MIME_TYPE.equals(H265)) {
-//        HEVC[00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20]后面00 00 00 01 26为帧数据开始，普通帧为00 00 00 01 02            if (output[4] == (byte) 0x40) {
-            if (output[4] == (byte) 0x40) {//KEY
-                for (int i = 5; i < length; i++) {
-                    if (output[i] == (byte) 0x00
-                            && output[i + 1] == (byte) 0x00
-                            && output[i + 2] == (byte) 0x00
-                            && output[i + 3] == (byte) 0x01
-                            && output[i + 4] == (byte) 0x26) {
-                        bufferInfo.set(0, length - i, OtherUtil.getFPS(), MediaCodec.BUFFER_FLAG_KEY_FRAME);
-                        writebuffer.put(output, i, length - i);
-                        break;
-                    }
-                }
-            } else {//NO KEY
-                bufferInfo.set(0, length, OtherUtil.getFPS(), MediaCodec.CRYPTO_MODE_UNENCRYPTED);
-                writebuffer.put(output);
-            }
-        }
-        writeMp4.write(WriteMp4.video, writebuffer, bufferInfo);
     }
 }

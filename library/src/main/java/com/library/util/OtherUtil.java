@@ -19,10 +19,10 @@ public class OtherUtil {
         return System.nanoTime() / 1000;
     }
 
-    public static void addQueue(ArrayBlockingQueue queue, Object obj) {
-        if (queue.size() >= QueueNum - 1) {
+    public static <T> void addQueue(ArrayBlockingQueue<T> queue, T t) {
+        if (queue.size() >= QueueNum) {
             queue.poll();
         }
-        queue.offer(obj);
+        queue.offer(t);
     }
 }

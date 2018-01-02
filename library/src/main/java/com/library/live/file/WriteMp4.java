@@ -35,7 +35,7 @@ public class WriteMp4 {
     private boolean agreeWrite = false;
     private boolean isShouldStart = false;
     private int frameNum = 0;
-    private Object lock = new Object();
+    private final Object lock = new Object();
 
     public WriteMp4(String path) {
         if (!TextUtils.isEmpty(path) && !path.equals("")) {
@@ -53,8 +53,6 @@ public class WriteMp4 {
         if (videoFormat != null && voiceFormat != null) {
             if (isShouldStart) {
                 start();
-            } else {
-                isShouldStart = true;
             }
         }
     }
@@ -62,7 +60,7 @@ public class WriteMp4 {
 
     public void start() {
         synchronized (lock) {
-            if (voiceFormat != null && videoFormat != null && mMediaMuxer == null && isShouldStart) {
+            if (voiceFormat != null && videoFormat != null && mMediaMuxer == null) {
                 isShouldStart = false;
                 setPath();
                 try {
@@ -89,8 +87,15 @@ public class WriteMp4 {
             if (flag == video) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVD) {//容错
                     presentationTimeUsVD = bufferInfo.presentationTimeUs;
-                    mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
-                    frameNum++;
+                    if (frameNum == 0) {//视频帧第一帧必须为关键帧
+                        if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
+                            mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
+                            frameNum++;
+                        }
+                    } else {
+                        mMediaMuxer.writeSampleData(videoTrackIndex, outputBuffer, bufferInfo);
+                        frameNum++;
+                    }
                 }
             } else if (flag == voice) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVE) {//容错
@@ -119,13 +124,13 @@ public class WriteMp4 {
     public void stop() {
         synchronized (lock) {
             if (agreeWrite) {
+                agreeWrite = false;
                 try {
                     mMediaMuxer.release();
                     mLog.log("app_WriteMp4", "文件录制关闭");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    agreeWrite = false;
                     mMediaMuxer = null;
                     //文件过短或异常，删除文件
                     File file = new File(path);

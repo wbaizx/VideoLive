@@ -96,10 +96,6 @@ Step 2：
 
         publish.stopRecode();//停止录制
 
-  但是录制需要在收到录制准备就绪信号后才可以调用，就绪信号可以通过如下方式获取
-
-        publish.setWriteCallback(new WriteCallback());
-
   如果推流图片角度不对，可以通过调用方法调整
 
         publish.adjustmentAngle();
@@ -124,7 +120,6 @@ Step 2：
                 .setPullMode(new UdpRecive(8765))
                 .setVideoCode(VDDecoder.H264)//设置解码方式
                 .setMultiple(1)//音频调节，倍数限制为1-8倍。1为原声,放大后可能导致爆音。
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
    如果程序中其他位置已经使用了相同端口的socket，需要使用UdpRecive的无参构造并手动调用player.write喂数据给解码器
@@ -137,7 +132,7 @@ Step 2：
 
    如果想要控制缓存策略可以在构建时设置如下参数
 
-                .setUdpPacketCacheMin(5)//udp包缓存数量,以音频为基准
+                .setUdpPacketCacheMin(3)//udp包缓存数量,以音频为基准
                 .setVideoFrameCacheMin(6)//视频帧达到播放条件的缓存帧数
 
    可以关闭默认缓冲动画
@@ -185,14 +180,6 @@ Step 2：
    
          player.stop();
   
-   播放过程中可调用以下方法（必须在已经开始渲染后才能调用录制,可以注册信号接收器获取）
-
-        player.setWriteCallback(new WriteCallback());
-   
-        player.startRecode();//停止录制
-	
-        player.stopRecode();//开始录制
-  
    销毁资源
            
          player.destroy();
@@ -229,16 +216,14 @@ Step 2：
 
         speak.stop();
 
-  关于录制同样需要在收到录制准备就绪信号后才可以调用，录制就绪信号会在第一次启动语音推流之后才会收到，另外录制应当与推流同步启动同步关闭
-
-        speak.setWriteCallback(new WriteCallback());
+  关于录制应当与推流同步启动同步关闭
 
         speak.startRecode();//开始录制
 
         speak.stopRecode();//停止录制
 
   注意如果同时视频推流和语音推流会出现冲突，如果正在视频推流，则不应该启动语音推流，如果已经启动，需调用stop方法关闭。
-  然后此时启动发送和关闭发送对应如下方法
+  然后此时启动发送和关闭发送对应如下方法，此时无法录制
 
         speak.startJustSend();
         speak.stopJustSend();

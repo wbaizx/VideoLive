@@ -116,7 +116,7 @@ public class SpeakSend {
     private void addbytes(ByteBuffer buff) {
         if (udpControl != null) {
             //自定义发送
-            OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position() - 0));
+            OtherUtil.addQueue(sendQueue, udpControl.Control(buff.array(), 0, buff.position()));
         } else {
             OtherUtil.addQueue(sendQueue, Arrays.copyOfRange(buff.array(), 0, buff.position()));//复制数组
         }

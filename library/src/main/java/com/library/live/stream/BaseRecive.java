@@ -1,8 +1,8 @@
 package com.library.live.stream;
 
+import com.library.common.UdpControlInterface;
 import com.library.common.VoiceCallback;
 import com.library.live.vd.VideoInformationInterface;
-import com.library.common.UdpControlInterface;
 
 /**
  * Created by android1 on 2017/9/27.
@@ -13,7 +13,7 @@ public abstract class BaseRecive {
     protected UdpControlInterface udpControl = null;
     protected VoiceCallback voiceCallback = null;
     protected VideoCallback videoCallback = null;
-    protected int UdpPacketMin = 5;
+    protected int UdpPacketMin = 3;
 
     /**
      * 手动送入数据的方法

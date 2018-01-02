@@ -31,7 +31,7 @@ public class WriteMp3 {
     private boolean isShouldStart = false;
 
     private int frameNum = 0;
-    private Object lock = new Object();
+    private final Object lock = new Object();
 
     public WriteMp3(String path) {
         if (!TextUtils.isEmpty(path) && !path.equals("")) {
@@ -44,14 +44,12 @@ public class WriteMp3 {
         voiceFormat = mediaFormat;
         if (isShouldStart) {
             start();
-        } else {
-            isShouldStart = true;
         }
     }
 
     public void start() {
         synchronized (lock) {
-            if (voiceFormat != null && mMediaMuxer == null && isShouldStart) {
+            if (voiceFormat != null && mMediaMuxer == null) {
                 isShouldStart = false;
                 setPath();
                 try {
@@ -99,13 +97,13 @@ public class WriteMp3 {
     public void stop() {
         synchronized (lock) {
             if (agreeWrite) {
+                agreeWrite = false;
                 try {
                     mMediaMuxer.release();
                     mLog.log("app_WriteMp3", "文件录制关闭");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    agreeWrite = false;
                     mMediaMuxer = null;
                     //文件过短或异常，删除文件
                     File file = new File(path);

@@ -121,7 +121,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
     public void write(byte[] bytes) {
         if (isrecive) {
             if (udpControl != null) {
-                bytes = udpControl.Control(bytes, 0, bytes.length - 0);
+                bytes = udpControl.Control(bytes, 0, bytes.length);
             }
             UdpBytes udpBytes = new UdpBytes(bytes);
             if (udpBytes.getTag() == (byte) 0x00) {

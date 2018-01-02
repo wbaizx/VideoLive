@@ -30,6 +30,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
+    private int videoUdpPacketMin = 70;
+    private boolean achieveVideoUdpPacketMin = true;
 
     private Strategy strategy;
 
@@ -125,7 +127,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     public void write(byte[] bytes) {
         if (isrecive) {
             if (udpControl != null) {
-                bytes = udpControl.Control(bytes, 0, bytes.length - 0);
+                bytes = udpControl.Control(bytes, 0, bytes.length);
             }
             UdpBytes udpBytes = new UdpBytes(bytes);
 
@@ -140,7 +142,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //            vdnum++;
 
                 //从排好序的队列中取出数据
-                if (videoList.size() >= (UdpPacketMin * 5 * 4)) {//视频帧包数量本来就多，并且音频5帧一包，这里可以多存一点，确保策略处理时音频帧比视频帧多
+                if (videoList.size() >= videoUdpPacketMin) {
+                    mLog.log("videoUdpPacket", "当前数量 " + videoList.size() + " 允许数量 " + videoUdpPacketMin);
                     mosaicVideoFrame(videoList.removeFirst());
                 }
             } else if (udpBytes.getTag() == (byte) 0x00) {
@@ -154,6 +157,10 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //            vcnum++;
 
                 if (voiceList.size() >= UdpPacketMin) {
+                    if (achieveVideoUdpPacketMin) {//音频达到条件后重置视频条件
+                        achieveVideoUdpPacketMin = false;
+                        videoUdpPacketMin = videoList.size() + 5;
+                    }
                     mosaicVoiceFrame(voiceList.removeFirst());
                 }
             }
