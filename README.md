@@ -34,7 +34,7 @@ Step 2：
     
 ## 视频使用示例：
     
-    ### 推流端：
+### 推流端：
  
     <TextureView
         android:id="@+id/textureView"
@@ -106,7 +106,7 @@ Step 2：
 
 
 
-    ### 接收端：
+### 接收端：
       
     <com.library.live.view.PlayerView
         android:id="@+id/playerView"
@@ -187,7 +187,7 @@ Step 2：
     
 ## 单独语音对讲使用示例：
 
-    ### 发送端：
+### 发送端：
 
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend("192.168.2.106", 8765))
@@ -242,7 +242,7 @@ Step 2：
 
 
 
-    ### 接收端：
+### 接收端：
 
         listen = new Listen.Buider()
                 .setPullMode(new ListenRecive(socket))
