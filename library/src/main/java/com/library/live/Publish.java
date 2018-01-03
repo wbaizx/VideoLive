@@ -425,11 +425,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
         vdEncoder.destroy();
         voiceRecord.destroy();
         baseSend.destroy();
+        releaseCamera();
+        imageReader.close();
         frameHandler.removeCallbacksAndMessages(null);
         handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
-        releaseCamera();
-        imageReader.close();
         writeMp4.destroy();
     }
 
