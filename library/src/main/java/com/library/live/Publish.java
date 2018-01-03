@@ -84,6 +84,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private int frontAngle = 270;
     private int backAngle = 90;
+    private CameraManager manager;
+    private String cameraId;
 
 
     private Publish(Context context, PublishView publishView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
@@ -99,6 +101,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.collectionbitrate_vc = collectionbitrate_vc;
         this.publishbitrate_vc = publishbitrate_vc;
         this.codetype = codetype;
+        this.publishView = publishView;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.ispreview = ispreview;
@@ -111,18 +114,18 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.baseSend = baseSend;
         this.baseSend.setUdpControl(udpControl);
         startControlFrameRate();
-
+        manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        initCamera();
         if (ispreview) {//如果需要显示预览
-            this.publishView = publishView;
             publishView.setSurfaceTextureListener(this);
         } else {
-            initCamera();
+            openCamera();
         }
     }
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        initCamera();
+        openCamera();
     }
 
     @Override
@@ -138,48 +141,20 @@ public class Publish implements TextureView.SurfaceTextureListener {
     public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
     }
 
-    /*
-    初始化并打开相机
+    /**
+     * 初始化相机管理
      */
     private void initCamera() {
-        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         try {
-            //遍历所有摄像头
+            //遍历所有摄像头,查找符合当前选择的摄像头
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                //查找符合当前选择的摄像头
                 if (characteristics.get(CameraCharacteristics.LENS_FACING) == facingFront) {
                     //获取StreamConfigurationMap管理摄像头支持的所有输出格式和尺寸,根据TextureView的尺寸设置预览尺寸
                     StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                    //选取分辨率（未必和设置的匹配，由于摄像头不支持设置的分辨率）
-                    setSize(map.getOutputSizes(SurfaceTexture.class));
-
-                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        return;
-                    }
-                    try {
-                        //打开相机
-                        manager.openCamera(cameraId, new CameraDevice.StateCallback() {
-                            @Override
-                            public void onOpened(@NonNull CameraDevice device) {
-                                cameraDevice = device;
-                                //开启预览
-                                startPreview();
-                            }
-
-                            @Override
-                            public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-
-                            }
-
-                            @Override
-                            public void onError(@NonNull CameraDevice cameraDevice, int i) {
-
-                            }
-                        }, null);//创建在当前线程
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
+                    //选取最佳分辨率初始化编码器（未必和设置的匹配，由于摄像头不支持设置的分辨率）
+                    initCode(map.getOutputSizes(SurfaceTexture.class));
+                    this.cameraId = cameraId;
                     break;
                 }
             }
@@ -188,66 +163,95 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
-    private void setSize(Size[] outputSizes) {
-        int numw = 10000;
-        int numh = 10000;
-        int num = 0;
-        for (int i = 0; i < outputSizes.length; i++) {
-            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
-            if (Math.abs(outputSizes[i].getWidth() - publishSize.getWidth()) <= numw) {
-                numw = Math.abs(outputSizes[i].getWidth() - publishSize.getWidth());
-                if (Math.abs(outputSizes[i].getHeight() - publishSize.getHeight()) <= numh) {
-                    numh = Math.abs(outputSizes[i].getHeight() - publishSize.getHeight());
-                    num = i;
+    /**
+     * 打开相机
+     */
+    private void openCamera() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        try {
+            //打开相机
+            manager.openCamera(cameraId, new CameraDevice.StateCallback() {
+                @Override
+                public void onOpened(@NonNull CameraDevice device) {
+                    cameraDevice = device;
+                    //开启预览
+                    startPreview();
                 }
-            }
-        }
-        publishSize = outputSizes[num];
 
-        numw = 10000;
-        numh = 10000;
-        num = 0;
-        for (int i = 0; i < outputSizes.length; i++) {
-            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
-            if (Math.abs(outputSizes[i].getWidth() - previewSize.getWidth()) <= numw) {
-                numw = Math.abs(outputSizes[i].getWidth() - previewSize.getWidth());
-                if (Math.abs(outputSizes[i].getHeight() - previewSize.getHeight()) <= numh) {
-                    numh = Math.abs(outputSizes[i].getHeight() - previewSize.getHeight());
-                    num = i;
+                @Override
+                public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+
                 }
-            }
-        }
-        previewSize = outputSizes[num];
 
-        numw = 10000;
-        numh = 10000;
-        num = 0;
-        for (int i = 0; i < outputSizes.length; i++) {
-            mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
-            if (Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth()) <= numw) {
-                numw = Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth());
-                if (Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight()) <= numh) {
-                    numh = Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight());
-                    num = i;
+                @Override
+                public void onError(@NonNull CameraDevice cameraDevice, int i) {
+
                 }
-            }
+            }, camearHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
-        collectionSize = outputSizes[num];
-
-        mLog.log("pictureSize", "推流分辨率  =  " + publishSize.getWidth() + " * " + publishSize.getHeight());
-        mLog.log("pictureSize", "预览分辨率  =  " + previewSize.getWidth() + " * " + previewSize.getHeight());
-        mLog.log("pictureSize", "采集分辨率  =  " + collectionSize.getWidth() + " * " + collectionSize.getHeight());
-
-        //计算比例(需对调宽高)
-        baseSend.setWeight((double) publishSize.getHeight() / publishSize.getWidth());
-        if (ispreview) {
-            publishView.setWeight((double) previewSize.getHeight() / previewSize.getWidth());
-        }
-        initEncode();
     }
 
-    private void initEncode() {
+    private void initCode(Size[] outputSizes) {
         if (vdEncoder == null) {
+            int numw = 10000;
+            int numh = 10000;
+            int num = 0;
+            for (int i = 0; i < outputSizes.length; i++) {
+                mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+                if (Math.abs(outputSizes[i].getWidth() - publishSize.getWidth()) <= numw) {
+                    numw = Math.abs(outputSizes[i].getWidth() - publishSize.getWidth());
+                    if (Math.abs(outputSizes[i].getHeight() - publishSize.getHeight()) <= numh) {
+                        numh = Math.abs(outputSizes[i].getHeight() - publishSize.getHeight());
+                        num = i;
+                    }
+                }
+            }
+            publishSize = outputSizes[num];
+
+            numw = 10000;
+            numh = 10000;
+            num = 0;
+            for (int i = 0; i < outputSizes.length; i++) {
+                mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+                if (Math.abs(outputSizes[i].getWidth() - previewSize.getWidth()) <= numw) {
+                    numw = Math.abs(outputSizes[i].getWidth() - previewSize.getWidth());
+                    if (Math.abs(outputSizes[i].getHeight() - previewSize.getHeight()) <= numh) {
+                        numh = Math.abs(outputSizes[i].getHeight() - previewSize.getHeight());
+                        num = i;
+                    }
+                }
+            }
+            previewSize = outputSizes[num];
+
+            numw = 10000;
+            numh = 10000;
+            num = 0;
+            for (int i = 0; i < outputSizes.length; i++) {
+                mLog.log("Size_app", outputSizes[i].getWidth() + "--" + outputSizes[i].getHeight());
+                if (Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth()) <= numw) {
+                    numw = Math.abs(outputSizes[i].getWidth() - collectionSize.getWidth());
+                    if (Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight()) <= numh) {
+                        numh = Math.abs(outputSizes[i].getHeight() - collectionSize.getHeight());
+                        num = i;
+                    }
+                }
+            }
+            collectionSize = outputSizes[num];
+
+            mLog.log("pictureSize", "推流分辨率  =  " + publishSize.getWidth() + " * " + publishSize.getHeight());
+            mLog.log("pictureSize", "预览分辨率  =  " + previewSize.getWidth() + " * " + previewSize.getHeight());
+            mLog.log("pictureSize", "采集分辨率  =  " + collectionSize.getWidth() + " * " + collectionSize.getHeight());
+
+            //计算比例(需对调宽高)
+            baseSend.setWeight((double) publishSize.getHeight() / publishSize.getWidth());
+            if (ispreview) {
+                publishView.setWeight((double) previewSize.getHeight() / previewSize.getWidth());
+            }
+
             recordEncoderVD = new RecordEncoderVD(collectionSize, frameRate, collectionBitrate, writeMp4, codetype);
             vdEncoder = new VDEncoder(collectionSize, publishSize, frameRate, publishBitrate, codetype, baseSend);
             //初始化音频编码
@@ -256,6 +260,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             voiceRecord.start();
         }
     }
+
 
     private void startPreview() {
         try {
@@ -294,7 +299,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 public void onConfigureFailed(CameraCaptureSession session) {
 
                 }
-            }, null);
+            }, camearHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -402,6 +407,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         facingFront = !rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         releaseCamera();
         initCamera();
+        openCamera();
         //最后来设置标志，防止最后几帧数据旋转错误
         rotate = !rotate;
     }
