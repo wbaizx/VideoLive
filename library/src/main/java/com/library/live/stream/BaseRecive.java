@@ -2,6 +2,7 @@ package com.library.live.stream;
 
 import com.library.common.UdpControlInterface;
 import com.library.common.VoiceCallback;
+import com.library.live.stream.upd.WeightCallback;
 import com.library.live.vd.VideoInformationInterface;
 
 /**
@@ -14,6 +15,7 @@ public abstract class BaseRecive {
     protected VoiceCallback voiceCallback = null;
     protected VideoCallback videoCallback = null;
     protected int UdpPacketMin = 3;
+    protected WeightCallback weightCallback;
 
     /**
      * 手动送入数据的方法
@@ -61,4 +63,8 @@ public abstract class BaseRecive {
     缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
      */
     public abstract void setIsInBuffer(IsInBuffer isInBuffer);
+
+    public void setWeightCallback(WeightCallback weightCallback) {
+        this.weightCallback = weightCallback;
+    }
 }

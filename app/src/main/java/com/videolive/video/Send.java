@@ -3,12 +3,12 @@ package com.videolive.video;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 
 import com.library.live.Publish;
 import com.library.live.stream.upd.UdpSend;
+import com.library.live.view.PublishView;
 import com.videolive.R;
 
 public class Send extends AppCompatActivity {
@@ -28,7 +28,7 @@ public class Send extends AppCompatActivity {
         record = findViewById(R.id.record);
         adjustment = findViewById(R.id.adjustment);
 
-        publish = new Publish.Buider(this, (TextureView) findViewById(R.id.textureView))
+        publish = new Publish.Buider(this, (PublishView) findViewById(R.id.publishView))
                 .setPushMode(new UdpSend(getIntent().getExtras().getString("url"), getIntent().getExtras().getInt("port")))
                 .setFrameRate(getIntent().getExtras().getInt("framerate"))
                 .setVideoCode(getIntent().getExtras().getString("videoCode"))
@@ -42,6 +42,7 @@ public class Send extends AppCompatActivity {
                 .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
+                .setCenterScaleType(true)
                 .build();
 
         tuistar.setOnClickListener(new View.OnClickListener() {

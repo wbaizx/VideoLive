@@ -3,26 +3,30 @@ package com.library.live.view;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.library.live.IsOutBuffer;
 import com.library.R;
+import com.library.live.IsOutBuffer;
 import com.library.live.stream.IsInBuffer;
+import com.library.live.stream.upd.WeightCallback;
 
 
 /**
  * Created by android1 on 2017/11/18.
  */
 
-public class PlayerView extends RelativeLayout implements IsInBuffer {
+public class PlayerView extends RelativeLayout implements IsInBuffer, WeightCallback {
     private ImageView loadimag;
     private SurfaceView surfaceview;
     private TextView loadtext;
@@ -31,6 +35,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
     private boolean bufferAnimator = true;
     private Handler handler;
     private UIRunnable uiRunnable;
+    private boolean isCenterScaleType = false;
 
     public PlayerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -39,6 +44,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
 
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.player_view, this, true);
+        setBackgroundColor(ContextCompat.getColor(context, R.color.black));
         loadimag = findViewById(R.id.loadimag);
         surfaceview = findViewById(R.id.surfaceview);
         loadtext = findViewById(R.id.loadtext);
@@ -48,7 +54,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
         rota.setInterpolator(new LinearInterpolator());
         rota.setRepeatCount(-1);
 
-        handler = new Handler(context.getMainLooper());
+        handler = new Handler(Looper.getMainLooper());
         uiRunnable = new UIRunnable();
     }
 
@@ -67,7 +73,28 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
         }
     }
 
+    @Override
+    public void getWeight(final double weight) {
+        if (isCenterScaleType) {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    ViewGroup.LayoutParams lp = surfaceview.getLayoutParams();
+                    if (getHeight() * weight > getWidth()) {
+                        lp.width = getWidth();
+                        lp.height = (int) (getWidth() / weight);
+                    } else {
+                        lp.width = (int) (getHeight() * weight);
+                        lp.height = getHeight();
+                    }
+                    surfaceview.setLayoutParams(lp);
+                }
+            });
+        }
+    }
+
     private class UIRunnable implements Runnable {
+
         private boolean isBuffer;
 
         @Override
@@ -90,6 +117,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
         public void setBuffer(boolean buffer) {
             isBuffer = buffer;
         }
+
     }
 
     public void setIsOutBuffer(IsOutBuffer isOutBuffer) {
@@ -98,6 +126,10 @@ public class PlayerView extends RelativeLayout implements IsInBuffer {
 
     public void setBufferAnimator(boolean bufferAnimator) {
         this.bufferAnimator = bufferAnimator;
+    }
+
+    public void setCenterScaleType(boolean centerScaleType) {
+        isCenterScaleType = centerScaleType;
     }
 
     public void stop() {

@@ -1,5 +1,7 @@
 package com.library.live.stream.upd;
 
+import android.util.Size;
+
 import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
@@ -30,6 +32,7 @@ public class UdpSend extends BaseSend {
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private boolean ismysocket = false;//用于判断是否需要销毁socket
     private int voiceSendNum = 0;//控制语音包合并发送，5个包发送一次
+    private byte weight;//图像比
 
     private SingleThreadExecutor singleThreadExecutor = null;
 
@@ -104,6 +107,11 @@ public class UdpSend extends BaseSend {
         }
     }
 
+    @Override
+    public void setWeight(double weight) {
+        this.weight = OtherUtil.setWeitht(weight);
+    }
+
     /**
      * 发送视频
      */
@@ -126,6 +134,7 @@ public class UdpSend extends BaseSend {
             } else {
                 buffvideo.put((byte) 1);//中间帧
             }
+            buffvideo.put(weight);//图像比
             buffvideo.putInt(time_vd_vaule);//时戳
             buffvideo.putShort((short) sendUdplength);//长度
             //添加视频数据
@@ -146,6 +155,7 @@ public class UdpSend extends BaseSend {
             } else {
                 buffvideo.put((byte) 2);//结束帧
             }
+            buffvideo.put(weight);//图像比
             buffvideo.putInt(time_vd_vaule);//时戳
             buffvideo.putShort((short) (video.length - nowPosition));//长度
             //添加视频数据

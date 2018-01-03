@@ -59,7 +59,7 @@ public class Speak {
     }
 
     public static class Buider {
-        private int publishBitrate = 20 * 1024;
+        private int publishBitrate = 24 * 1024;
         private SpeakSend speakSend;
         private UdpControlInterface udpControl;
         private String path = null;

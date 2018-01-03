@@ -12,11 +12,11 @@
         android:layout_height="wrap_content"
         android:text="旋转" />
 
-    <TextureView
-        android:id="@+id/textureView"
+    <com.library.live.view.PublishView
+        android:id="@+id/publishView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_weight="1"></com.library.live.view.PublishView>
 
     <LinearLayout
         android:layout_width="match_parent"

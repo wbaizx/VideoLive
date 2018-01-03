@@ -1,6 +1,7 @@
 package com.library.common;
 
 import com.library.util.ByteUtil;
+import com.library.util.OtherUtil;
 
 import java.util.Arrays;
 
@@ -13,6 +14,7 @@ import java.util.Arrays;
  * <p>
  * 视频：----
  * 1字节 帧标记tag  0帧头 1帧中间 2帧尾 3独立帧
+ * 1字节 图像比例
  * 4字节 时间戳
  * 2字节 内容长度（纯数据部分）
  * length 数据内容
@@ -35,6 +37,7 @@ public class UdpBytes {
     private byte[] bytes;
     private byte[] data;
     private int time;
+    private double weight;
 
     private int frameTag;
     private int lengthnum;//记录音频偏移长度
@@ -45,10 +48,10 @@ public class UdpBytes {
 
         if (tag == (byte) 0x01) {//视频
             frameTag = bytes[5];
-            time = ByteUtil.byte_to_int(bytes[6], bytes[7], bytes[8], bytes[9]);
-            //12是视频UDP包头+视频协议字长,data得到数据可能不足一帧视频
-            data = Arrays.copyOfRange(bytes, 12, ByteUtil.byte_to_short(bytes[10], bytes[11]) + 12);
-
+            weight = OtherUtil.getWeight(bytes[6]);
+            time = ByteUtil.byte_to_int(bytes[7], bytes[8], bytes[9], bytes[10]);
+            //13是视频UDP包头+视频协议字长,data得到数据可能不足一帧视频
+            data = Arrays.copyOfRange(bytes, 13, ByteUtil.byte_to_short(bytes[11], bytes[12]) + 13);
         } else if (tag == (byte) 0x00) {//音频
             this.bytes = bytes;
             time = ByteUtil.byte_to_int(bytes[5], bytes[6], bytes[7], bytes[8]);
@@ -77,6 +80,11 @@ public class UdpBytes {
     //视频帧标记
     public int getFrameTag() {
         return frameTag;
+    }
+
+    //图像比
+    public double getWeight() {
+        return weight;
     }
 
     //音频定位下一帧

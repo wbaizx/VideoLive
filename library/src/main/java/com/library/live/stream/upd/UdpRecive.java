@@ -39,6 +39,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private Handler udpHandler;
 
     private SingleThreadExecutor singleThreadExecutor = null;
+    private double weight = 0;
 
     private ArrayBlockingQueue<byte[]> udpQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
 
@@ -132,6 +133,12 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             UdpBytes udpBytes = new UdpBytes(bytes);
 
             if (udpBytes.getTag() == (byte) 0x01) {
+                if (weight != udpBytes.getWeight()) {
+                    weight = udpBytes.getWeight();
+                    if (weightCallback != null) {
+                        weightCallback.getWeight(weight);
+                    }
+                }
                 addudp(videoList, udpBytes);
 
                 //计算丢包率--------------------------------

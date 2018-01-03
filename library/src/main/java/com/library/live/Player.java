@@ -112,8 +112,14 @@ public class Player {
             return this;
         }
 
+        public Buider setCenterScaleType(boolean isCenterScaleType) {
+            playerView.setCenterScaleType(isCenterScaleType);
+            return this;
+        }
+
         public Player build() {
             baseRecive.setUdpPacketCacheMin(udpPacketCacheMin);
+            baseRecive.setWeightCallback(playerView);//将playerView接口设置给baseRecive用以回调图像比例
             baseRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
             playerView.setIsOutBuffer(isOutBuffer);//给playerView设置isOutBuffer接口用以将缓冲状态回调给客户端
             baseRecive.setOther(videoFrameCacheMin);

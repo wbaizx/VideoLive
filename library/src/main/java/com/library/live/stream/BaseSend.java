@@ -1,5 +1,7 @@
 package com.library.live.stream;
 
+import android.util.Size;
+
 import com.library.common.UdpControlInterface;
 
 /**
@@ -22,4 +24,6 @@ public abstract class BaseSend {
     public void setUdpControl(UdpControlInterface udpControl) {
         this.udpControl = udpControl;
     }
+
+    public abstract void setWeight(double weight);
 }

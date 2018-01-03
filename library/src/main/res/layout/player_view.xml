@@ -6,23 +6,24 @@
     <SurfaceView
         android:id="@+id/surfaceview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true" />
 
     <ImageView
         android:id="@+id/loadimag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:layout_centerInParent="true"
-        android:src="@drawable/loading" />
+        android:src="@drawable/loading"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/loadtext"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/loadimag"
         android:layout_centerHorizontal="true"
         android:text="正在加载..."
-        android:textColor="#8c8c8c" />
+        android:textColor="#8c8c8c"
+        android:visibility="gone" />
 </merge>

@@ -27,6 +27,7 @@ public class Recive extends AppCompatActivity {
                 .setPullMode(new UdpRecive(getIntent().getExtras().getInt("port")))
                 .setVideoCode(getIntent().getExtras().getString("videoCode"))
                 .setMultiple(getIntent().getExtras().getInt("multiple"))
+                .setCenterScaleType(true)
                 .build();
 
         jiestar.setOnClickListener(new View.OnClickListener() {

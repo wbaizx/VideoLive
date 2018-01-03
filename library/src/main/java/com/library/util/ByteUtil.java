@@ -8,8 +8,8 @@ public class ByteUtil {
     //short转bytes
     public static byte[] short_to_byte(short num) {
         byte[] result = new byte[2];
-        result[0] = (byte) ((num >>> 8) & 0xff);
-        result[1] = (byte) ((num >>> 0) & 0xff);
+        result[0] = (byte) ((num >> 8) & 0xff);
+        result[1] = (byte) ((num >> 0) & 0xff);
         return result;
     }
 

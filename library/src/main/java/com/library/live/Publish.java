@@ -28,6 +28,7 @@ import com.library.live.stream.BaseSend;
 import com.library.live.vc.VoiceRecord;
 import com.library.live.vd.RecordEncoderVD;
 import com.library.live.vd.VDEncoder;
+import com.library.live.view.PublishView;
 import com.library.util.ImagUtil;
 import com.library.util.mLog;
 
@@ -63,7 +64,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //用于获取预览数据相关
     private ImageReader imageReader;
     //用于实时显示预览
-    private TextureView textureView;
+    private PublishView publishView;
     //预览分辨率
     private Size previewSize;
     //推流分辨率
@@ -85,7 +86,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int backAngle = 90;
 
 
-    private Publish(Context context, TextureView textureView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
+    private Publish(Context context, PublishView publishView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
                     boolean rotate, String path, BaseSend baseSend, UdpControlInterface udpControl) {
         this.context = context;
@@ -112,8 +113,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         startControlFrameRate();
 
         if (ispreview) {//如果需要显示预览
-            this.textureView = textureView;
-            textureView.setSurfaceTextureListener(this);
+            this.publishView = publishView;
+            publishView.setSurfaceTextureListener(this);
         } else {
             initCamera();
         }
@@ -150,9 +151,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 if (characteristics.get(CameraCharacteristics.LENS_FACING) == facingFront) {
                     //获取StreamConfigurationMap管理摄像头支持的所有输出格式和尺寸,根据TextureView的尺寸设置预览尺寸
                     StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-//                    previewSize = map.getOutputSizes(SurfaceTexture.class)[0];//预览分辨率直接设置为最大分辨率
-                    //选取采集分辨率（未必和设置的匹配，由于摄像头不支持设置的分辨率）
-                    setPublshSize(map.getOutputSizes(SurfaceTexture.class));
+                    //选取分辨率（未必和设置的匹配，由于摄像头不支持设置的分辨率）
+                    setSize(map.getOutputSizes(SurfaceTexture.class));
 
                     if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         return;
@@ -188,7 +188,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
-    private void setPublshSize(Size[] outputSizes) {
+    private void setSize(Size[] outputSizes) {
         int numw = 10000;
         int numh = 10000;
         int num = 0;
@@ -238,6 +238,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
         mLog.log("pictureSize", "预览分辨率  =  " + previewSize.getWidth() + " * " + previewSize.getHeight());
         mLog.log("pictureSize", "采集分辨率  =  " + collectionSize.getWidth() + " * " + collectionSize.getHeight());
 
+        //计算比例(需对调宽高)
+        baseSend.setWeight((double) publishSize.getHeight() / publishSize.getWidth());
+        if (ispreview) {
+            publishView.setWeight((double) previewSize.getHeight() / previewSize.getWidth());
+        }
         initEncode();
     }
 
@@ -299,7 +304,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     获取textureView的Surface
      */
     private Surface getTextureSurface() {
-        SurfaceTexture mSurfaceTexture = textureView.getSurfaceTexture();
+        SurfaceTexture mSurfaceTexture = publishView.getSurfaceTexture();
         mSurfaceTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());//设置TextureView的缓冲区大小
         return new Surface(mSurfaceTexture);
     }
@@ -423,14 +428,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     public static class Buider {
-        private TextureView textureView;
+        private PublishView publishView;
         private Context context;
         //编码参数
         private int frameRate = 15;
         private int publishBitrate = 600 * 1024;
         private int collectionBitrate = 600 * 1024;
         private int collectionbitrate_vc = 64 * 1024;
-        private int publishbitrate_vc = 20 * 1024;
+        private int publishbitrate_vc = 24 * 1024;
         //推流分辨率,仅控制推流编码
         private Size publishSize = new Size(480, 320);
         //预览分辨率，仅控制预览
@@ -448,9 +453,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private BaseSend baseSend;
         private UdpControlInterface udpControl = null;
 
-        public Buider(Context context, TextureView textureView) {
+        public Buider(Context context, PublishView publishView) {
             this.context = context;
-            this.textureView = textureView;
+            this.publishView = publishView;
         }
 
         public Buider(Context context) {
@@ -524,13 +529,18 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
+        public Buider setCenterScaleType(boolean isCenterScaleType) {
+            publishView.setCenterScaleType(isCenterScaleType);
+            return this;
+        }
+
         public Buider setUdpControl(UdpControlInterface udpControl) {
             this.udpControl = udpControl;
             return this;
         }
 
         public Publish build() {
-            return new Publish(context, textureView, ispreview, publishSize, previewSize, collectionSize, frameRate,
+            return new Publish(context, publishView, ispreview, publishSize, previewSize, collectionSize, frameRate,
                     publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend, udpControl);
         }
     }

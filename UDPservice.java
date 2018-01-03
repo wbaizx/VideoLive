@@ -105,9 +105,6 @@ public class UDPservice {
 
 	// -----------------------
 
-    public  short byte_to_short(byte b1, byte b2) {
-        return (short) ((b1 & 0xff) << 8 | (b2 & 0xff));
-    }
     public  int byte_to_int(byte b1, byte b2, byte b3, byte b4) {
         return (((b1 & 0xFF) << 24) | ((b2 & 0xFF) << 16) | ((b3 & 0xFF) << 8) | (b4 & 0xFF));
     }

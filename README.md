@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.2'
+	        compile 'com.github.wbaizx:VideoLive:3.0.3'
 	}
 
 
@@ -36,14 +36,14 @@ Step 2：
     
 ### 推流端：
  
-    <TextureView
-        android:id="@+id/textureView"
+    <com.library.live.view.PublishView
+        android:id="@+id/publishView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_weight="1"></com.library.live.view.PublishView>
         
         
-        publish = new Publish.Buider(this, (TextureView) findViewById(R.id.textureView))
+        publish = new Publish.Buider(this, (PublishView) findViewById(R.id.publishView))
                 .setPushMode(new UdpSend("192.168.2.106", 8765))
                 .setFrameRate(15)//帧率
                 .setVideoCode(VDEncoder.H264)//编码方式
@@ -51,7 +51,7 @@ Step 2：
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64 * 1024)//音频采集采样率
-                .setPublishBitrateVC(20 * 1024)//音频推流采样率
+                .setPublishBitrateVC(24 * 1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
                 .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
                 .setCollectionSize(480, 320)//采集分辨率，如果系统不支持会自动选取最相近的
@@ -63,7 +63,11 @@ Step 2：
   如果socket已经创建需要使用已经有的socket
        
        .setPushMode(new UdpSend(socket, "192.168.2.106", 8765))
-  
+
+  如果需要按比例显示图像
+
+                .setCenterScaleType(true)
+
   如果需要添加自己的协议
        
                 .setUdpControl(new UdpControlInterface() {
@@ -126,14 +130,14 @@ Step 2：
 
         player.write(byte[]);
 
-   动态调节音量
-
-        player.setVoiceIncreaseMultiple();//动态调整音量(放大pcm音量，与设备音量无关)
-
    如果想要控制缓存策略可以在构建时设置如下参数
 
                 .setUdpPacketCacheMin(3)//udp包缓存数量,以音频为基准
                 .setVideoFrameCacheMin(6)//视频帧达到播放条件的缓存帧数
+
+   如果需要按比例显示图像
+
+                .setCenterScaleType(true)
 
    可以关闭默认缓冲动画
 
@@ -170,7 +174,9 @@ Step 2：
             videoCallback.videoCallback(video);
             voiceCallback.voiceCallback(voice);
 
-   其他更多自定义设置可以参考BaseRecive源码
+   动态调节音量
+
+        player.setVoiceIncreaseMultiple();//动态调整音量(放大pcm音量，与设备音量无关)
 
    调用播放
    
@@ -191,7 +197,7 @@ Step 2：
 
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend("192.168.2.106", 8765))
-                .setPublishBitrate(20 * 1024)//音频推流采样率
+                .setPublishBitrate(24 * 1024)//音频推流采样率
                 .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
 
