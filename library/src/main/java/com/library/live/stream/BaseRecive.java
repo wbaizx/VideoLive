@@ -2,7 +2,6 @@ package com.library.live.stream;
 
 import com.library.common.UdpControlInterface;
 import com.library.common.VoiceCallback;
-import com.library.live.stream.upd.WeightCallback;
 import com.library.live.vd.VideoInformationInterface;
 
 /**
@@ -14,7 +13,6 @@ public abstract class BaseRecive {
     protected UdpControlInterface udpControl = null;
     protected VoiceCallback voiceCallback = null;
     protected VideoCallback videoCallback = null;
-    protected int UdpPacketMin = 3;
     protected WeightCallback weightCallback;
 
     /**
@@ -27,10 +25,6 @@ public abstract class BaseRecive {
     public abstract void stopRevice();
 
     public abstract void destroy();
-
-    public void getInformation(byte[] important) {
-        informaitonInterface.Information(important);
-    }
 
     public void setInformaitonInterface(VideoInformationInterface informaitonInterface) {
         this.informaitonInterface = informaitonInterface;
@@ -49,13 +43,10 @@ public abstract class BaseRecive {
     }
 
     //控制缓存包数量 用于解决udp乱序
-    public void setUdpPacketCacheMin(int udpPacketCacheMin) {
-        UdpPacketMin = udpPacketCacheMin;
-    }
+    public abstract void setUdpPacketCacheMin(int udpPacketCacheMin);
 
     /*
     子类可以通过这个方法获得一些策略参数，根据需要决定是否使用,
-    参数为:视频帧达到播放条件的缓存帧数
      */
     public abstract void setOther(int videoFrameCacheMin);
 

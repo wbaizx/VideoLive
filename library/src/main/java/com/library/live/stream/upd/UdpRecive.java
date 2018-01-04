@@ -27,6 +27,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private DatagramSocket socket = null;
     private boolean isrecive = false;
     private DatagramPacket packetreceive;
+    private int udpPacketCacheMin = 3;
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
@@ -163,7 +164,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //            }
 //            vcnum++;
 
-                if (voiceList.size() >= UdpPacketMin) {
+                if (voiceList.size() >= udpPacketCacheMin) {
                     if (achieveVideoUdpPacketMin) {//音频达到条件后重置视频条件
                         achieveVideoUdpPacketMin = false;
                         videoUdpPacketMin = videoList.size() + 5;
@@ -221,7 +222,9 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 //        HEVC 00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20 后面 00 00 00 01 26 为帧数据开始，普通帧为 00 00 00 01 02
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2 后面 00 00 00 01 65 为帧数据开始，普通帧为 41
         if (frame[4] == (byte) 0x67 || frame[4] == (byte) 0x40) {
-            getInformation(frame);
+            if (informaitonInterface != null) {
+                informaitonInterface.Information(frame);
+            }
         }
     }
 
@@ -273,9 +276,13 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
+    @Override
+    public void setUdpPacketCacheMin(int udpPacketCacheMin) {
+        this.udpPacketCacheMin = udpPacketCacheMin;
+    }
+
     /*
     可以通过这个方法获得一些策略参数，根据需要决定是否需要,
-    3个参数分别为 视频帧达到播放条件的缓存帧数，视频帧缓冲时间，音频帧缓冲时间
      */
     @Override
     public void setOther(int videoFrameCacheMin) {

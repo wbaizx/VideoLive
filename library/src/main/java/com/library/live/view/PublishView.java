@@ -21,6 +21,7 @@ import com.library.R;
 public class PublishView extends RelativeLayout {
     private boolean isCenterScaleType = false;
     private TextureView textureView;
+    private Handler handler;
 
     public PublishView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -31,6 +32,7 @@ public class PublishView extends RelativeLayout {
         LayoutInflater.from(context).inflate(R.layout.publish_view, this, true);
         setBackgroundColor(ContextCompat.getColor(context, R.color.black));
         textureView = findViewById(R.id.textureView);
+        handler = new Handler(Looper.getMainLooper());
     }
 
     public void setCenterScaleType(boolean centerScaleType) {
@@ -47,7 +49,7 @@ public class PublishView extends RelativeLayout {
 
     public void setWeight(final double weight) {
         if (isCenterScaleType) {
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
+            handler.post(new Runnable() {
                 @Override
                 public void run() {
                     ViewGroup.LayoutParams lp = textureView.getLayoutParams();

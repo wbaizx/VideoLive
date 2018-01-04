@@ -1,7 +1,5 @@
 package com.library.live.stream;
 
-import android.util.Size;
-
 import com.library.common.UdpControlInterface;
 
 /**

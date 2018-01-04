@@ -19,7 +19,7 @@ import android.widget.TextView;
 import com.library.R;
 import com.library.live.IsOutBuffer;
 import com.library.live.stream.IsInBuffer;
-import com.library.live.stream.upd.WeightCallback;
+import com.library.live.stream.WeightCallback;
 
 
 /**
@@ -76,7 +76,7 @@ public class PlayerView extends RelativeLayout implements IsInBuffer, WeightCall
     @Override
     public void getWeight(final double weight) {
         if (isCenterScaleType) {
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
+            handler.post(new Runnable() {
                 @Override
                 public void run() {
                     ViewGroup.LayoutParams lp = surfaceview.getLayoutParams();

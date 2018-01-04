@@ -90,7 +90,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private Publish(Context context, PublishView publishView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
-                    boolean rotate, String path, BaseSend baseSend, UdpControlInterface udpControl) {
+                    boolean rotate, String path, BaseSend baseSend) {
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
@@ -102,6 +102,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.publishbitrate_vc = publishbitrate_vc;
         this.codetype = codetype;
         this.publishView = publishView;
+        this.baseSend = baseSend;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.ispreview = ispreview;
@@ -111,8 +112,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
 
-        this.baseSend = baseSend;
-        this.baseSend.setUdpControl(udpControl);
+
         startControlFrameRate();
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         initCamera();
@@ -356,9 +356,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                if (controlFrameRateThread.isAlive()) {
-                    frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
-                }
+                frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 if (frameRateControlQueue.size() > 0) {
 //                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
@@ -385,8 +383,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void releaseCamera() {
         //释放相机
-        cameraDevice.close();
-        cameraDevice = null;
+        if (cameraDevice != null) {
+            cameraDevice.close();
+            cameraDevice = null;
+        }
     }
 
 
@@ -546,8 +546,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Publish build() {
+            baseSend.setUdpControl(udpControl);
             return new Publish(context, publishView, ispreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend, udpControl);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend);
         }
     }
 }

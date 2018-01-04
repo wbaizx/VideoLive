@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.4'
+	        compile 'com.github.wbaizx:VideoLive:3.0.5'
 	}
 
 
@@ -47,14 +47,14 @@ Step 2：
                 .setPushMode(new UdpSend("192.168.2.106", 8765))
                 .setFrameRate(15)//帧率
                 .setVideoCode(VDEncoder.H264)//编码方式
-                .setIsPreview(true)//是否需要显示预览(如需后台推流必须设置false),如果设置false，则构建此Buider可以调用单参数方法Publish.Buider(context)
+                .setIsPreview(true)//是否需要显示预览(如需后台推流最好设置false，如果设置false则构建Buider可以调用单参数方法Publish.Buider(context))
                 .setPublishBitrate(600 * 1024)//推流采样率
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64 * 1024)//音频采集采样率
                 .setPublishBitrateVC(24 * 1024)//音频推流采样率
-                .setPublishSize(480, 320)//推流分辨率，如果系统不支持会自动选取最相近的
-                .setPreviewSize(480, 320)//预览分辨率，如果系统不支持会自动选取最相近的
-                .setCollectionSize(480, 320)//采集分辨率，如果系统不支持会自动选取最相近的
+                .setPublishSize(480, 320)//推流分辨率，不要高于采集分辨率
+                .setPreviewSize(480, 320)//预览分辨率
+                .setCollectionSize(480, 320)//采集分辨率，决定录制文件的分辨率
                 .setRotate(true)//是否为前置摄像头,默认后置
                 .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
                 .build();
