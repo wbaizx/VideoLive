@@ -50,7 +50,7 @@ public class VoiceRecord {
                     byte[] buffer = new byte[recBufSize];
                     int bufferReadResult;
                     audioRecord.startRecording();//开始录制
-                    while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                    while (audioRecord != null && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         /*
                         两针间采集大概40ms，编码发送大概10ms，单线程顺序执行没有问题
                          */

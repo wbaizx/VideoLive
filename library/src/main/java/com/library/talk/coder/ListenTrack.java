@@ -50,7 +50,7 @@ public class ListenTrack implements VoicePlayer {
 
     @Override
     public void voicePlayer(byte[] voicebyte) {
-        if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+        if (audioTrack != null && audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
             //控制音频音量
             audioTrack.write(VoiceUtil.increasePCM(voicebyte, multiple), 0, voicebyte.length);
         }

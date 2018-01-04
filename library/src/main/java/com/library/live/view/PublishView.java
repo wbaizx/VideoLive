@@ -9,7 +9,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.TextureView;
-import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 import com.library.R;
@@ -20,8 +19,10 @@ import com.library.R;
 
 public class PublishView extends RelativeLayout {
     private boolean isCenterScaleType = false;
+    private boolean isShould = false;
     private TextureView textureView;
     private Handler handler;
+    private WeightRunnable weightRunnable;
 
     public PublishView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -33,6 +34,7 @@ public class PublishView extends RelativeLayout {
         setBackgroundColor(ContextCompat.getColor(context, R.color.black));
         textureView = findViewById(R.id.textureView);
         handler = new Handler(Looper.getMainLooper());
+        weightRunnable = new WeightRunnable(this, textureView);
     }
 
     public void setCenterScaleType(boolean centerScaleType) {
@@ -47,22 +49,23 @@ public class PublishView extends RelativeLayout {
         return textureView.getSurfaceTexture();
     }
 
-    public void setWeight(final double weight) {
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (isShould) {
+            isShould = false;
+            handler.post(weightRunnable);
+        }
+    }
+
+    public void setWeight(double weight) {
         if (isCenterScaleType) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    ViewGroup.LayoutParams lp = textureView.getLayoutParams();
-                    if (getHeight() * weight > getWidth()) {
-                        lp.width = getWidth();
-                        lp.height = (int) (getWidth() / weight);
-                    } else {
-                        lp.width = (int) (getHeight() * weight);
-                        lp.height = getHeight();
-                    }
-                    textureView.setLayoutParams(lp);
-                }
-            });
+            weightRunnable.setWeight(weight);
+            if (getWidth() != 0 && getHeight() != 0) {
+                handler.post(weightRunnable);
+            } else {
+                isShould = true;
+            }
         }
     }
 }

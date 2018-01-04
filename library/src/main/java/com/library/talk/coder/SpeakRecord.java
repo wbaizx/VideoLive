@@ -64,7 +64,7 @@ public class SpeakRecord {
             public void run() {
                 byte[] buffer = new byte[recBufSize];
                 int bufferReadResult;
-                while (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                while (audioRecord != null && audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                         /*
                         两针间采集大概40ms，编码发送大概10ms，单线程顺序执行没有问题
                          */

@@ -10,7 +10,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -36,6 +35,8 @@ public class PlayerView extends RelativeLayout implements IsInBuffer, WeightCall
     private Handler handler;
     private UIRunnable uiRunnable;
     private boolean isCenterScaleType = false;
+    private WeightRunnable weightRunnable;
+    private boolean isShould = false;
 
     public PlayerView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -56,10 +57,20 @@ public class PlayerView extends RelativeLayout implements IsInBuffer, WeightCall
 
         handler = new Handler(Looper.getMainLooper());
         uiRunnable = new UIRunnable();
+        weightRunnable = new WeightRunnable(this, surfaceview);
     }
 
     public SurfaceHolder getHolder() {
         return surfaceview.getHolder();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (isShould) {
+            isShould = false;
+            handler.post(weightRunnable);
+        }
     }
 
     @Override
@@ -74,22 +85,14 @@ public class PlayerView extends RelativeLayout implements IsInBuffer, WeightCall
     }
 
     @Override
-    public void getWeight(final double weight) {
+    public void getWeight(double weight) {
         if (isCenterScaleType) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    ViewGroup.LayoutParams lp = surfaceview.getLayoutParams();
-                    if (getHeight() * weight > getWidth()) {
-                        lp.width = getWidth();
-                        lp.height = (int) (getWidth() / weight);
-                    } else {
-                        lp.width = (int) (getHeight() * weight);
-                        lp.height = getHeight();
-                    }
-                    surfaceview.setLayoutParams(lp);
-                }
-            });
+            weightRunnable.setWeight(weight);
+            if (getWidth() != 0 && getHeight() != 0) {
+                handler.post(weightRunnable);
+            } else {
+                isShould = true;
+            }
         }
     }
 

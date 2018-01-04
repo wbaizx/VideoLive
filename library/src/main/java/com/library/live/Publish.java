@@ -51,7 +51,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private BaseSend baseSend;
     //是否翻转，默认后置
     private boolean rotate = false;
-    private boolean ispreview = true;
+    private boolean isPreview = true;
+    private boolean isCameraBegin = false;
     //帧率
     private int frameRate;
     private int publishBitrate;
@@ -61,6 +62,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private String codetype;
     //相机设备
     private CameraDevice cameraDevice;
+    //捕获会话
+    private CameraCaptureSession session;
     //用于获取预览数据相关
     private ImageReader imageReader;
     //用于实时显示预览
@@ -88,7 +91,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private String cameraId;
 
 
-    private Publish(Context context, PublishView publishView, boolean ispreview, Size publishSize, Size previewSize, Size collectionSize,
+    private Publish(Context context, PublishView publishView, boolean isPreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
                     boolean rotate, String path, BaseSend baseSend) {
         this.context = context;
@@ -105,18 +108,17 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.baseSend = baseSend;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
-        this.ispreview = ispreview;
+        this.isPreview = isPreview;
         writeMp4 = new WriteMp4(path);
 
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
 
-
         startControlFrameRate();
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         initCamera();
-        if (ispreview) {//如果需要显示预览
+        if (isPreview) {//如果需要显示预览
             publishView.setSurfaceTextureListener(this);
         } else {
             openCamera();
@@ -167,6 +169,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
      * 打开相机
      */
     private void openCamera() {
+        if (isCameraBegin) {
+            return;
+        }
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
@@ -248,7 +253,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
             //计算比例(需对调宽高)
             baseSend.setWeight((double) publishSize.getHeight() / publishSize.getWidth());
-            if (ispreview) {
+            if (isPreview) {
                 publishView.setWeight((double) previewSize.getHeight() / previewSize.getWidth());
             }
 
@@ -271,7 +276,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             Surface imageReaderSurface = getImageReaderSurface();
             mCaptureRequestBuilder.addTarget(imageReaderSurface);
             surfaces.add(imageReaderSurface);
-            if (ispreview) {
+            if (isPreview) {
                 //如果需要预览添加实时预览Target
                 Surface textureSurface = getTextureSurface();
                 mCaptureRequestBuilder.addTarget(textureSurface);
@@ -281,6 +286,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(CameraCaptureSession session) {
+                    Publish.this.session = session;
                     //设置反复捕获数据的请求，这样预览界面就会一直有数据显示
                     try {
                         session.setRepeatingRequest(mCaptureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
@@ -292,7 +298,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
-
+                    isCameraBegin = true;
                 }
 
                 @Override
@@ -382,10 +388,20 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     private void releaseCamera() {
+        isCameraBegin = false;
         //释放相机
+        if (session != null) {
+            session.close();
+            session = null;
+        }
+        frameRateControlQueue.clear();
         if (cameraDevice != null) {
             cameraDevice.close();
             cameraDevice = null;
+        }
+        if (imageReader != null) {
+            imageReader.close();
+            imageReader = null;
         }
     }
 
@@ -404,12 +420,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     //旋转
     public void rotate() {
-        facingFront = !rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
-        releaseCamera();
-        initCamera();
-        openCamera();
-        //最后来设置标志，防止最后几帧数据旋转错误
-        rotate = !rotate;
+        if (isCameraBegin) {
+            facingFront = !rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
+            releaseCamera();
+            initCamera();
+            openCamera();
+            //最后来设置标志，防止最后几帧数据旋转错误
+            rotate = !rotate;
+        }
     }
 
     public void start() {
@@ -421,12 +439,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     public void destroy() {
+        releaseCamera();
         recordEncoderVD.destroy();
         vdEncoder.destroy();
         voiceRecord.destroy();
         baseSend.destroy();
-        releaseCamera();
-        imageReader.close();
         frameHandler.removeCallbacksAndMessages(null);
         handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
@@ -451,7 +468,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         //是否翻转，默认后置
         private boolean rotate = false;
         //设置是否需要显示预览,默认显示
-        private boolean ispreview = true;
+        private boolean isPreview = true;
         private String codetype = VDEncoder.H264;
         //录制地址
         private String path = null;
@@ -489,8 +506,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
-        public Buider setIsPreview(boolean ispreview) {
-            this.ispreview = ispreview;
+        public Buider setIsPreview(boolean isPreview) {
+            this.isPreview = isPreview;
             return this;
         }
 
@@ -547,7 +564,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
         public Publish build() {
             baseSend.setUdpControl(udpControl);
-            return new Publish(context, publishView, ispreview, publishSize, previewSize, collectionSize, frameRate,
+            return new Publish(context, publishView, isPreview, publishSize, previewSize, collectionSize, frameRate,
                     publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend);
         }
     }

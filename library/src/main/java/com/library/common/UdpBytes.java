@@ -28,8 +28,6 @@ import java.util.Arrays;
  * 2字节 内容长度（纯数据部分）
  * length 数据内容
  * ......音频5帧一包，所以5个相同数据段
- * <p>
- * 如果修改协议记得修改下面去除的头长度，以及服务器头长度设置
  */
 public class UdpBytes {
     private int tag;

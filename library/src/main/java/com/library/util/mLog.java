@@ -1,7 +1,5 @@
 package com.library.util;
 
-import android.util.Log;
-
 /**
  * Created by android1 on 2017/11/30.
  */
