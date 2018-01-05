@@ -30,6 +30,7 @@ import com.library.live.vd.RecordEncoderVD;
 import com.library.live.vd.VDEncoder;
 import com.library.live.view.PublishView;
 import com.library.util.ImagUtil;
+import com.library.util.Rotate3dAnimation;
 import com.library.util.mLog;
 
 import java.util.ArrayList;
@@ -89,7 +90,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int backAngle = 90;
     private CameraManager manager;
     private String cameraId;
-
 
     private Publish(Context context, PublishView publishView, boolean isPreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
@@ -331,11 +331,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
         imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                if (frameRateControlQueue.size() >= (frameMax - 1)) {
-                    //超出限制丢弃
-                    frameRateControlQueue.poll().close();
+                if (isCameraBegin) {
+                    if (frameRateControlQueue.size() >= (frameMax - 1)) {
+                        //超出限制丢弃
+                        frameRateControlQueue.poll().close();
+                    }
+                    frameRateControlQueue.offer(reader.acquireNextImage());
+                } else {
+                    reader.acquireNextImage().close();
                 }
-                frameRateControlQueue.offer(reader.acquireNextImage());
             }
         }, camearHandler);
         return imageReader.getSurface();
@@ -390,12 +394,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void releaseCamera() {
         isCameraBegin = false;
+        for (int i = 0; i < frameRateControlQueue.size(); i++) {
+            frameRateControlQueue.poll().close();
+        }
         //释放相机
         if (session != null) {
             session.close();
             session = null;
         }
-        frameRateControlQueue.clear();
         if (cameraDevice != null) {
             cameraDevice.close();
             cameraDevice = null;
@@ -422,6 +428,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     //旋转
     public void rotate() {
         if (isCameraBegin) {
+            Rotate3dAnimation.rotate3dDegrees180(publishView, 700, 500, Rotate3dAnimation.ROTATE_Y_AXIS);
             facingFront = !rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
             releaseCamera();
             initCamera();
