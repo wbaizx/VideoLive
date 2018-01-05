@@ -136,7 +136,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-        return false;
+        releaseCamera();
+        return true;
     }
 
     @Override
