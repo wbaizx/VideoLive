@@ -54,6 +54,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private boolean rotate = false;
     private boolean isPreview = true;
     private boolean isCameraBegin = false;
+    private boolean isStartPublish = false;
+    private boolean isStartRecode = false;
     //帧率
     private int frameRate;
     private int publishBitrate;
@@ -414,12 +416,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
 
     public void startRecode() {
+        isStartRecode = true;
         voiceRecord.startRecode();
         recordEncoderVD.start();
         writeMp4.start();
     }
 
     public void stopRecode() {
+        isStartRecode = false;
         voiceRecord.stopRecode();
         recordEncoderVD.stop();
         writeMp4.stop();
@@ -439,14 +443,18 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     public void start() {
+        isStartPublish = true;
         baseSend.startsend();
     }
 
     public void stop() {
+        isStartPublish = false;
         baseSend.stopsend();
     }
 
     public void destroy() {
+        isStartPublish = false;
+        isStartRecode = false;
         releaseCamera();
         recordEncoderVD.destroy();
         vdEncoder.destroy();
@@ -456,6 +464,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
         writeMp4.destroy();
+    }
+
+    public boolean isStartPublish() {
+        return isStartPublish;
+    }
+
+    public boolean isStartRecode() {
+        return isStartRecode;
     }
 
     public static class Buider {
