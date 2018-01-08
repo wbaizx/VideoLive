@@ -40,10 +40,6 @@ public class WriteMp4 {
         if (!TextUtils.isEmpty(dirpath) && !dirpath.equals("")) {
             this.dirpath = dirpath;
         }
-        File dirfile = new File(dirpath);
-        if (!dirfile.exists()) {
-            dirfile.mkdirs();
-        }
     }
 
     public void addTrack(MediaFormat mediaFormat, int flag) {
@@ -109,6 +105,10 @@ public class WriteMp4 {
     }
 
     private void setPath() {
+        File dirfile = new File(dirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
+        }
         path = dirpath + File.separator + System.currentTimeMillis() + ".mp4";
     }
 

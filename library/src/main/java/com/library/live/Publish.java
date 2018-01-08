@@ -95,7 +95,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int facingFront;
     //拍照路径
     private String picturedirpath;
-    private String picturepath;
 
     //异步线程
     private HandlerThread controlFrameRateThread;
@@ -123,15 +122,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.codetype = codetype;
         this.publishView = publishView;
         this.baseSend = baseSend;
+        this.picturedirpath = picturedirpath;
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.isPreview = isPreview;
         writeMp4 = new WriteMp4(dirpath);
-        this.picturedirpath = picturedirpath;
-        File dirfile = new File(picturedirpath);
-        if (!dirfile.exists()) {
-            dirfile.mkdirs();
-        }
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
@@ -439,7 +434,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     private void saveImag(Image image) {
-        this.picturepath = picturedirpath + File.separator + System.currentTimeMillis() + ".jpg";
+        File dirfile = new File(picturedirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
+        }
         ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(bytes);
@@ -447,7 +445,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         FileOutputStream output = null;
         Bitmap newBitmap = null;
         try {
-            output = new FileOutputStream(picturepath);
+            output = new FileOutputStream(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
             if (rotate) {
                 newBitmap = mirror(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
                 newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
