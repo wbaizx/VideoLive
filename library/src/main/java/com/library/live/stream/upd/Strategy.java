@@ -34,6 +34,8 @@ public class Strategy {
     private final int voiceFrameControltime = 100;//音视频帧同步时间差错范围
     private boolean videoObservation = false;
     private boolean voiceObservation = false;
+    private int VideoTimedifference = 0;
+    private int VoiceTimedifference = 0;
 
     private IsInBuffer isInBuffer;
 
@@ -41,22 +43,16 @@ public class Strategy {
         this.cachingStrategyCallback = cachingStrategyCallback;
     }
 
-    public void addVideo(int timedifference, int time, byte[] video) {
-        OtherUtil.addQueue(videoframes, new FramesObject(
-                Math.max(20, Math.min(200, timedifference)),//视频帧时间差控制在20-180之间
-                time,
-                video));
+    public void addVideo(int time, byte[] video) {
+        OtherUtil.addQueue(videoframes, new FramesObject(time, video));
         if (videoObservation && videoframes.size() >= videomin) {//允许观察并且达到播放条件唤醒
             videoObservation = false;
             VideoHandler.post(videoRunnable);
         }
     }
 
-    public void addVoice(int timedifference, int time, byte[] voice) {
-        OtherUtil.addQueue(voiceframes, new FramesObject(
-                Math.max(1, Math.min(80, timedifference)),
-                time,
-                voice));//音频帧时间差控制在1-80之间
+    public void addVoice(int time, byte[] voice) {
+        OtherUtil.addQueue(voiceframes, new FramesObject(time, voice));
         if (voiceObservation && isVideoStart) {//允许观察并且视频达到播放条件唤醒
             voiceObservation = false;
             VoiceHandler.post(voiceRunnable);
@@ -69,13 +65,21 @@ public class Strategy {
             if (isStart) {
                 if (isVideoStart && videoframes.size() > 0) {
                     FramesObject framesObject = videoframes.poll();
+
+                    //计算下一帧播放延时时间
+                    if (videoframes.size() > 0) {
+                        //视频帧时间差控制在20-180之间
+                        VideoTimedifference = Math.max(20, Math.min(200, videoframes.peek().getTime() - framesObject.getTime()));
+                    } else {
+                        VideoTimedifference = 0;
+                    }
                     if (videoframes.size() > (videomin + 5)) {//帧缓存峰值为起始条件 +5，超过这个值则加快 frameControltime ms播放
                         while (videoframes.size() > (videomin + 35)) {//堆积数量超过峰值过多，丢弃部分
                             videoframes.poll();
                         }
-                        VideoHandler.postDelayed(this, framesObject.getTimedifference() - frameControltime);
+                        VideoHandler.postDelayed(this, VideoTimedifference - frameControltime);
                     } else {
-                        VideoHandler.postDelayed(this, framesObject.getTimedifference());
+                        VideoHandler.postDelayed(this, VideoTimedifference);
                     }
                     VDtime = framesObject.getTime();
                     if (cachingStrategyCallback != null) {
@@ -108,8 +112,17 @@ public class Strategy {
             if (isStart) {
                 if (isVideoStart && voiceframes.size() > 0) {
                     FramesObject framesObject = voiceframes.poll();
+
+                    //计算下一帧播放延时时间
+                    if (voiceframes.size() > 0) {
+                        //音频帧时间差控制在1-80之间
+                        VoiceTimedifference = Math.max(1, Math.min(80, voiceframes.peek().getTime() - framesObject.getTime()));
+                    } else {
+                        VoiceTimedifference = 0;
+                    }
+
                     if ((framesObject.getTime() - VDtime) > voiceFrameControltime) {//音频帧快了
-                        VoiceHandler.postDelayed(this, framesObject.getTimedifference() + frameControltime);
+                        VoiceHandler.postDelayed(this, VoiceTimedifference + frameControltime);
                     } else if ((VDtime - framesObject.getTime()) > voiceFrameControltime) {//音频帧慢了
                         if ((VDtime - framesObject.getTime()) > (voiceFrameControltime * 3)) {//音频帧过慢
                             while (voiceframes.size() > 0) {
@@ -120,7 +133,7 @@ public class Strategy {
                         }
                         VoiceHandler.post(this);
                     } else {
-                        VoiceHandler.postDelayed(this, framesObject.getTimedifference());
+                        VoiceHandler.postDelayed(this, VoiceTimedifference);
                     }
                     if (cachingStrategyCallback != null) {
                         cachingStrategyCallback.voiceStrategy(framesObject.getData());
@@ -177,18 +190,12 @@ public class Strategy {
 
 
     private class FramesObject {
-        private int timedifference;
         private int time;
         private byte[] data;
 
-        public FramesObject(int timedifference, int time, byte[] data) {
+        public FramesObject(int time, byte[] data) {
             this.time = time;
             this.data = data;
-            this.timedifference = timedifference;
-        }
-
-        public int getTimedifference() {
-            return timedifference;
         }
 
         public int getTime() {

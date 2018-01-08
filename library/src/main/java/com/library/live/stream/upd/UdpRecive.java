@@ -175,7 +175,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    private int oldudptime_vd = 0;//记录上一个包的时间
     private int oneFrame = 0;//同帧标识符(使用时间戳当同帧标识)
 
     private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 80);
@@ -204,14 +203,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             if (udpBytes.getTime() == oneFrame) {
                 frameBuffer.put(udpBytes.getData());
                 //完整一帧，交个策略处理
-                strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(),
-                        Arrays.copyOfRange(frameBuffer.array(), 0, frameBuffer.position()));
-                oldudptime_vd = udpBytes.getTime();
+                strategy.addVideo(udpBytes.getTime(), Arrays.copyOfRange(frameBuffer.array(), 0, frameBuffer.position()));
             }
         } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
             //完整一帧，交个策略处理
-            strategy.addVideo(udpBytes.getTime() - oldudptime_vd, udpBytes.getTime(), udpBytes.getData());
-            oldudptime_vd = udpBytes.getTime();
+            strategy.addVideo(udpBytes.getTime(), udpBytes.getData());
         }
     }
 
@@ -228,19 +224,15 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    private int oldudptime_vc = 0;//记录上一个包的时间
-
     /*
      将链表数据拼接成帧
      */
     private void mosaicVoiceFrame(UdpBytes udpBytes) {
         //从一个包中取出5帧数据，交个策略处理
-        strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
-        oldudptime_vc = udpBytes.getTime();
+        strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         for (int i = 0; i < 4; i++) {
             udpBytes.nextVoice();//定位下一帧
-            strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
-            oldudptime_vc = udpBytes.getTime();
+            strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         }
     }
 
