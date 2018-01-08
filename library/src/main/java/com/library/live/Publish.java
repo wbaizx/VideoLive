@@ -52,6 +52,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private BaseSend baseSend;
     //是否翻转，默认后置
     private boolean rotate = false;
+    private int rotateAngle = 90;//270 图片需要翻转角度
     private boolean isPreview = true;
     private boolean isCameraBegin = false;
     private boolean isStartPublish = false;
@@ -88,8 +89,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private WriteMp4 writeMp4;
 
-    private int frontAngle = 270;
-    private int backAngle = 90;
     private CameraManager manager;
     private String cameraId;
 
@@ -158,8 +157,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     //获取StreamConfigurationMap管理摄像头支持的所有输出格式和尺寸,根据TextureView的尺寸设置预览尺寸
                     StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     //选取最佳分辨率初始化编码器（未必和设置的匹配，由于摄像头不支持设置的分辨率）
-                    initCode(map.getOutputSizes(SurfaceTexture.class));
                     this.cameraId = cameraId;
+                    rotateAngle = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                    initCode(map.getOutputSizes(SurfaceTexture.class));
                     break;
                 }
             }
@@ -347,14 +347,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return imageReader.getSurface();
     }
 
-    public void adjustmentAngle() {
-        if (rotate) {
-            frontAngle = frontAngle == 270 ? 90 : 270;
-        } else {
-            backAngle = backAngle == 90 ? 270 : 90;
-        }
-    }
-
     private byte[] input;
     private byte[] i420;
     //耗时检测
@@ -377,7 +369,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     i420 = ImagUtil.YUV420888toI420(image);
                     input = new byte[i420.length];
                     ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
-                            input, rotate ? frontAngle : backAngle, rotate);
+                            input, rotateAngle, rotate);
                     //录制编码器
                     recordEncoderVD.addFrame(input);
                     //推流编码器

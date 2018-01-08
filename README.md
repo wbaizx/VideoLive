@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.6'
+	        compile 'com.github.wbaizx:VideoLive:3.0.7'
 	}
 
 
@@ -99,10 +99,6 @@ Step 2：
         publish.startRecode();//开始录制
 
         publish.stopRecode();//停止录制
-
-  如果推流图片角度不对，可以通过调用方法调整
-
-        publish.adjustmentAngle();
 
    最后销毁资源
         

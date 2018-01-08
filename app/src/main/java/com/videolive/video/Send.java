@@ -16,7 +16,6 @@ public class Send extends AppCompatActivity {
     private Button tuistar;
     private Button rot;
     private Button record;
-    private Button adjustment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +25,6 @@ public class Send extends AppCompatActivity {
         tuistar = findViewById(R.id.tuistar);
         rot = findViewById(R.id.rot);
         record = findViewById(R.id.record);
-        adjustment = findViewById(R.id.adjustment);
 
         publish = new Publish.Buider(this, (PublishView) findViewById(R.id.publishView))
                 .setPushMode(new UdpSend(getIntent().getExtras().getString("url"), getIntent().getExtras().getInt("port")))
@@ -68,13 +66,6 @@ public class Send extends AppCompatActivity {
                     publish.stopRecode();
                     record.setText("开始录制");
                 }
-            }
-        });
-
-        adjustment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                publish.adjustmentAngle();
             }
         });
 
