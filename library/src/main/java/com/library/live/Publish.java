@@ -3,7 +3,10 @@ package com.library.live;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -14,6 +17,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -30,9 +34,14 @@ import com.library.live.vd.RecordEncoderVD;
 import com.library.live.vd.VDEncoder;
 import com.library.live.view.PublishView;
 import com.library.util.ImagUtil;
+import com.library.util.OtherUtil;
 import com.library.util.Rotate3dAnimation;
 import com.library.util.mLog;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -68,8 +77,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private CameraDevice cameraDevice;
     //捕获会话
     private CameraCaptureSession session;
+    //拍照CaptureRequest
+    private CaptureRequest captureRequest;
     //用于获取预览数据相关
-    private ImageReader imageReader;
+    private ImageReader previewImageReader;
+    //用于获取拍照数据相关
+    private ImageReader pictureImageReader;
     //用于实时显示预览
     private PublishView publishView;
     //预览分辨率
@@ -80,6 +93,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private Size collectionSize;
     //控制前后摄像头
     private int facingFront;
+    //拍照路径
+    private String picturedirpath;
+    private String picturepath;
 
     //异步线程
     private HandlerThread controlFrameRateThread;
@@ -94,7 +110,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private Publish(Context context, PublishView publishView, boolean isPreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
-                    boolean rotate, String dirpath, BaseSend baseSend) {
+                    boolean rotate, String dirpath, BaseSend baseSend, String picturedirpath) {
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
@@ -111,7 +127,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.isPreview = isPreview;
         writeMp4 = new WriteMp4(dirpath);
-
+        this.picturedirpath = picturedirpath;
+        File dirfile = new File(picturedirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
+        }
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
@@ -272,19 +292,31 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void startPreview() {
         try {
-            //创建CaptureRequestBuilder，TEMPLATE_PREVIEW表示预览请求
-            final CaptureRequest.Builder mCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             List<Surface> surfaces = new ArrayList<>();
-            //添加帧数据Target
-            Surface imageReaderSurface = getImageReaderSurface();
-            mCaptureRequestBuilder.addTarget(imageReaderSurface);
-            surfaces.add(imageReaderSurface);
+            //预览CaptureRequest.Builder
+            final CaptureRequest.Builder previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+            Surface previewSurface = getPreviewImageReaderSurface();
+            previewRequestBuilder.addTarget(previewSurface);
+            surfaces.add(previewSurface);
             if (isPreview) {
-                //如果需要预览添加实时预览Target
                 Surface textureSurface = getTextureSurface();
-                mCaptureRequestBuilder.addTarget(textureSurface);
+                previewRequestBuilder.addTarget(textureSurface);
                 surfaces.add(textureSurface);
             }
+
+            //拍照CaptureRequest.Builder
+            final CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+            //设置照片的方向
+            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, rotateAngle);
+            Surface pictureSurface = getPictureImageReaderSurface();
+            captureRequestBuilder.addTarget(pictureSurface);
+            surfaces.add(pictureSurface);
+            captureRequest = captureRequestBuilder.build();
+
             //创建相机捕获会话，第一个参数是捕获数据的输出Surface列表(同时输出屏幕和输出预览)，第二个参数是CameraCaptureSession的状态回调接口，当它创建好后会回调onConfigured方法，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
@@ -292,12 +324,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     Publish.this.session = session;
                     //设置反复捕获数据的请求，这样预览界面就会一直有数据显示
                     try {
-                        session.setRepeatingRequest(mCaptureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
-                            @Override
-                            public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
-                                super.onCaptureStarted(session, request, timestamp, frameNumber);
-                            }
-                        }, camearHandler);
+                        session.setRepeatingRequest(previewRequestBuilder.build(), null, camearHandler);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -324,13 +351,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     /*
-    创建ImageReader,注册回调监听（在这里获取每一帧数据）并返回Surface
+    创建预览ImageReader回调监听（在这里获取每一帧数据）并返回Surface
      */
-    private Surface getImageReaderSurface() {
+    private Surface getPreviewImageReaderSurface() {
         //最后一个参数代表每次最多获取几帧数据
-        imageReader = ImageReader.newInstance(collectionSize.getWidth(), collectionSize.getHeight(), ImageFormat.YUV_420_888, frameMax);
+        previewImageReader = ImageReader.newInstance(collectionSize.getWidth(), collectionSize.getHeight(), ImageFormat.YUV_420_888, frameMax);
         //监听ImageReader的事件，它的参数就是预览帧数据，可以对这帧数据进行处理,类似于Camera1的PreviewCallback回调的预览帧数据
-        imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+        previewImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 if (isCameraBegin) {
@@ -344,14 +371,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 }
             }
         }, camearHandler);
-        return imageReader.getSurface();
+        return previewImageReader.getSurface();
     }
 
     private byte[] input;
     private byte[] i420;
+
     //耗时检测
 //    private long time = 0;
-
     //帧率控制策略
     private void startControlFrameRate() {
         //初始化长度
@@ -367,14 +394,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     Image image = frameRateControlQueue.poll();
                     //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码
                     i420 = ImagUtil.YUV420888toI420(image);
+                    image.close();
                     input = new byte[i420.length];
-                    ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(),
-                            input, rotateAngle, rotate);
+                    ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(), input, rotateAngle, rotate);
                     //录制编码器
                     recordEncoderVD.addFrame(input);
                     //推流编码器
                     vdEncoder.addFrame(input);
-                    image.close();
 //                    if ((System.currentTimeMillis() - time) > (1000 / frameRate)) {
 //                        mLog.log("Frame_slow", "图像处理速度过慢");
 //                    }
@@ -384,6 +410,69 @@ public class Publish implements TextureView.SurfaceTextureListener {
             }
         };
         frameHandler.post(runnable);
+    }
+
+    public void takePicture() {
+        if (session != null) {
+            try {
+                session.capture(captureRequest, null, camearHandler);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /*
+    创建拍照ImageReader回调监听（在这里获取拍照数据）并返回Surface
+     */
+    private Surface getPictureImageReaderSurface() {
+        pictureImageReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.JPEG, frameMax);
+        pictureImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                Image image = reader.acquireNextImage();
+                saveImag(image);
+                image.close();
+            }
+        }, camearHandler);
+        return pictureImageReader.getSurface();
+    }
+
+    private void saveImag(Image image) {
+        this.picturepath = picturedirpath + File.separator + System.currentTimeMillis() + ".jpg";
+        ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[byteBuffer.remaining()];
+        byteBuffer.get(bytes);
+
+        FileOutputStream output = null;
+        Bitmap newBitmap = null;
+        try {
+            output = new FileOutputStream(picturepath);
+            if (rotate) {
+                newBitmap = mirror(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+                newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+            } else {
+                output.write(bytes);
+            }
+            output.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (newBitmap != null) {
+                newBitmap.recycle();
+            }
+            OtherUtil.close(output);
+        }
+    }
+
+    private Bitmap mirror(Bitmap temp) {
+        Matrix m = new Matrix();
+        m.postScale(-1, 1);   //镜像水平翻转
+//        m.postScale(1, -1);   //镜像垂直翻转
+//        m.postRotate(-90);  //旋转-90度
+        Bitmap newBitmap = Bitmap.createBitmap(temp, 0, 0, temp.getWidth(), temp.getHeight(), m, true);
+        temp.recycle();
+        return newBitmap;
     }
 
     private void releaseCamera() {
@@ -400,9 +489,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
             cameraDevice.close();
             cameraDevice = null;
         }
-        if (imageReader != null) {
-            imageReader.close();
-            imageReader = null;
+        if (previewImageReader != null) {
+            previewImageReader.close();
+            previewImageReader = null;
+        }
+        if (pictureImageReader != null) {
+            pictureImageReader.close();
+            pictureImageReader = null;
         }
     }
 
@@ -488,6 +581,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private String codetype = VDEncoder.H264;
         //录制地址
         private String dirpath = null;
+        //拍照地址
+        private String picturedirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoPicture";
 
         private BaseSend baseSend;
         private UdpControlInterface udpControl = null;
@@ -558,6 +653,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
+        public Buider setPictureDirPath(String picturedirpath) {
+            this.picturedirpath = picturedirpath;
+            return this;
+        }
+
         public Buider setRotate(boolean rotate) {
             this.rotate = rotate;
             return this;
@@ -581,7 +681,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         public Publish build() {
             baseSend.setUdpControl(udpControl);
             return new Publish(context, publishView, isPreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath, baseSend);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath, baseSend, picturedirpath);
         }
     }
 }

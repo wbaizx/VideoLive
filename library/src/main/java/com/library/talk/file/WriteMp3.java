@@ -36,6 +36,10 @@ public class WriteMp3 {
         if (!TextUtils.isEmpty(dirpath) && !dirpath.equals("")) {
             this.dirpath = dirpath;
         }
+        File dirfile = new File(dirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
+        }
     }
 
     public void addTrack(MediaFormat mediaFormat) {
@@ -78,10 +82,6 @@ public class WriteMp3 {
     }
 
     private void setPath() {
-        File dirfile = new File(dirpath);
-        if (!dirfile.exists()) {
-            dirfile.mkdirs();
-        }
         path = dirpath + File.separator + System.currentTimeMillis() + ".mp3";
     }
 

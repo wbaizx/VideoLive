@@ -1,5 +1,7 @@
 package com.library.util;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -89,5 +91,17 @@ public class OtherUtil {
             queue.poll();
         }
         queue.offer(t);
+    }
+
+    public static <T extends Closeable> void close(T t) {
+        if (t != null) {
+            try {
+                t.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            } finally {
+                t = null;
+            }
+        }
     }
 }

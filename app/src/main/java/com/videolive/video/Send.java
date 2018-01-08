@@ -18,6 +18,7 @@ public class Send extends AppCompatActivity {
     private Button tuistar;
     private Button rot;
     private Button record;
+    private Button takePicture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +27,7 @@ public class Send extends AppCompatActivity {
 
         tuistar = findViewById(R.id.tuistar);
         rot = findViewById(R.id.rot);
+        takePicture = findViewById(R.id.takePicture);
         record = findViewById(R.id.record);
 
         publish = new Publish.Buider(this, (PublishView) findViewById(R.id.publishView))
@@ -42,6 +44,7 @@ public class Send extends AppCompatActivity {
                 .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
                 .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")
+                .setPictureDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoPicture")
                 .setCenterScaleType(true)
                 .build();
 
@@ -68,6 +71,13 @@ public class Send extends AppCompatActivity {
                     publish.stopRecode();
                     record.setText("开始录制");
                 }
+            }
+        });
+
+        takePicture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                publish.takePicture();
             }
         });
 

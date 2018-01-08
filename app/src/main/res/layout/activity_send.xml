@@ -24,11 +24,19 @@
         android:orientation="horizontal">
 
         <Button
+            android:id="@+id/takePicture"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="拍照" />
+
+        <Button
             android:id="@+id/record"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="开始录制" />
+
 
         <Button
             android:id="@+id/tuistar"
