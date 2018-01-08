@@ -14,10 +14,10 @@ public class Speak {
     private boolean isStartPublish = false;
     private boolean isStartRecode = false;
 
-    public Speak(int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String path) {
+    public Speak(int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String dirpath) {
         this.speakSend = speakSend;
         speakSend.setUdpControl(udpControl);
-        speakRecord = new SpeakRecord(publishBitrate, speakSend, path);
+        speakRecord = new SpeakRecord(publishBitrate, speakSend, dirpath);
     }
 
     public void start() {
@@ -78,7 +78,7 @@ public class Speak {
         private int publishBitrate = 24 * 1024;
         private SpeakSend speakSend;
         private UdpControlInterface udpControl;
-        private String path = null;
+        private String dirpath = null;
 
         public Buider setPushMode(SpeakSend speakSend) {
             this.speakSend = speakSend;
@@ -96,13 +96,13 @@ public class Speak {
             return this;
         }
 
-        public Buider setVoicePath(String path) {
-            this.path = path;
+        public Buider setVoiceDirPath(String dirpath) {
+            this.dirpath = dirpath;
             return this;
         }
 
         public Speak build() {
-            return new Speak(publishBitrate, udpControl, speakSend, path);
+            return new Speak(publishBitrate, udpControl, speakSend, dirpath);
         }
     }
 }

@@ -23,9 +23,9 @@ public class SpeakEncoder {
     private WriteMp3 writeMp3;
     private MediaFormat format;
 
-    public SpeakEncoder(int bitrate, int recBufSize, SpeakSend speakSend, String path) {
+    public SpeakEncoder(int bitrate, int recBufSize, SpeakSend speakSend, String dirpath) {
         this.speakSend = speakSend;
-        writeMp3 = new WriteMp3(path);
+        writeMp3 = new WriteMp3(dirpath);
         try {
             mediaCodec = MediaCodec.createEncoderByType(AAC_MIME);
         } catch (IOException e) {

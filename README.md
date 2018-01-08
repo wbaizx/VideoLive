@@ -56,7 +56,7 @@ Step 2：
                 .setPreviewSize(480, 320)//预览分辨率
                 .setCollectionSize(480, 320)//采集分辨率，决定录制文件的分辨率
                 .setRotate(true)//是否为前置摄像头,默认后置
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")//录制路径,当前为默认路径
                 .build();
 
 
@@ -194,7 +194,7 @@ Step 2：
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend("192.168.2.106", 8765))
                 .setPublishBitrate(24 * 1024)//音频推流采样率
-                .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")//录制文件位置,如果为空则每次录制以当前时间命名
+                .setVoiceDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoTalk")//录制路径,当前为默认路径
                 .build();
 
   如果socket已经创建需要使用已经有的socket

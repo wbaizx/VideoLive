@@ -12,6 +12,7 @@ import com.library.talk.stream.ListenRecive;
 import com.library.talk.stream.SpeakSend;
 import com.videolive.R;
 
+import java.io.File;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
@@ -39,7 +40,7 @@ public class Voice extends AppCompatActivity {
         speak = new Speak.Buider()
                 .setPushMode(new SpeakSend(socket, getIntent().getExtras().getString("url"), getIntent().getExtras().getInt("port")))
                 .setPublishBitrate(getIntent().getExtras().getInt("publishbitrate_vc"))
-                .setVoicePath(Environment.getExternalStorageDirectory().getPath() + "/VideoTalk.mp3")
+                .setVoiceDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoTalk")
                 .build();
 
         listen = new Listen.Buider()

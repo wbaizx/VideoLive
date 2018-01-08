@@ -20,7 +20,7 @@ public class SpeakRecord {
     private SpeakEncoder speakEncoder;
     private double decibel = 0;//平均振幅,用于计算分贝
 
-    public SpeakRecord(int publishBitrate, SpeakSend speakSend, String path) {
+    public SpeakRecord(int publishBitrate, SpeakSend speakSend, String dirpath) {
         recBufSize = AudioRecord.getMinBufferSize(
                 OtherUtil.samplerate,
                 AudioFormat.CHANNEL_IN_STEREO,
@@ -32,7 +32,7 @@ public class SpeakRecord {
                 AudioFormat.ENCODING_PCM_16BIT,
                 recBufSize);
         singleThreadExecutor = new SingleThreadExecutor();
-        speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend, path);
+        speakEncoder = new SpeakEncoder(publishBitrate, recBufSize, speakSend, dirpath);
     }
 
     public void start() {

@@ -19,9 +19,8 @@ import java.nio.ByteBuffer;
 public class WriteMp3 {
     private MediaMuxer mMediaMuxer = null;
 
-    private final String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoTalk";
+    private String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoTalk";
     private String path = null;
-    private boolean isHasPath = false;
     private MediaFormat voiceFormat = null;
 
     private int voiceTrackIndex;
@@ -33,10 +32,9 @@ public class WriteMp3 {
     private int frameNum = 0;
     private final Object lock = new Object();
 
-    public WriteMp3(String path) {
-        if (!TextUtils.isEmpty(path) && !path.equals("")) {
-            this.path = path;
-            isHasPath = true;
+    public WriteMp3(String dirpath) {
+        if (!TextUtils.isEmpty(dirpath) && !dirpath.equals("")) {
+            this.dirpath = dirpath;
         }
     }
 
@@ -80,18 +78,11 @@ public class WriteMp3 {
     }
 
     private void setPath() {
-        if (isHasPath) {
-            File file = new File(path);
-            if (file.exists()) {
-                file.delete();
-            }
-        } else {
-            File dirfile = new File(dirpath);
-            if (!dirfile.exists()) {
-                dirfile.mkdirs();
-            }
-            path = dirpath + File.separator + System.currentTimeMillis() + ".mp3";
+        File dirfile = new File(dirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
         }
+        path = dirpath + File.separator + System.currentTimeMillis() + ".mp3";
     }
 
     public void stop() {

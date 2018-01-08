@@ -11,6 +11,8 @@ import com.library.live.stream.upd.UdpSend;
 import com.library.live.view.PublishView;
 import com.videolive.R;
 
+import java.io.File;
+
 public class Send extends AppCompatActivity {
     private Publish publish;
     private Button tuistar;
@@ -39,7 +41,7 @@ public class Send extends AppCompatActivity {
                 .setPreviewSize(getIntent().getExtras().getInt("pr_width"), getIntent().getExtras().getInt("pr_height"))
                 .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
-                .setVideoPath(Environment.getExternalStorageDirectory().getPath() + "/VideoLive.mp4")
+                .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")
                 .setCenterScaleType(true)
                 .build();
 

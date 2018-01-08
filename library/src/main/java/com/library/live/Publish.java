@@ -94,7 +94,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private Publish(Context context, PublishView publishView, boolean isPreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
-                    boolean rotate, String path, BaseSend baseSend) {
+                    boolean rotate, String dirpath, BaseSend baseSend) {
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
@@ -110,7 +110,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         this.rotate = rotate;
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.isPreview = isPreview;
-        writeMp4 = new WriteMp4(path);
+        writeMp4 = new WriteMp4(dirpath);
 
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
@@ -487,7 +487,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         private boolean isPreview = true;
         private String codetype = VDEncoder.H264;
         //录制地址
-        private String path = null;
+        private String dirpath = null;
 
         private BaseSend baseSend;
         private UdpControlInterface udpControl = null;
@@ -553,8 +553,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
 
-        public Buider setVideoPath(String path) {
-            this.path = path;
+        public Buider setVideoDirPath(String dirpath) {
+            this.dirpath = dirpath;
             return this;
         }
 
@@ -581,7 +581,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         public Publish build() {
             baseSend.setUdpControl(udpControl);
             return new Publish(context, publishView, isPreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, path, baseSend);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath, baseSend);
         }
     }
 }
