@@ -181,8 +181,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
 
     public void destroy() {
         if (ismysocket) {
-            socket.close();
-            socket = null;
+            OtherUtil.close(socket);
         }
         stop();
         strategy.destroy();

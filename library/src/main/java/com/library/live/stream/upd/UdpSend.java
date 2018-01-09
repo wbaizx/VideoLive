@@ -1,7 +1,5 @@
 package com.library.live.stream.upd;
 
-import android.util.Size;
-
 import com.library.live.stream.BaseSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
@@ -84,8 +82,7 @@ public class UdpSend extends BaseSend {
     public void destroy() {
         stopsend();
         if (ismysocket) {
-            socket.close();
-            socket = null;
+            OtherUtil.close(socket);
         }
         if (singleThreadExecutor != null) {
             singleThreadExecutor.shutdownNow();

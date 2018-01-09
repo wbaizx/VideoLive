@@ -288,31 +288,34 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private void startPreview() {
         try {
             List<Surface> surfaces = new ArrayList<>();
-            //预览CaptureRequest.Builder
+            //预览数据输出
             final CaptureRequest.Builder previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
             Surface previewSurface = getPreviewImageReaderSurface();
             previewRequestBuilder.addTarget(previewSurface);
             surfaces.add(previewSurface);
+
+            //预览
             if (isPreview) {
                 Surface textureSurface = getTextureSurface();
                 previewRequestBuilder.addTarget(textureSurface);
                 surfaces.add(textureSurface);
             }
 
-            //拍照CaptureRequest.Builder
+            //拍照数据输出
             final CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-            //设置照片的方向
             captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, rotateAngle);
             Surface pictureSurface = getPictureImageReaderSurface();
             captureRequestBuilder.addTarget(pictureSurface);
             surfaces.add(pictureSurface);
             captureRequest = captureRequestBuilder.build();
 
-            //创建相机捕获会话，第一个参数是捕获数据的输出Surface列表(同时输出屏幕和输出预览)，第二个参数是CameraCaptureSession的状态回调接口，当它创建好后会回调onConfigured方法，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
+            //创建相机捕获会话，第一个参数是捕获数据的输出Surface列表(同时输出屏幕，输出预览，拍照)，
+            // 第二个参数是CameraCaptureSession的状态回调接口，当它创建好后会回调onConfigured方法，
+            // 第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(CameraCaptureSession session) {
@@ -410,7 +413,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     public void takePicture() {
         if (session != null) {
             try {
-                session.capture(captureRequest, null, camearHandler);
+                session.capture(captureRequest, null, frameHandler);
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -429,7 +432,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 saveImag(image);
                 image.close();
             }
-        }, camearHandler);
+        }, frameHandler);
         return pictureImageReader.getSurface();
     }
 
@@ -478,21 +481,15 @@ public class Publish implements TextureView.SurfaceTextureListener {
         for (int i = 0; i < frameRateControlQueue.size(); i++) {
             frameRateControlQueue.poll().close();
         }
-        //释放相机
+        //释放相机各种资源
         if (session != null) {
             session.close();
-            session = null;
-        }
-        if (cameraDevice != null) {
             cameraDevice.close();
-            cameraDevice = null;
-        }
-        if (previewImageReader != null) {
             previewImageReader.close();
-            previewImageReader = null;
-        }
-        if (pictureImageReader != null) {
             pictureImageReader.close();
+            session = null;
+            cameraDevice = null;
+            previewImageReader = null;
             pictureImageReader = null;
         }
     }

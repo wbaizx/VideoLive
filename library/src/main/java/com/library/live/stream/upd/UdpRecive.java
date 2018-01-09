@@ -24,6 +24,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
+    private boolean ismysocket = false;//用于判断是否需要销毁socket
     private DatagramSocket socket = null;
     private boolean isrecive = false;
     private DatagramPacket packetreceive;
@@ -48,6 +49,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         try {
             socket = new DatagramSocket(port);
             socket.setReceiveBufferSize(1024 * 1024);
+            ismysocket = true;
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -256,9 +258,8 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void destroy() {
-        if (socket != null) {
-            socket.close();
-            socket = null;
+        if (ismysocket) {
+            OtherUtil.close(socket);
         }
         stopRevice();
         strategy.destroy();

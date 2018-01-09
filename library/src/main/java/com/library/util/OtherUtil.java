@@ -99,8 +99,6 @@ public class OtherUtil {
                 t.close();
             } catch (IOException e1) {
                 e1.printStackTrace();
-            } finally {
-                t = null;
             }
         }
     }

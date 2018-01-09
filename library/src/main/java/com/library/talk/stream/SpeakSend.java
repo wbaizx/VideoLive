@@ -171,8 +171,7 @@ public class SpeakSend {
     public void destroy() {
         stop();
         if (ismysocket) {
-            socket.close();
-            socket = null;
+            OtherUtil.close(socket);
         }
         if (singleThreadExecutor != null) {
             singleThreadExecutor.shutdownNow();
