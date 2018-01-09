@@ -478,7 +478,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void releaseCamera() {
         isCameraBegin = false;
-        for (int i = 0; i < frameRateControlQueue.size(); i++) {
+        while (!frameRateControlQueue.isEmpty()) {
             frameRateControlQueue.poll().close();
         }
         //释放相机各种资源
@@ -493,7 +493,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
             pictureImageReader = null;
         }
     }
-
 
     public void startRecode() {
         isStartRecode = true;

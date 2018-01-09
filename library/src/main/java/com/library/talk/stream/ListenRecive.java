@@ -136,19 +136,15 @@ public class ListenRecive implements ListenCachingStrategyCallback {
         }
     }
 
-    private int oldudptime_vc = 0;//记录上一个包的时间
-
     /*
      将链表数据拼接成帧
      */
     private void mosaicVoiceFrame(UdpBytes udpBytes) {
         //从一个包中取出5帧数据，交个策略处理
-        strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
-        oldudptime_vc = udpBytes.getTime();
+        strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         for (int i = 0; i < 4; i++) {
             udpBytes.nextVoice();//定位下一帧
-            strategy.addVoice(udpBytes.getTime() - oldudptime_vc, udpBytes.getTime(), udpBytes.getData());
-            oldudptime_vc = udpBytes.getTime();
+            strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         }
     }
 
