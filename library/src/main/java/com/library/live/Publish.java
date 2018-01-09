@@ -7,7 +7,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -39,10 +41,12 @@ import com.library.util.Rotate3dAnimation;
 import com.library.util.mLog;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -66,6 +70,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private boolean isCameraBegin = false;
     private boolean isStartPublish = false;
     private boolean isStartRecode = false;
+    private boolean useuvPicture = false;
+
+    public static final int TAKEPHOTO = 0;
+    public static final int CONVERSION = 1;
+    private int ScreenshotsMode = CONVERSION;
     //帧率
     private int frameRate;
     private int publishBitrate;
@@ -95,12 +104,17 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int facingFront;
     //拍照路径
     private String picturedirpath;
+    //拍照回调
+    private PictureCallback pictureCallback;
 
     //异步线程
     private HandlerThread controlFrameRateThread;
     private HandlerThread handlerCamearThread;
     private Handler camearHandler;
     private Handler frameHandler;
+
+    private HandlerThread handlerPictureThread;
+    private Handler pictureHandler;
 
     private WriteMp4 writeMp4;
 
@@ -109,7 +123,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private Publish(Context context, PublishView publishView, boolean isPreview, Size publishSize, Size previewSize, Size collectionSize,
                     int frameRate, int publishBitrate, int collectionBitrate, int collectionbitrate_vc, int publishbitrate_vc, String codetype,
-                    boolean rotate, String dirpath, BaseSend baseSend, String picturedirpath) {
+                    boolean rotate, String dirpath, BaseSend baseSend, String picturedirpath, int ScreenshotsMode) {
+        this.ScreenshotsMode = ScreenshotsMode;
         this.context = context;
         this.publishSize = publishSize;
         this.previewSize = previewSize;
@@ -127,9 +142,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         facingFront = rotate ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
         this.isPreview = isPreview;
         writeMp4 = new WriteMp4(dirpath);
+
         handlerCamearThread = new HandlerThread("Camear2");
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
+
+        handlerPictureThread = new HandlerThread("Picture");
+        handlerPictureThread.start();
+        pictureHandler = new Handler(handlerPictureThread.getLooper());
 
         startControlFrameRate();
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
@@ -304,14 +324,16 @@ public class Publish implements TextureView.SurfaceTextureListener {
             }
 
             //拍照数据输出
-            final CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, rotateAngle);
-            Surface pictureSurface = getPictureImageReaderSurface();
-            captureRequestBuilder.addTarget(pictureSurface);
-            surfaces.add(pictureSurface);
-            captureRequest = captureRequestBuilder.build();
+            if (ScreenshotsMode == TAKEPHOTO) {
+                final CaptureRequest.Builder captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+                captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, rotateAngle);
+                Surface pictureSurface = getPictureImageReaderSurface();
+                captureRequestBuilder.addTarget(pictureSurface);
+                surfaces.add(pictureSurface);
+                captureRequest = captureRequestBuilder.build();
+            }
 
             //创建相机捕获会话，第一个参数是捕获数据的输出Surface列表(同时输出屏幕，输出预览，拍照)，
             // 第二个参数是CameraCaptureSession的状态回调接口，当它创建好后会回调onConfigured方法，
@@ -373,6 +395,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     private byte[] input;
+    private byte[] yuvPicture;
     private byte[] i420;
 
     //耗时检测
@@ -395,6 +418,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     image.close();
                     input = new byte[i420.length];
                     ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(), input, rotateAngle, rotate);
+                    if (useuvPicture && yuvPicture == null) {
+                        useuvPicture = false;
+                        yuvPicture = Arrays.copyOf(input, input.length);
+                        pictureHandler.post(pictureRunnable);
+                    }
                     //录制编码器
                     recordEncoderVD.addFrame(input);
                     //推流编码器
@@ -410,16 +438,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
         frameHandler.post(runnable);
     }
 
-    public void takePicture() {
-        if (session != null) {
-            try {
-                session.capture(captureRequest, null, frameHandler);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     /*
     创建拍照ImageReader回调监听（在这里获取拍照数据）并返回Surface
      */
@@ -429,33 +447,49 @@ public class Publish implements TextureView.SurfaceTextureListener {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Image image = reader.acquireNextImage();
-                saveImag(image);
+                ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
+                byte[] bytes = new byte[byteBuffer.remaining()];
+                byteBuffer.get(bytes);
                 image.close();
+                saveImage(bytes);
             }
-        }, frameHandler);
+        }, pictureHandler);
         return pictureImageReader.getSurface();
     }
 
-    private void saveImag(Image image) {
-        File dirfile = new File(picturedirpath);
-        if (!dirfile.exists()) {
-            dirfile.mkdirs();
-        }
-        ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
-        byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
-
+    private void saveImage(byte[] bytes) {
+        OtherUtil.CreateDirFile(picturedirpath);
         FileOutputStream output = null;
         Bitmap newBitmap = null;
         try {
             output = new FileOutputStream(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (ScreenshotsMode == CONVERSION) {
+            byte[] picture = new byte[bytes.length];
+            ImagUtil.yuvI420ToNV21(bytes, picture, collectionSize.getHeight(), collectionSize.getWidth());
+            YuvImage yuvImage = new YuvImage(picture, ImageFormat.NV21, collectionSize.getHeight(), collectionSize.getWidth(), null);
+            yuvImage.compressToJpeg(new Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, output);
+
+        } else if (ScreenshotsMode == TAKEPHOTO) {
             if (rotate) {
                 newBitmap = mirror(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
                 newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
             } else {
-                output.write(bytes);
+                try {
+                    output.write(bytes);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        }
+        try {
             output.flush();
+            if (pictureCallback != null) {
+                pictureCallback.Success(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -486,10 +520,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
             session.close();
             cameraDevice.close();
             previewImageReader.close();
-            pictureImageReader.close();
             session = null;
             cameraDevice = null;
             previewImageReader = null;
+
+        }
+        if (pictureImageReader != null) {
+            pictureImageReader.close();
             pictureImageReader = null;
         }
     }
@@ -521,6 +558,31 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
+    public void takePicture() {
+        if (ScreenshotsMode == CONVERSION) {
+            useuvPicture = true;
+
+        } else if (ScreenshotsMode == TAKEPHOTO) {
+            if (session != null) {
+                try {
+                    session.capture(captureRequest, null, pictureHandler);
+                } catch (CameraAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private Runnable pictureRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (yuvPicture != null) {
+                saveImage(yuvPicture);
+                yuvPicture = null;
+            }
+        }
+    };
+
     public void start() {
         isStartPublish = true;
         baseSend.startsend();
@@ -540,8 +602,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
         voiceRecord.destroy();
         baseSend.destroy();
         frameHandler.removeCallbacksAndMessages(null);
-        handlerCamearThread.quitSafely();
         controlFrameRateThread.quitSafely();
+        pictureHandler.removeCallbacksAndMessages(null);
+        handlerPictureThread.quitSafely();
+        handlerCamearThread.quitSafely();
         writeMp4.destroy();
     }
 
@@ -553,9 +617,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return isStartRecode;
     }
 
+    public void setPictureCallback(PictureCallback pictureCallback) {
+        this.pictureCallback = pictureCallback;
+    }
+
     public static class Buider {
         private PublishView publishView;
         private Context context;
+        private int ScreenshotsMode = CONVERSION;
         //编码参数
         private int frameRate = 15;
         private int publishBitrate = 600 * 1024;
@@ -641,6 +710,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
+        public Buider setScreenshotsMode(int ScreenshotsMode) {
+            this.ScreenshotsMode = ScreenshotsMode;
+            return this;
+        }
+
 
         public Buider setVideoDirPath(String dirpath) {
             this.dirpath = dirpath;
@@ -675,7 +749,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         public Publish build() {
             baseSend.setUdpControl(udpControl);
             return new Publish(context, publishView, isPreview, publishSize, previewSize, collectionSize, frameRate,
-                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath, baseSend, picturedirpath);
+                    publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath,
+                    baseSend, picturedirpath, ScreenshotsMode);
         }
     }
 }

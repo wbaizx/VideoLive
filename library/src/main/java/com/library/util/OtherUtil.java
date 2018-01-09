@@ -1,6 +1,7 @@
 package com.library.util;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -100,6 +101,13 @@ public class OtherUtil {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
+        }
+    }
+
+    public static void CreateDirFile(String dirpath) {
+        File dirfile = new File(dirpath);
+        if (!dirfile.exists()) {
+            dirfile.mkdirs();
         }
     }
 }

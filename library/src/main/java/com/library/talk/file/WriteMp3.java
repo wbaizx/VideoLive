@@ -6,6 +6,7 @@ import android.media.MediaMuxer;
 import android.os.Environment;
 import android.text.TextUtils;
 
+import com.library.util.OtherUtil;
 import com.library.util.mLog;
 
 import java.io.File;
@@ -78,10 +79,7 @@ public class WriteMp3 {
     }
 
     private void setPath() {
-        File dirfile = new File(dirpath);
-        if (!dirfile.exists()) {
-            dirfile.mkdirs();
-        }
+        OtherUtil.CreateDirFile(dirpath);
         path = dirpath + File.separator + System.currentTimeMillis() + ".mp3";
     }
 
