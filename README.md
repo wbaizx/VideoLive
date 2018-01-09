@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.7'
+	        compile 'com.github.wbaizx:VideoLive:3.0.8'
 	}
 
 
@@ -53,8 +53,8 @@ Step 2：
                 .setCollectionBitrateVC(64 * 1024)//音频采集采样率
                 .setPublishBitrateVC(24 * 1024)//音频推流采样率
                 .setPublishSize(480, 320)//推流分辨率，不要高于采集分辨率
-                .setPreviewSize(480, 320)//预览分辨率，模式为CONVERSION时决定截屏分辨率
-                .setCollectionSize(480, 320)//采集分辨率，决定录制文件的分辨率，模式为TAKEPHOTO时决定截屏分辨率
+                .setPreviewSize(480, 320)//预览分辨率，模式为TAKEPHOTO时决定截屏分辨率
+                .setCollectionSize(480, 320)//采集分辨率，决定录制文件的分辨率，模式为CONVERSION时决定截屏分辨率
                 .setRotate(true)//是否为前置摄像头,默认后置
                 .setScreenshotsMode(Publish.CONVERSION)//截屏模式
                 .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")//录制路径,当前为默认路径
