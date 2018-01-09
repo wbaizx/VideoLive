@@ -387,7 +387,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             @Override
             public void run() {
                 frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
-                if (frameRateControlQueue.size() > 0) {
+                if (!frameRateControlQueue.isEmpty()) {
 //                    time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
                     //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码

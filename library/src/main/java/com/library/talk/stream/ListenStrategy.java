@@ -52,7 +52,7 @@ public class ListenStrategy {
         @Override
         public void run() {
             if (isStart) {
-                if (isVoiceStart && voiceframes.size() > 0) {
+                if (isVoiceStart && !voiceframes.isEmpty()) {
                     FramesObject framesObject = voiceframes.poll();
                     if (voiceframes.size() > (voicemin + 10)) {//帧缓存峰值为起始条件 +5，超过这个值则加快播放
                         while (voiceframes.size() > (voicemin + 40)) {//堆积数量超过峰值过多，丢弃部分

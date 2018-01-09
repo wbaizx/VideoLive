@@ -111,7 +111,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
     private Runnable listenrunnable = new Runnable() {
         @Override
         public void run() {
-            while (udpQueue.size() > 0) {
+            while (!udpQueue.isEmpty()) {
                 write(udpQueue.poll());
             }
         }

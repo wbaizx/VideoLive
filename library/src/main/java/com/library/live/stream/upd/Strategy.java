@@ -63,11 +63,11 @@ public class Strategy {
         @Override
         public void run() {
             if (isStart) {
-                if (isVideoStart && videoframes.size() > 0) {
+                if (isVideoStart && !videoframes.isEmpty()) {
                     FramesObject framesObject = videoframes.poll();
 
                     //计算下一帧播放延时时间
-                    if (videoframes.size() > 0) {
+                    if (!videoframes.isEmpty()) {
                         //视频帧时间差控制在20-180之间
                         VideoTimedifference = Math.max(20, Math.min(200, videoframes.peek().getTime() - framesObject.getTime()));
                     } else {
@@ -110,11 +110,11 @@ public class Strategy {
         @Override
         public void run() {
             if (isStart) {
-                if (isVideoStart && voiceframes.size() > 0) {
+                if (isVideoStart && !voiceframes.isEmpty()) {
                     FramesObject framesObject = voiceframes.poll();
 
                     //计算下一帧播放延时时间
-                    if (voiceframes.size() > 0) {
+                    if (!voiceframes.isEmpty()) {
                         //音频帧时间差控制在1-80之间
                         VoiceTimedifference = Math.max(1, Math.min(80, voiceframes.peek().getTime() - framesObject.getTime()));
                     } else {
@@ -125,7 +125,7 @@ public class Strategy {
                         VoiceHandler.postDelayed(this, VoiceTimedifference + frameControltime);
                     } else if ((VDtime - framesObject.getTime()) > voiceFrameControltime) {//音频帧慢了
                         if ((VDtime - framesObject.getTime()) > (voiceFrameControltime * 3)) {//音频帧过慢
-                            while (voiceframes.size() > 0) {
+                            while (!voiceframes.isEmpty()) {
                                 if ((voiceframes.poll().getTime() - VDtime) < voiceFrameControltime + frameControltime) {
                                     break;
                                 }
