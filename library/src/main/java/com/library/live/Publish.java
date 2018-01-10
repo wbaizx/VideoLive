@@ -113,9 +113,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private Handler camearHandler;
     private Handler frameHandler;
 
-    private HandlerThread handlerPictureThread;
-    private Handler pictureHandler;
-
     private WriteMp4 writeMp4;
 
     private CameraManager manager;
@@ -147,11 +144,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         handlerCamearThread.start();
         camearHandler = new Handler(handlerCamearThread.getLooper());
 
-        handlerPictureThread = new HandlerThread("Picture");
-        handlerPictureThread.start();
-        pictureHandler = new Handler(handlerPictureThread.getLooper());
+        starFrameControl();
 
-        startControlFrameRate();
         manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         initCamera();
         if (isPreview) {//如果需要显示预览
@@ -394,34 +388,28 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return previewImageReader.getSurface();
     }
 
-    private byte[] input;
-    private byte[] yuvPicture;
-    private byte[] i420;
-
-    //耗时检测
-//    private long time = 0;
-    //帧率控制策略
-    private void startControlFrameRate() {
-        //初始化长度
+    private void starFrameControl() {
         controlFrameRateThread = new HandlerThread("FrameRateControl");
         controlFrameRateThread.start();
         frameHandler = new Handler(controlFrameRateThread.getLooper());
-        Runnable runnable = new Runnable() {
+        frameHandler.post(new Runnable() {
             @Override
             public void run() {
                 frameHandler.postDelayed(this, 1000 / frameRate);//帧率控制时间
                 if (!frameRateControlQueue.isEmpty()) {
-//                    time = System.currentTimeMillis();
+                    //耗时检测
+//                    long time = System.currentTimeMillis();
                     Image image = frameRateControlQueue.poll();
-                    //先转成I420再旋转图片(270需要镜像)然后交给编码器等待编码
-                    i420 = ImagUtil.YUV420888toI420(image);
+                    //YUV_420_888先转成I420
+                    byte[] i420 = ImagUtil.YUV420888toI420(image);
                     image.close();
-                    input = new byte[i420.length];
+                    byte[] input = new byte[i420.length];
+                    //旋转I420(270需要镜像)然后交给编码器等待编码
                     ImagUtil.rotateI420(i420, collectionSize.getWidth(), collectionSize.getHeight(), input, rotateAngle, rotate);
                     if (useuvPicture && yuvPicture == null) {
                         useuvPicture = false;
                         yuvPicture = Arrays.copyOf(input, input.length);
-                        pictureHandler.post(pictureRunnable);
+                        camearHandler.post(pictureRunnable);
                     }
                     //录制编码器
                     recordEncoderVD.addFrame(input);
@@ -434,8 +422,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                     mLog.log("Frame_loss", "图像采集速率不够");
                 }
             }
-        };
-        frameHandler.post(runnable);
+        });
     }
 
     /*
@@ -453,18 +440,18 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 image.close();
                 saveImage(bytes);
             }
-        }, pictureHandler);
+        }, camearHandler);
         return pictureImageReader.getSurface();
     }
 
     private void saveImage(byte[] bytes) {
         OtherUtil.CreateDirFile(picturedirpath);
-        FileOutputStream output = null;
-        Bitmap newBitmap = null;
+        FileOutputStream output;
         try {
             output = new FileOutputStream(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            return;
         }
 
         if (ScreenshotsMode == CONVERSION) {
@@ -475,8 +462,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
         } else if (ScreenshotsMode == TAKEPHOTO) {
             if (rotate) {
-                newBitmap = mirror(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+                Bitmap newBitmap = mirror(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
                 newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+                newBitmap.recycle();
             } else {
                 try {
                     output.write(bytes);
@@ -493,9 +481,6 @@ public class Publish implements TextureView.SurfaceTextureListener {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (newBitmap != null) {
-                newBitmap.recycle();
-            }
             OtherUtil.close(output);
         }
     }
@@ -565,7 +550,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         } else if (ScreenshotsMode == TAKEPHOTO) {
             if (session != null) {
                 try {
-                    session.capture(captureRequest, null, pictureHandler);
+                    session.capture(captureRequest, null, camearHandler);
                 } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }
@@ -573,13 +558,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
+    private byte[] yuvPicture;
+
     private Runnable pictureRunnable = new Runnable() {
         @Override
         public void run() {
-            if (yuvPicture != null) {
-                saveImage(yuvPicture);
-                yuvPicture = null;
-            }
+            saveImage(yuvPicture);
+            yuvPicture = null;
         }
     };
 
@@ -603,10 +588,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
         baseSend.destroy();
         frameHandler.removeCallbacksAndMessages(null);
         controlFrameRateThread.quitSafely();
-        pictureHandler.removeCallbacksAndMessages(null);
-        handlerPictureThread.quitSafely();
+        camearHandler.removeCallbacksAndMessages(null);
         handlerCamearThread.quitSafely();
         writeMp4.destroy();
+        pictureCallback = null;
     }
 
     public boolean isStartPublish() {
