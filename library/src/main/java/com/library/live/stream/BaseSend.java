@@ -7,6 +7,10 @@ import com.library.common.UdpControlInterface;
  */
 
 public abstract class BaseSend {
+    public static final int PUBLISH_STATUS_START = 0;
+    public static final int PUBLISH_STATUS_STOP = 1;
+    protected int PUBLISH_STATUS = PUBLISH_STATUS_STOP;
+
     protected UdpControlInterface udpControl = null;
 
     public abstract void startsend();
@@ -24,4 +28,8 @@ public abstract class BaseSend {
     }
 
     public abstract void setWeight(double weight);
+
+    public int getPublishStatus() {
+        return PUBLISH_STATUS;
+    }
 }

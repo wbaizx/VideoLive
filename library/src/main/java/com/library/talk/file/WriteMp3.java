@@ -18,6 +18,11 @@ import java.nio.ByteBuffer;
  */
 
 public class WriteMp3 {
+    public static final int RECODE_STATUS_START = 0;
+    public static final int RECODE_STATUS_STOP = 1;
+    public static final int RECODE_STATUS_READY = 2;
+    private int RECODE_STATUS = RECODE_STATUS_STOP;
+
     private MediaMuxer mMediaMuxer = null;
 
     private String dirpath = Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoTalk";
@@ -27,7 +32,6 @@ public class WriteMp3 {
     private int voiceTrackIndex;
     private long presentationTimeUsVE = 0;
 
-    private boolean agreeWrite = false;
     private boolean isShouldStart = false;
 
     private int frameNum = 0;
@@ -47,6 +51,7 @@ public class WriteMp3 {
     }
 
     public void start() {
+        RECODE_STATUS = RECODE_STATUS_READY;
         synchronized (lock) {
             if (voiceFormat != null && mMediaMuxer == null) {
                 isShouldStart = false;
@@ -57,7 +62,7 @@ public class WriteMp3 {
                     mMediaMuxer.start();
                     presentationTimeUsVE = 0;
                     frameNum = 0;
-                    agreeWrite = true;
+                    RECODE_STATUS = RECODE_STATUS_START;
                     mLog.log("app_WriteMp3", "文件录制启动");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -69,7 +74,7 @@ public class WriteMp3 {
     }
 
     public void write(ByteBuffer outputBuffer, MediaCodec.BufferInfo bufferInfo) {
-        if (agreeWrite) {
+        if (RECODE_STATUS == RECODE_STATUS_START) {
             if (bufferInfo.presentationTimeUs > presentationTimeUsVE) {//容错
                 presentationTimeUsVE = bufferInfo.presentationTimeUs;
                 mMediaMuxer.writeSampleData(voiceTrackIndex, outputBuffer, bufferInfo);
@@ -85,8 +90,7 @@ public class WriteMp3 {
 
     public void stop() {
         synchronized (lock) {
-            if (agreeWrite) {
-                agreeWrite = false;
+            if (RECODE_STATUS == RECODE_STATUS_START) {
                 try {
                     mMediaMuxer.release();
                     mLog.log("app_WriteMp3", "文件录制关闭");
@@ -103,11 +107,16 @@ public class WriteMp3 {
             } else {
                 isShouldStart = false;
             }
+            RECODE_STATUS = RECODE_STATUS_STOP;
         }
     }
 
     public void destroy() {
         stop();
+    }
+
+    public int getRecodeStatus() {
+        return RECODE_STATUS;
     }
 }
 

@@ -111,5 +111,9 @@ public class SpeakEncoder {
         }
         writeMp3.destroy();
     }
+
+    public int getRecodeStatus() {
+        return writeMp3.getRecodeStatus();
+    }
 }
 

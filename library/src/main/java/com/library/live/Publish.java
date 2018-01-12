@@ -22,6 +22,7 @@ import android.media.ImageReader;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Size;
@@ -68,13 +69,11 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private int rotateAngle = 90;//270 图片需要翻转角度
     private boolean isPreview = true;
     private boolean isCameraBegin = false;
-    private boolean isStartPublish = false;
-    private boolean isStartRecode = false;
     private boolean useuvPicture = false;
 
     public static final int TAKEPHOTO = 0;
     public static final int CONVERSION = 1;
-    private int ScreenshotsMode = CONVERSION;
+    private int ScreenshotsMode = TAKEPHOTO;
     //帧率
     private int frameRate;
     private int publishBitrate;
@@ -517,14 +516,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
     }
 
     public void startRecode() {
-        isStartRecode = true;
         voiceRecord.startRecode();
         recordEncoderVD.start();
         writeMp4.start();
     }
 
     public void stopRecode() {
-        isStartRecode = false;
         voiceRecord.stopRecode();
         recordEncoderVD.stop();
         writeMp4.stop();
@@ -569,18 +566,14 @@ public class Publish implements TextureView.SurfaceTextureListener {
     };
 
     public void start() {
-        isStartPublish = true;
         baseSend.startsend();
     }
 
     public void stop() {
-        isStartPublish = false;
         baseSend.stopsend();
     }
 
     public void destroy() {
-        isStartPublish = false;
-        isStartRecode = false;
         releaseCamera();
         recordEncoderVD.destroy();
         vdEncoder.destroy();
@@ -594,12 +587,12 @@ public class Publish implements TextureView.SurfaceTextureListener {
         pictureCallback = null;
     }
 
-    public boolean isStartPublish() {
-        return isStartPublish;
+    public int getPublishStatus() {
+        return baseSend.getPublishStatus();
     }
 
-    public boolean isStartRecode() {
-        return isStartRecode;
+    public int getRecodeStatus() {
+        return writeMp4.getRecodeStatus();
     }
 
     public void setPictureCallback(PictureCallback pictureCallback) {
@@ -609,7 +602,13 @@ public class Publish implements TextureView.SurfaceTextureListener {
     public static class Buider {
         private PublishView publishView;
         private Context context;
-        private int ScreenshotsMode = CONVERSION;
+
+        @IntDef({CONVERSION, TAKEPHOTO})
+        private @interface ScreenshotsMode {
+        }
+
+        private int screenshotsMode = TAKEPHOTO;
+
         //编码参数
         private int frameRate = 15;
         private int publishBitrate = 600 * 1024;
@@ -695,8 +694,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
             return this;
         }
 
-        public Buider setScreenshotsMode(int ScreenshotsMode) {
-            this.ScreenshotsMode = ScreenshotsMode;
+        public Buider setScreenshotsMode(@ScreenshotsMode int screenshotsMode) {
+            this.screenshotsMode = screenshotsMode;
             return this;
         }
 
@@ -735,7 +734,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             baseSend.setUdpControl(udpControl);
             return new Publish(context, publishView, isPreview, publishSize, previewSize, collectionSize, frameRate,
                     publishBitrate, collectionBitrate, collectionbitrate_vc, publishbitrate_vc, codetype, rotate, dirpath,
-                    baseSend, picturedirpath, ScreenshotsMode);
+                    baseSend, picturedirpath, screenshotsMode);
         }
     }
 }

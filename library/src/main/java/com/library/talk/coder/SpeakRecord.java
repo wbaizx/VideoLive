@@ -101,4 +101,8 @@ public class SpeakRecord {
         }
         speakEncoder.destroy();
     }
+
+    public int getRecodeStatus() {
+        return speakEncoder.getRecodeStatus();
+    }
 }

@@ -15,7 +15,6 @@ public class Player {
     private VoiceTrack voiceTrack;
     private BaseRecive baseRecive;
     private PlayerView playerView;
-    private boolean isStartRevice = false;
 
     private Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, int multiple) {
         this.baseRecive = baseRecive;
@@ -33,14 +32,12 @@ public class Player {
 
 
     public void start() {
-        isStartRevice = true;
         voiceTrack.start();
         vdDecoder.start();
         baseRecive.startRevice();
     }
 
     public void stop() {
-        isStartRevice = false;
         baseRecive.stopRevice();
         vdDecoder.stop();
         voiceTrack.stop();
@@ -48,7 +45,6 @@ public class Player {
     }
 
     public void destroy() {
-        isStartRevice = false;
         baseRecive.destroy();
         vdDecoder.destroy();
         voiceTrack.destroy();
@@ -58,8 +54,8 @@ public class Player {
         baseRecive.write(bytes);
     }
 
-    public boolean isStartRevice() {
-        return isStartRevice;
+    public int getReciveStatus() {
+        return baseRecive.getReciveStatus();
     }
 
     public static class Buider {

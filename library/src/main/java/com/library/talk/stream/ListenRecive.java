@@ -23,6 +23,10 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public class ListenRecive implements ListenCachingStrategyCallback {
+    public static final int RECIVE_STATUS_START = 0;
+    public static final int RECIVE_STATUS_STOP = 1;
+    private int RECIVE_STATUS = RECIVE_STATUS_STOP;
+
     private DatagramSocket socket = null;
     private DatagramPacket packetreceive;
     private SingleThreadExecutor singleThreadExecutor = null;
@@ -31,7 +35,6 @@ public class ListenRecive implements ListenCachingStrategyCallback {
     private VoiceCallback voiceCallback;
     private HandlerThread handlerListenThread;
     private Handler ListenHandler;
-    private boolean isrecive = false;
     private UdpControlInterface udpControl;
     private ListenStrategy strategy;
     private boolean ismysocket = false;//用于判断是否需要销毁socket
@@ -74,7 +77,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
     }
 
     public void start() {
-        isrecive = true;
+        RECIVE_STATUS = RECIVE_STATUS_START;
         voiceList.clear();
         udpQueue.clear();
         strategy.start();
@@ -93,7 +96,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
             singleThreadExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    while (isrecive) {
+                    while (RECIVE_STATUS == RECIVE_STATUS_START) {
                         try {
                             socket.receive(packetreceive);
                             OtherUtil.addQueue(udpQueue, Arrays.copyOfRange(packetreceive.getData(), 0, packetreceive.getLength()));
@@ -119,7 +122,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
 
 
     public void write(byte[] bytes) {
-        if (isrecive) {
+        if (RECIVE_STATUS == RECIVE_STATUS_START) {
             if (udpControl != null) {
                 bytes = udpControl.Control(bytes, 0, bytes.length);
             }
@@ -167,7 +170,7 @@ public class ListenRecive implements ListenCachingStrategyCallback {
     }
 
     public void stop() {
-        isrecive = false;
+        RECIVE_STATUS = RECIVE_STATUS_STOP;
         if (handlerListenThread != null) {
             ListenHandler.removeCallbacksAndMessages(null);
             handlerListenThread.quitSafely();
@@ -208,5 +211,9 @@ public class ListenRecive implements ListenCachingStrategyCallback {
 
     public void setVoiceFrameCacheMin(int voiceFrameCacheMin) {
         strategy.setVoiceFrameCacheMin(voiceFrameCacheMin);
+    }
+
+    public int getReciveStatus() {
+        return RECIVE_STATUS;
     }
 }

@@ -20,7 +20,6 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public class UdpSend extends BaseSend {
-    private boolean issend = false;
     private DatagramSocket socket = null;
     private DatagramPacket packetsendPush = null;
     private int voiceNum = 0;
@@ -68,14 +67,14 @@ public class UdpSend extends BaseSend {
         if (packetsendPush != null) {
             buffvoice.clear();
             voiceSendNum = 0;
-            issend = true;
+            PUBLISH_STATUS = PUBLISH_STATUS_START;
             starsendThread();
         }
     }
 
     @Override
     public void stopsend() {
-        issend = false;
+        PUBLISH_STATUS = PUBLISH_STATUS_STOP;
     }
 
     @Override
@@ -92,14 +91,14 @@ public class UdpSend extends BaseSend {
 
     @Override
     public void addVideo(byte[] video) {
-        if (issend) {
+        if (PUBLISH_STATUS == PUBLISH_STATUS_START) {
             writeVideo(video);
         }
     }
 
     @Override
     public void addVoice(byte[] voice) {
-        if (issend) {
+        if (PUBLISH_STATUS == PUBLISH_STATUS_START) {
             writeVoice(voice);
         }
     }
@@ -212,7 +211,7 @@ public class UdpSend extends BaseSend {
             public void run() {
                 byte[] data;
                 try {
-                    while (issend) {
+                    while (PUBLISH_STATUS == PUBLISH_STATUS_START) {
                         data = sendQueue.take();
                         if (data != null) {
                             packetsendPush.setData(data);

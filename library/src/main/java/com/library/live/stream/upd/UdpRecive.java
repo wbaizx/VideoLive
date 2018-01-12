@@ -26,7 +26,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     private boolean ismysocket = false;//用于判断是否需要销毁socket
     private DatagramSocket socket = null;
-    private boolean isrecive = false;
     private DatagramPacket packetreceive;
     private int udpPacketCacheMin = 3;
 
@@ -67,7 +66,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void startRevice() {
-        isrecive = true;
+        RECIVE_STATUS = RECIVE_STATUS_START;
         videoList.clear();
         voiceList.clear();
         udpQueue.clear();
@@ -88,7 +87,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             singleThreadExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    while (isrecive) {
+                    while (RECIVE_STATUS == RECIVE_STATUS_START) {
                         try {
                             socket.receive(packetreceive);
                             OtherUtil.addQueue(udpQueue, Arrays.copyOfRange(packetreceive.getData(), 0, packetreceive.getLength()));
@@ -114,7 +113,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
     @Override
     public void stopRevice() {
-        isrecive = false;
+        RECIVE_STATUS = RECIVE_STATUS_STOP;
         strategy.stop();
         if (handlerUdpThread != null) {
             udpHandler.removeCallbacksAndMessages(null);
@@ -129,7 +128,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     //添加解码数据
     @Override
     public void write(byte[] bytes) {
-        if (isrecive) {
+        if (RECIVE_STATUS == RECIVE_STATUS_START) {
             if (udpControl != null) {
                 bytes = udpControl.Control(bytes, 0, bytes.length);
             }
@@ -153,7 +152,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
 
                 //从排好序的队列中取出数据
                 if (videoList.size() >= videoUdpPacketMin) {
-                    mLog.log("videoUdpPacket", "当前数量 " + videoList.size() + " 允许数量 " + videoUdpPacketMin);
+//                    mLog.log("videoUdpPacket", "当前数量 " + videoList.size() + " 允许数量 " + videoUdpPacketMin);
                     mosaicVideoFrame(videoList.removeFirst());
                 }
             } else if (udpBytes.getTag() == (byte) 0x00) {

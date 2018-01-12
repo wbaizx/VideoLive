@@ -9,6 +9,10 @@ import com.library.live.vd.VideoInformationInterface;
  */
 
 public abstract class BaseRecive {
+    public static final int RECIVE_STATUS_START = 0;
+    public static final int RECIVE_STATUS_STOP = 1;
+    protected int RECIVE_STATUS = RECIVE_STATUS_STOP;
+
     protected VideoInformationInterface informaitonInterface;
     protected UdpControlInterface udpControl = null;
     protected VoiceCallback voiceCallback = null;
@@ -57,5 +61,9 @@ public abstract class BaseRecive {
 
     public void setWeightCallback(WeightCallback weightCallback) {
         this.weightCallback = weightCallback;
+    }
+
+    public int getReciveStatus() {
+        return RECIVE_STATUS;
     }
 }

@@ -11,7 +11,6 @@ import com.library.talk.stream.ListenRecive;
 public class Listen {
     private ListenTrack listenTrack;
     private ListenRecive listenRecive;
-    private boolean isStartRevice = false;
 
     private Listen(ListenRecive listenRecive, int udpPacketCacheMin, int voiceFrameCacheMin, UdpControlInterface udpControl, int multiple) {
         listenTrack = new ListenTrack(listenRecive);
@@ -23,13 +22,11 @@ public class Listen {
     }
 
     public void start() {
-        isStartRevice = true;
         listenTrack.start();
         listenRecive.start();
     }
 
     public void stop() {
-        isStartRevice = false;
         listenRecive.stop();
         listenTrack.stop();
     }
@@ -39,7 +36,6 @@ public class Listen {
     }
 
     public void destroy() {
-        isStartRevice = false;
         listenRecive.destroy();
         listenTrack.destroy();
     }
@@ -48,8 +44,8 @@ public class Listen {
         listenRecive.write(bytes);
     }
 
-    public boolean isStartRevice() {
-        return isStartRevice;
+    public int getReciveStatus() {
+        return listenRecive.getReciveStatus();
     }
 
 

@@ -20,11 +20,14 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 public class SpeakSend {
+    public static final int PUBLISH_STATUS_START = 0;
+    public static final int PUBLISH_STATUS_STOP = 1;
+    private int PUBLISH_STATUS = PUBLISH_STATUS_STOP;
+
     private boolean ismysocket = false;//用于判断是否需要销毁socket
     private DatagramSocket socket = null;
     private DatagramPacket packetsendPush = null;
     private SingleThreadExecutor singleThreadExecutor;
-    private boolean issend = false;
     private ByteBuffer buffvoice = ByteBuffer.allocate(1024);
     private int voiceSendNum = 0;//控制语音包合并发送，5个包发送一次
     private int voiceNum = 0;//音频序号
@@ -63,20 +66,20 @@ public class SpeakSend {
             buffvoice.clear();
             voiceSendNum = 0;
             voiceNum = 0;
-            issend = true;
+            PUBLISH_STATUS = PUBLISH_STATUS_START;
             starsendThread();
         }
     }
 
     public void startJustSend() {
         if (packetsendPush != null) {
-            issend = true;
+            PUBLISH_STATUS = PUBLISH_STATUS_START;
             starsendThread();
         }
     }
 
     public void addVoice(byte[] voice) {
-        if (issend) {
+        if (PUBLISH_STATUS == PUBLISH_STATUS_START) {
             writeVoice(voice);
         }
     }
@@ -143,7 +146,7 @@ public class SpeakSend {
             public void run() {
                 byte[] data;
                 try {
-                    while (issend) {
+                    while (PUBLISH_STATUS == PUBLISH_STATUS_START) {
                         data = sendQueue.take();
                         if (data != null) {
                             packetsendPush.setData(data);
@@ -165,7 +168,7 @@ public class SpeakSend {
     }
 
     public void stop() {
-        issend = false;
+        PUBLISH_STATUS = PUBLISH_STATUS_STOP;
     }
 
     public void destroy() {
@@ -183,4 +186,7 @@ public class SpeakSend {
         this.udpControl = udpControl;
     }
 
+    public int getPublishStatus() {
+        return PUBLISH_STATUS;
+    }
 }

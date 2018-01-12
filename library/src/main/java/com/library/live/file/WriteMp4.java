@@ -18,6 +18,11 @@ import java.nio.ByteBuffer;
  */
 
 public class WriteMp4 {
+    public static final int RECODE_STATUS_START = 0;
+    public static final int RECODE_STATUS_STOP = 1;
+    public static final int RECODE_STATUS_READY = 2;
+    private int RECODE_STATUS = RECODE_STATUS_STOP;
+
     private MediaMuxer mMediaMuxer = null;
     public static final int video = 0;
     public static final int voice = 1;
@@ -32,7 +37,6 @@ public class WriteMp4 {
     private long presentationTimeUsVD = 0;
     private long presentationTimeUsVE = 0;
 
-    private boolean agreeWrite = false;
     private boolean isShouldStart = false;
     private int frameNum = 0;
     private final Object lock = new Object();
@@ -58,6 +62,7 @@ public class WriteMp4 {
 
 
     public void start() {
+        RECODE_STATUS = RECODE_STATUS_READY;
         synchronized (lock) {
             if (voiceFormat != null && videoFormat != null && mMediaMuxer == null) {
                 isShouldStart = false;
@@ -70,7 +75,7 @@ public class WriteMp4 {
                     presentationTimeUsVE = 0;
                     presentationTimeUsVD = 0;
                     frameNum = 0;
-                    agreeWrite = true;
+                    RECODE_STATUS = RECODE_STATUS_START;
                     mLog.log("app_WriteMp4", "文件录制启动");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -82,7 +87,7 @@ public class WriteMp4 {
     }
 
     public void write(int flag, ByteBuffer outputBuffer, MediaCodec.BufferInfo bufferInfo) {
-        if (agreeWrite) {
+        if (RECODE_STATUS == RECODE_STATUS_START) {
             if (flag == video) {
                 if (bufferInfo.presentationTimeUs > presentationTimeUsVD) {//容错
                     presentationTimeUsVD = bufferInfo.presentationTimeUs;
@@ -112,8 +117,7 @@ public class WriteMp4 {
 
     public void stop() {
         synchronized (lock) {
-            if (agreeWrite) {
-                agreeWrite = false;
+            if (RECODE_STATUS == RECODE_STATUS_START) {
                 try {
                     mMediaMuxer.release();
                     mLog.log("app_WriteMp4", "文件录制关闭");
@@ -130,10 +134,15 @@ public class WriteMp4 {
             } else {
                 isShouldStart = false;
             }
+            RECODE_STATUS = RECODE_STATUS_STOP;
         }
     }
 
     public void destroy() {
         stop();
+    }
+
+    public int getRecodeStatus() {
+        return RECODE_STATUS;
     }
 }

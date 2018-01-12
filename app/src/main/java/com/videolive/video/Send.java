@@ -46,7 +46,7 @@ public class Send extends AppCompatActivity {
                 .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")
                 .setPictureDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoPicture")
                 .setCenterScaleType(true)
-                .setScreenshotsMode(Publish.CONVERSION)
+                .setScreenshotsMode(Publish.TAKEPHOTO)
                 .build();
 
         tuistar.setOnClickListener(new View.OnClickListener() {

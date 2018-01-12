@@ -11,8 +11,6 @@ import com.library.talk.stream.SpeakSend;
 public class Speak {
     private SpeakRecord speakRecord;
     private SpeakSend speakSend;
-    private boolean isStartPublish = false;
-    private boolean isStartRecode = false;
 
     public Speak(int publishBitrate, UdpControlInterface udpControl, SpeakSend speakSend, String dirpath) {
         this.speakSend = speakSend;
@@ -21,15 +19,11 @@ public class Speak {
     }
 
     public void start() {
-        isStartPublish = true;
-        isStartRecode = true;
         speakSend.start();
         speakRecord.start();
     }
 
     public void stop() {
-        isStartPublish = false;
-        isStartRecode = false;
         speakRecord.stop();
         speakSend.stop();
     }
@@ -60,18 +54,16 @@ public class Speak {
     }
 
     public void destroy() {
-        isStartPublish = false;
-        isStartRecode = false;
         speakRecord.destroy();
         speakSend.destroy();
     }
 
-    public boolean isStartPublish() {
-        return isStartPublish;
+    public int getPublishStatus() {
+        return speakSend.getPublishStatus();
     }
 
-    public boolean isStartRecode() {
-        return isStartRecode;
+    public int getRecodeStatus() {
+        return speakRecord.getRecodeStatus();
     }
 
     public static class Buider {
