@@ -32,6 +32,7 @@ public class VDEncoder {
     private int cHeight;
     private int pWidth;
     private int pHeight;
+    private int COLOR_FORMAT;
     private SingleThreadExecutor singleThreadExecutor;
 
     public VDEncoder(Size csize, Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
@@ -43,17 +44,19 @@ public class VDEncoder {
         pWidth = psize.getHeight();
         pHeight = psize.getWidth();
 
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, pWidth, pHeight);
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, publishBitrate);
-        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
-        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-
         try {
             mediaCodec = MediaCodec.createEncoderByType(codetype);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat(codetype, pWidth, pHeight);
+        COLOR_FORMAT = ImagUtil.showSupportedColorFormat(mediaCodec, codetype);
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FORMAT);
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, publishBitrate);
+        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
+        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mediaCodec.start();
         singleThreadExecutor = new SingleThreadExecutor();
@@ -87,6 +90,7 @@ public class VDEncoder {
                 byte[] input = new byte[pWidth * pHeight * 3 / 2];
                 byte[] outData;
                 byte[] take;
+                boolean isScale = (cWidth != pWidth) || (cHeight != pHeight);//是否需要缩放
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
@@ -97,11 +101,14 @@ public class VDEncoder {
                         e.printStackTrace();
                         break;
                     }
-                    if (cWidth == pWidth && cHeight == pHeight) {
-                        ImagUtil.yuvI420ToNV12(take, input, pWidth, pHeight);
-                    } else {
-                        //两个分辨率不同才进行缩放
+                    if (isScale) {
                         ImagUtil.scaleI420(take, cWidth, cHeight, data, pWidth, pHeight, 0);
+                    } else {
+                        data = take;
+                    }
+                    if (COLOR_FORMAT == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                        input = data;
+                    } else {
                         ImagUtil.yuvI420ToNV12(data, input, pWidth, pHeight);
                     }
                     try {

@@ -2,8 +2,11 @@ package com.library.util;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 
 public class ImagUtil {
@@ -62,8 +65,8 @@ public class ImagUtil {
      **/
     public static native void cropYUV(byte[] src, int width, int height, byte[] dst, int dst_width, int dst_height, int left, int top);
 
-    /*
-     YUV_420_888转换为I420
+    /**
+     * YUV_420_888转换为I420
      */
     public static byte[] YUV420888toI420(Image image) {
         int width = image.getCropRect().width();
@@ -115,5 +118,35 @@ public class ImagUtil {
             }
         }
         return data;
+    }
+
+    /**
+     * 展示mediaCodec支持的YUV格式
+     */
+    public static int showSupportedColorFormat(MediaCodec mediaCodec, String codetype) {
+        MediaCodecInfo.CodecCapabilities caps = mediaCodec.getCodecInfo().getCapabilitiesForType(codetype);
+
+        //    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible; 2135033992  //一定支持
+        //    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar; 19            //I420
+        //    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar; 21        //NV12或者NV21
+
+        ArrayList<Integer> list = new ArrayList<>();
+        for (int colorFormat : caps.colorFormats) {
+            list.add(colorFormat);
+            mLog.log("SupportedColorFormat", "所有支持  " + colorFormat);
+        }
+        if (list.contains(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)) {
+            //I420
+            mLog.log("SupportedColorFormat", "选择  COLOR_FormatYUV420Planar");
+            return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
+        } else if (list.contains(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)) {
+            //NV12
+            mLog.log("SupportedColorFormat", "选择  COLOR_FormatYUV420SemiPlanar");
+            return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
+        } else {
+            //其他
+            mLog.log("SupportedColorFormat", "选择  COLOR_FormatYUV420Flexible");
+            return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+        }
     }
 }

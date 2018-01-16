@@ -218,12 +218,10 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
                 @Override
                 public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-
                 }
 
                 @Override
                 public void onError(@NonNull CameraDevice cameraDevice, int i) {
-
                 }
             }, camearHandler);
         } catch (CameraAccessException e) {

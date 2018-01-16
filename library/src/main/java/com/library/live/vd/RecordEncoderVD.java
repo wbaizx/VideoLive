@@ -26,6 +26,7 @@ public class RecordEncoderVD {
     private ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<>(OtherUtil.QueueNum);
     private int width;
     private int height;
+    private int COLOR_FORMAT;
     private SingleThreadExecutor singleThreadExecutor;
     private MediaFormat mediaFormat;
 
@@ -34,17 +35,20 @@ public class RecordEncoderVD {
         //由于图片旋转过，所以高度宽度需要对调
         width = csize.getHeight();
         height = csize.getWidth();
-        mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, collectionBitrate);
-        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
-        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
         try {
             mediaCodec = MediaCodec.createEncoderByType(codetype);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        mediaFormat = MediaFormat.createVideoFormat(codetype, width, height);
+        COLOR_FORMAT = ImagUtil.showSupportedColorFormat(mediaCodec, codetype);
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FORMAT);
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, collectionBitrate);
+        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
+        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
@@ -52,7 +56,7 @@ public class RecordEncoderVD {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        if(isRuning){
+        if (isRuning) {
             OtherUtil.addQueue(YUVQueue, bytes);
         }
     }
@@ -85,7 +89,12 @@ public class RecordEncoderVD {
                         e.printStackTrace();
                         break;
                     }
-                    ImagUtil.yuvI420ToNV12(take, input, width, height);
+
+                    if (COLOR_FORMAT == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                        input = take;
+                    } else {
+                        ImagUtil.yuvI420ToNV12(take, input, width, height);
+                    }
                     try {
                         int inputBufferIndex = mediaCodec.dequeueInputBuffer(OtherUtil.waitTime);
                         if (inputBufferIndex >= 0) {
