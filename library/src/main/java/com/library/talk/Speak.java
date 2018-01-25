@@ -1,6 +1,7 @@
 package com.library.talk;
 
 import com.library.common.UdpControlInterface;
+import com.library.common.WriteFileCallback;
 import com.library.talk.coder.SpeakRecord;
 import com.library.talk.stream.SpeakSend;
 
@@ -64,6 +65,10 @@ public class Speak {
 
     public int getRecodeStatus() {
         return speakRecord.getRecodeStatus();
+    }
+
+    public void setWriteFileCallback(WriteFileCallback writeFileCallback) {
+        speakRecord.setWriteFileCallback(writeFileCallback);
     }
 
     public static class Buider {

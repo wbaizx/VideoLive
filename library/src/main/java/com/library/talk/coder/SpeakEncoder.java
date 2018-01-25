@@ -4,6 +4,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
+import com.library.common.WriteFileCallback;
 import com.library.talk.file.WriteMp3;
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
@@ -114,6 +115,10 @@ public class SpeakEncoder {
 
     public int getRecodeStatus() {
         return writeMp3.getRecodeStatus();
+    }
+
+    public void setWriteFileCallback(WriteFileCallback writeFileCallback) {
+        writeMp3.setWriteFileCallback(writeFileCallback);
     }
 }
 

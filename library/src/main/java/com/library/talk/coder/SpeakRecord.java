@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
+import com.library.common.WriteFileCallback;
 import com.library.talk.stream.SpeakSend;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
@@ -104,5 +105,9 @@ public class SpeakRecord {
 
     public int getRecodeStatus() {
         return speakEncoder.getRecodeStatus();
+    }
+
+    public void setWriteFileCallback(WriteFileCallback writeFileCallback) {
+        speakEncoder.setWriteFileCallback(writeFileCallback);
     }
 }

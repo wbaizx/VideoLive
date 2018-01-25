@@ -30,6 +30,7 @@ import android.view.Surface;
 import android.view.TextureView;
 
 import com.library.common.UdpControlInterface;
+import com.library.common.WriteFileCallback;
 import com.library.live.file.WriteMp4;
 import com.library.live.stream.BaseSend;
 import com.library.live.vc.VoiceRecord;
@@ -41,6 +42,7 @@ import com.library.util.OtherUtil;
 import com.library.util.Rotate3dAnimation;
 import com.library.util.mLog;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -443,9 +445,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
 
     private void saveImage(byte[] bytes) {
         OtherUtil.CreateDirFile(picturedirpath);
-        FileOutputStream output;
+        BufferedOutputStream output;
         try {
-            output = new FileOutputStream(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
+            output = new BufferedOutputStream(new FileOutputStream(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return;
@@ -455,7 +457,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             byte[] picture = new byte[bytes.length];
             ImagUtil.yuvI420ToNV21(bytes, picture, collectionSize.getHeight(), collectionSize.getWidth());
             YuvImage yuvImage = new YuvImage(picture, ImageFormat.NV21, collectionSize.getHeight(), collectionSize.getWidth(), null);
-            yuvImage.compressToJpeg(new Rect(0, 0, yuvImage.getWidth(), yuvImage.getHeight()), 100, output);
+            yuvImage.compressToJpeg(new Rect(0, 0, collectionSize.getHeight(), collectionSize.getWidth()), 100, output);
 
         } else if (ScreenshotsMode == TAKEPHOTO) {
             if (rotate) {
@@ -470,15 +472,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 }
             }
         }
-        try {
-            output.flush();
-            if (pictureCallback != null) {
-                pictureCallback.Success(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            OtherUtil.close(output);
+        OtherUtil.close(output);
+        if (pictureCallback != null) {
+            pictureCallback.Success(picturedirpath + File.separator + System.currentTimeMillis() + ".jpg");
         }
     }
 
@@ -596,7 +592,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
     public void setPictureCallback(PictureCallback pictureCallback) {
         this.pictureCallback = pictureCallback;
     }
-
+    public void setWriteFileCallback(WriteFileCallback writeFileCallback) {
+        writeMp4.setWriteFileCallback(writeFileCallback);
+    }
     public static class Buider {
         private PublishView publishView;
         private Context context;

@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.10'
+	        compile 'com.github.wbaizx:VideoLive:3.0.11'
 	}
 
 
@@ -103,6 +103,18 @@ Step 2：
         publish.stopRecode();//停止录制
 
         publish.takePicture();//截屏
+
+   录制回调通过如下方式实现
+
+        publish.setWriteFileCallback(new WriteFileCallback() {
+            @Override
+            public void success(String path) {
+            }
+
+            @Override
+            public void failure(String err) {
+            }
+        });
 
    截屏回调通过如下方式实现
 
@@ -236,6 +248,18 @@ Step 2：
         speak.startRecode();//开始录制
 
         speak.stopRecode();//停止录制
+
+  录制回调通过如下方式实现
+
+        speak.setWriteFileCallback(new WriteFileCallback() {
+            @Override
+            public void success(String name) {
+            }
+
+            @Override
+            public void failure(String err) {
+            }
+        });
 
   注意如果同时视频推流和语音推流会出现冲突，如果正在视频推流，则不应该启动语音推流，如果已经启动，需调用stop方法关闭。
   然后此时启动发送和关闭发送对应如下方法，此时无法录制
