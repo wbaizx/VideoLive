@@ -83,7 +83,7 @@ public class Speak {
         }
 
         public Buider setPublishBitrate(int publishBitrate) {
-            this.publishBitrate = publishBitrate;
+            this.publishBitrate = Math.min(48 * 1024, publishBitrate);//限制最大48，因为发送会合并5个包，过大会导致溢出
             return this;
         }
 
