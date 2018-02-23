@@ -1,7 +1,7 @@
 package com.library.live;
 
 import com.library.common.UdpControlInterface;
-import com.library.live.stream.BaseRecive;
+import com.library.live.stream.UdpRecive;
 import com.library.live.vc.VoiceTrack;
 import com.library.live.vd.VDDecoder;
 import com.library.live.view.PlayerView;
@@ -13,16 +13,16 @@ import com.library.live.view.PlayerView;
 public class Player {
     private VDDecoder vdDecoder;
     private VoiceTrack voiceTrack;
-    private BaseRecive baseRecive;
+    private UdpRecive udpRecive;
     private PlayerView playerView;
 
-    private Player(PlayerView playerView, String codetype, BaseRecive baseRecive, UdpControlInterface udpControl, int multiple) {
-        this.baseRecive = baseRecive;
+    private Player(PlayerView playerView, String codetype, UdpRecive udpRecive, UdpControlInterface udpControl, int multiple) {
+        this.udpRecive = udpRecive;
         this.playerView = playerView;
-        this.baseRecive.setUdpControl(udpControl);
+        this.udpRecive.setUdpControl(udpControl);
 
-        vdDecoder = new VDDecoder(playerView, codetype, baseRecive);
-        voiceTrack = new VoiceTrack(baseRecive);
+        vdDecoder = new VDDecoder(playerView, codetype, udpRecive);
+        voiceTrack = new VoiceTrack(udpRecive);
         voiceTrack.setIncreaseMultiple(multiple);
     }
 
@@ -34,39 +34,36 @@ public class Player {
     public void start() {
         voiceTrack.start();
         vdDecoder.start();
-        baseRecive.startRevice();
+        udpRecive.startRevice();
     }
 
     public void stop() {
-        baseRecive.stopRevice();
+        udpRecive.stopRevice();
         vdDecoder.stop();
         voiceTrack.stop();
         playerView.stop();
     }
 
     public void destroy() {
-        baseRecive.destroy();
+        udpRecive.destroy();
         vdDecoder.destroy();
         voiceTrack.destroy();
     }
 
     public void write(byte[] bytes) {
-        baseRecive.write(bytes);
+        udpRecive.write(bytes);
     }
 
     public int getReciveStatus() {
-        return baseRecive.getReciveStatus();
+        return udpRecive.getReciveStatus();
     }
 
     public static class Buider {
         private PlayerView playerView;
-        private BaseRecive baseRecive;
+        private UdpRecive udpRecive;
         private String codetype = VDDecoder.H264;
         private UdpControlInterface udpControl = null;
         private int multiple = 1;
-
-        private int udpPacketCacheMin = 3;//udp包最小缓存数量，用于udp包排序
-        private int videoFrameCacheMin = 6;//视频帧达到播放标准的数量
 
         private IsOutBuffer isOutBuffer = null;//缓冲接口回调
 
@@ -80,8 +77,8 @@ public class Player {
         }
 
 
-        public Buider setPullMode(BaseRecive baseRecive) {
-            this.baseRecive = baseRecive;
+        public Buider setPullMode(UdpRecive udpRecive) {
+            this.udpRecive = udpRecive;
             return this;
         }
 
@@ -96,12 +93,12 @@ public class Player {
         }
 
         public Buider setUdpPacketCacheMin(int udpPacketCacheMin) {
-            this.udpPacketCacheMin = udpPacketCacheMin;
+            udpRecive.setUdpPacketCacheMin(udpPacketCacheMin);
             return this;
         }
 
         public Buider setVideoFrameCacheMin(int videoFrameCacheMin) {
-            this.videoFrameCacheMin = videoFrameCacheMin;
+            udpRecive.setOther(videoFrameCacheMin);
             return this;
         }
 
@@ -122,12 +119,10 @@ public class Player {
         }
 
         public Player build() {
-            baseRecive.setUdpPacketCacheMin(udpPacketCacheMin);
-            baseRecive.setWeightCallback(playerView);//将playerView接口设置给baseRecive用以回调图像比例
-            baseRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
+            udpRecive.setWeightCallback(playerView);//将playerView接口设置给baseRecive用以回调图像比例
+            udpRecive.setIsInBuffer(playerView);//将playerView接口设置给baseRecive用以回调缓冲状态
             playerView.setIsOutBuffer(isOutBuffer);//给playerView设置isOutBuffer接口用以将缓冲状态回调给客户端
-            baseRecive.setOther(videoFrameCacheMin);
-            return new Player(playerView, codetype, baseRecive, udpControl, multiple);
+            return new Player(playerView, codetype, udpRecive, udpControl, multiple);
         }
     }
 }

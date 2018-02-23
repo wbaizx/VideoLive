@@ -30,7 +30,7 @@ public class WeightRunnable implements Runnable {
             lp.width = (int) (layout.getHeight() * weight);
             lp.height = layout.getHeight();
         }
-        mLog.log("View_Size", lp.width + "--" + lp.height);
+        mLog.log("View_Size", lp.width + "--" + lp.height + "--" + weight);
         view.setLayoutParams(lp);
     }
 

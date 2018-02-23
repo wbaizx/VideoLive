@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.library.live.Publish;
-import com.library.live.stream.upd.UdpSend;
+import com.library.live.stream.UdpSend;
 import com.library.live.view.PublishView;
 import com.videolive.R;
 
@@ -41,7 +41,6 @@ public class Send extends AppCompatActivity {
                 .setPublishBitrateVC(getIntent().getExtras().getInt("publishbitrate_vc"))
                 .setPublishSize(getIntent().getExtras().getInt("pu_width"), getIntent().getExtras().getInt("pu_height"))
                 .setPreviewSize(getIntent().getExtras().getInt("pr_width"), getIntent().getExtras().getInt("pr_height"))
-                .setCollectionSize(getIntent().getExtras().getInt("c_width"), getIntent().getExtras().getInt("c_height"))
                 .setRotate(getIntent().getExtras().getBoolean("rotate"))
                 .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")
                 .setPictureDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoPicture")

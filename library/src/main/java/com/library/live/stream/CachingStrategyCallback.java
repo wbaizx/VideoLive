@@ -1,4 +1,4 @@
-package com.library.live.stream.upd;
+package com.library.live.stream;
 
 /**
  * Created by android1 on 2017/11/16.

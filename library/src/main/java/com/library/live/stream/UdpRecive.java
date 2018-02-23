@@ -1,11 +1,12 @@
-package com.library.live.stream.upd;
+package com.library.live.stream;
 
 import android.os.Handler;
 import android.os.HandlerThread;
 
 import com.library.common.UdpBytes;
-import com.library.live.stream.BaseRecive;
-import com.library.live.stream.IsInBuffer;
+import com.library.common.UdpControlInterface;
+import com.library.common.VoiceCallback;
+import com.library.live.vd.VideoInformationInterface;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
@@ -23,11 +24,21 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Created by android1 on 2017/9/23.
  */
 
-public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
+public class UdpRecive implements CachingStrategyCallback {
+    public static final int RECIVE_STATUS_START = 0;
+    public static final int RECIVE_STATUS_STOP = 1;
+    private int RECIVE_STATUS = RECIVE_STATUS_STOP;
+
+    private VideoInformationInterface informaitonInterface;
+    private UdpControlInterface udpControl = null;
+    private VoiceCallback voiceCallback = null;
+    private VideoCallback videoCallback = null;
+    private WeightCallback weightCallback;
+
     private boolean ismysocket = false;//用于判断是否需要销毁socket
     private DatagramSocket socket = null;
     private DatagramPacket packetreceive;
-    private int udpPacketCacheMin = 3;
+    private int udpPacketCacheMin = 3;//udp包最小缓存数量，用于udp包排序
 
     private LinkedList<UdpBytes> videoList = new LinkedList<>();
     private LinkedList<UdpBytes> voiceList = new LinkedList<>();
@@ -64,7 +75,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         strategy.setCachingStrategyCallback(this);
     }
 
-    @Override
     public void startRevice() {
         RECIVE_STATUS = RECIVE_STATUS_START;
         videoList.clear();
@@ -111,7 +121,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     };
 
-    @Override
     public void stopRevice() {
         RECIVE_STATUS = RECIVE_STATUS_STOP;
         strategy.stop();
@@ -121,12 +130,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    //丢包率计算
-//    int vdnum = 0;
-//    int vcnum = 0;
-
     //添加解码数据
-    @Override
     public void write(byte[] bytes) {
         if (RECIVE_STATUS == RECIVE_STATUS_START) {
             if (udpControl != null) {
@@ -143,13 +147,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                 }
                 addudp(videoList, udpBytes);
 
-                //计算丢包率--------------------------------
-//            if ((vdnum % 500) == 0) {//每500个包输出一次
-//                mLog.log("UdpLoss", "视频丢包率 :  " +
-//                        ((float) udpBytes.getNum() - (float) vdnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-//            }
-//            vdnum++;
-
                 //从排好序的队列中取出数据
                 if (videoList.size() >= videoUdpPacketMin) {
 //                    mLog.log("videoUdpPacket", "当前数量 " + videoList.size() + " 允许数量 " + videoUdpPacketMin);
@@ -157,13 +154,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
                 }
             } else if (udpBytes.getTag() == (byte) 0x00) {
                 addudp(voiceList, udpBytes);
-
-                //计算丢包率--------------------------------
-//            if ((vcnum % 50) == 0) {//每50个包输出一次
-//                mLog.log("UdpLoss", "音频丢包率 :  " +
-//                        ((float) udpBytes.getNum() - (float) vcnum) * (float) 100 / (float) udpBytes.getNum() + "%");
-//            }
-//            vcnum++;
 
                 if (voiceList.size() >= udpPacketCacheMin) {
                     if (achieveVideoUdpPacketMin) {//音频达到条件后重置视频条件
@@ -192,7 +182,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
             frameBuffer.put(udpBytes.getData());
             oneFrame = udpBytes.getTime();
         } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
-            //因为一帧的时间戳相同，利用时间判断是否为同一帧，另外加上长度强行限制溢出
+            //因为一帧的时间戳相同，利用时间判断是否为同一帧，加上长度强行限制溢出
             if (udpBytes.getTime() == oneFrame &&
                     ((frameBuffer.position() + udpBytes.getData().length) < frameBuffer.capacity())) {
                 frameBuffer.put(udpBytes.getData());
@@ -203,11 +193,11 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         } else if (udpBytes.getFrameTag() == (byte) 0x02) {//帧尾
             if (udpBytes.getTime() == oneFrame) {
                 frameBuffer.put(udpBytes.getData());
-                //完整一帧，交个策略处理
+                //完整一帧
                 strategy.addVideo(udpBytes.getTime(), Arrays.copyOfRange(frameBuffer.array(), 0, frameBuffer.position()));
             }
         } else if (udpBytes.getFrameTag() == (byte) 0x03) {//独立帧
-            //完整一帧，交个策略处理
+            //完整一帧
             strategy.addVideo(udpBytes.getTime(), udpBytes.getData());
         }
     }
@@ -229,10 +219,10 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
      将链表数据拼接成帧
      */
     private void mosaicVoiceFrame(UdpBytes udpBytes) {
-        //从一个包中取出5帧数据，交个策略处理
+        //从一个包中取出5帧数据
         strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         for (int i = 0; i < 4; i++) {
-            udpBytes.nextVoice();//定位下一帧
+            udpBytes.nextVoice();
             strategy.addVoice(udpBytes.getTime(), udpBytes.getData());
         }
     }
@@ -255,7 +245,6 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    @Override
     public void destroy() {
         if (ismysocket) {
             OtherUtil.close(socket);
@@ -268,7 +257,7 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
         }
     }
 
-    @Override
+    //控制缓存包数量 用于解决udp乱序
     public void setUdpPacketCacheMin(int udpPacketCacheMin) {
         this.udpPacketCacheMin = udpPacketCacheMin;
     }
@@ -276,16 +265,40 @@ public class UdpRecive extends BaseRecive implements CachingStrategyCallback {
     /*
     可以通过这个方法获得一些策略参数，根据需要决定是否需要,
      */
-    @Override
     public void setOther(int videoFrameCacheMin) {
         strategy.setVideoFrameCacheMin(videoFrameCacheMin);
     }
 
-    @Override
+    /*
+    缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
+     */
     public void setIsInBuffer(IsInBuffer isInBuffer) {
         strategy.setIsInBuffer(isInBuffer);
     }
 
+    public void setInformaitonInterface(VideoInformationInterface informaitonInterface) {
+        this.informaitonInterface = informaitonInterface;
+    }
+
+    public void setUdpControl(UdpControlInterface udpControl) {
+        this.udpControl = udpControl;
+    }
+
+    public void setVoiceCallback(VoiceCallback voiceCallback) {
+        this.voiceCallback = voiceCallback;
+    }
+
+    public void setVideoCallback(VideoCallback videoCallback) {
+        this.videoCallback = videoCallback;
+    }
+
+    public void setWeightCallback(WeightCallback weightCallback) {
+        this.weightCallback = weightCallback;
+    }
+
+    public int getReciveStatus() {
+        return RECIVE_STATUS;
+    }
 
     @Override
     public void videoStrategy(byte[] video) {

@@ -4,7 +4,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
-import com.library.live.stream.BaseSend;
+import com.library.live.stream.UdpSend;
 import com.library.util.OtherUtil;
 import com.library.util.VoiceUtil;
 
@@ -18,10 +18,10 @@ import java.nio.ByteBuffer;
 public class VCEncoder {
     private final String AAC_MIME = MediaFormat.MIMETYPE_AUDIO_AAC;
     private MediaCodec mediaCodec;
-    private BaseSend baseSend;
+    private UdpSend udpSend;
 
-    public VCEncoder(int bitrate, int recBufSize, BaseSend baseSend) {
-        this.baseSend = baseSend;
+    public VCEncoder(int bitrate, int recBufSize, UdpSend udpSend) {
+        this.udpSend = udpSend;
         try {
             mediaCodec = MediaCodec.createEncoderByType(AAC_MIME);
         } catch (IOException e) {
@@ -67,7 +67,7 @@ public class VCEncoder {
                 VoiceUtil.addADTStoPacket(outData, bufferInfo.size + 7);
                 outputBuffer.get(outData, 7, bufferInfo.size);
                 //添加将要发送的音频数据
-                baseSend.addVoice(outData);
+                udpSend.addVoice(outData);
 
                 mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                 outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);

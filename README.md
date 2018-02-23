@@ -16,7 +16,7 @@ Step 1：
 Step 2：
 
 	dependencies {
-	        compile 'com.github.wbaizx:VideoLive:3.0.11'
+	        compile 'com.github.wbaizx:VideoLive:3.1.0'
 	}
 
 
@@ -52,15 +52,13 @@ Step 2：
                 .setCollectionBitrate(600 * 1024)//采集采样率
                 .setCollectionBitrateVC(64 * 1024)//音频采集采样率
                 .setPublishBitrateVC(24 * 1024)//音频推流采样率
-                .setPublishSize(480, 320)//推流分辨率，不要高于采集分辨率
-                .setPreviewSize(480, 320)//预览分辨率，模式为TAKEPHOTO时决定截屏分辨率
-                .setCollectionSize(480, 320)//采集分辨率，决定录制文件的分辨率，模式为CONVERSION时决定截屏分辨率
+                .setPublishSize(480, 320)//推流分辨率，不要高于预览分辨率
+                .setPreviewSize(480, 320)//预览分辨率，决定截屏、录制文件的分辨率
                 .setRotate(true)//是否为前置摄像头,默认后置
                 .setScreenshotsMode(Publish.CONVERSION)//截屏模式
                 .setVideoDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoLive")//录制路径,当前为默认路径
                 .setPictureDirPath(Environment.getExternalStorageDirectory().getPath() + File.separator + "VideoPicture")//拍照路径,当前为默认路径
                 .build();
-
 
   如果socket已经创建需要使用已经有的socket
        
@@ -79,12 +77,6 @@ Step 2：
                         return new byte[0];
                     }
                 })
-
-  如果需要自定义发送方式，需要新建类并继承BaseSend。注意回调自定义UPD包发送，如下
-        
-        if (udpControl != null) {
-            bytes = udpControl.Control(bytes, 0, bytes.length);
-        }
 
   然后在需要推流的地方调用
          
@@ -176,7 +168,6 @@ Step 2：
                     }
                 })
 
-
    如果需要去掉自己添加的协议
                 
                 .setUdpControl(new UdpControlInterface() {
@@ -185,15 +176,6 @@ Step 2：
                         return new byte[0];//在这里将发送时的自定义处理去掉后返回
                     }
                 })
-
-   如果需要自定义接收方式，需要新建类并继承BaseRecive。注意在包含解码器需要的配置信息的地方
-	 
-         调用getInformation(byte[] important)给解码器（important为包含解码器需要的配置信息的视频帧数据，可以不完整）
-
-   在处理完数据后回调给解码器
-
-            videoCallback.videoCallback(video);
-            voiceCallback.voiceCallback(voice);
 
    动态调节音量
 

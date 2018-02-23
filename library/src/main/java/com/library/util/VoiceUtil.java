@@ -39,11 +39,7 @@ public class VoiceUtil {
         for (int i = 0, dest; i < datalength; i++) {
             dest = (short) ((src[i * 2] & 0xff) | (src[2 * i + 1] & 0xff) << 8) * multiple;
             //爆音处理
-            if (dest > 32767) {
-                dest = 32767;
-            } else if (dest < -32768) {
-                dest = -32768;
-            }
+            dest = Math.max(-32768, Math.min(32767, dest));
             src[i * 2] = (byte) dest;
             src[i * 2 + 1] = (byte) (dest >> 8);
         }

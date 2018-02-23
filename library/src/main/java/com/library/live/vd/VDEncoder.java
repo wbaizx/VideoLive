@@ -5,7 +5,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Size;
 
-import com.library.live.stream.BaseSend;
+import com.library.live.stream.UdpSend;
 import com.library.util.ByteUtil;
 import com.library.util.ImagUtil;
 import com.library.util.OtherUtil;
@@ -21,7 +21,7 @@ public class VDEncoder {
     public static final String H264 = MediaFormat.MIMETYPE_VIDEO_AVC;
     public static final String H265 = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private MediaCodec mediaCodec;
-    private BaseSend baseSend;
+    private UdpSend udpSend;
 
     //编码参数
     private byte[] information;
@@ -35,9 +35,9 @@ public class VDEncoder {
     private int COLOR_FORMAT;
     private SingleThreadExecutor singleThreadExecutor;
 
-    public VDEncoder(Size csize, Size psize, int framerate, int publishBitrate, String codetype, BaseSend baseSend) {
+    public VDEncoder(Size csize, Size psize, int framerate, int publishBitrate, String codetype, UdpSend udpSend) {
         //UPD实例
-        this.baseSend = baseSend;
+        this.udpSend = udpSend;
         //由于图片旋转过，所以高度宽度需要对调
         cWidth = csize.getHeight();
         cHeight = csize.getWidth();
@@ -136,13 +136,13 @@ public class VDEncoder {
                                 System.arraycopy(information, 0, outData, 0, information.length);
                                 outputBuffer.get(outData, information.length, bufferInfo.size);
                                 //交给发送器等待发送
-                                baseSend.addVideo(outData);
+                                udpSend.addVideo(outData);
                             } else {
                                 //普通帧
                                 //添加将要发送的视频数据
                                 outData = new byte[bufferInfo.size];
                                 outputBuffer.get(outData);
-                                baseSend.addVideo(outData);
+                                udpSend.addVideo(outData);
                             }
                             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                             outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, OtherUtil.waitTime);

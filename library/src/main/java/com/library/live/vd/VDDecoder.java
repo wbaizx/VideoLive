@@ -4,8 +4,7 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.view.SurfaceHolder;
 
-import com.library.live.file.WriteMp4;
-import com.library.live.stream.BaseRecive;
+import com.library.live.stream.UdpRecive;
 import com.library.live.stream.VideoCallback;
 import com.library.live.view.PlayerView;
 import com.library.util.ByteUtil;
@@ -36,7 +35,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
     /**
      * 初始化解码器
      */
-    public VDDecoder(PlayerView playerView, String codetype, BaseRecive baseRecive) {
+    public VDDecoder(PlayerView playerView, String codetype, UdpRecive udpRecive) {
         this.holder = playerView.getHolder();
         MIME_TYPE = codetype;
         try {
@@ -44,8 +43,8 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         } catch (IOException e) {
             e.printStackTrace();
         }
-        baseRecive.setVideoCallback(this);
-        baseRecive.setInformaitonInterface(this);
+        udpRecive.setVideoCallback(this);
+        udpRecive.setInformaitonInterface(this);
         holder.addCallback(this);
         // 设置该组件让屏幕不会自动关闭
         holder.setKeepScreenOn(true);

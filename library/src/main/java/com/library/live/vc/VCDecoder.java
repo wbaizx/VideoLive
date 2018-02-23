@@ -6,7 +6,7 @@ import android.media.MediaFormat;
 
 import com.library.common.VoiceCallback;
 import com.library.common.VoicePlayer;
-import com.library.live.stream.BaseRecive;
+import com.library.live.stream.UdpRecive;
 import com.library.util.OtherUtil;
 import com.library.util.mLog;
 
@@ -24,8 +24,8 @@ public class VCDecoder implements VoiceCallback {
     private boolean isdecoder = false;
     private VoicePlayer voicePlayer;
 
-    public VCDecoder(BaseRecive baseRecive) {
-        baseRecive.setVoiceCallback(this);
+    public VCDecoder(UdpRecive udpRecive) {
+        udpRecive.setVoiceCallback(this);
         try {
             mDecoder = MediaCodec.createDecoderByType(AAC_MIME);
             MediaFormat mediaFormat = new MediaFormat();

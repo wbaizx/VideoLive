@@ -1,6 +1,6 @@
-package com.library.live.stream.upd;
+package com.library.live.stream;
 
-import com.library.live.stream.BaseSend;
+import com.library.common.UdpControlInterface;
 import com.library.util.OtherUtil;
 import com.library.util.SingleThreadExecutor;
 import com.library.util.mLog;
@@ -19,7 +19,13 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Created by android1 on 2017/9/25.
  */
 
-public class UdpSend extends BaseSend {
+public class UdpSend {
+    public static final int PUBLISH_STATUS_START = 0;
+    public static final int PUBLISH_STATUS_STOP = 1;
+    private int PUBLISH_STATUS = PUBLISH_STATUS_STOP;
+
+    private UdpControlInterface udpControl = null;
+
     private DatagramSocket socket = null;
     private DatagramPacket packetsendPush = null;
     private int voiceNum = 0;
@@ -62,7 +68,6 @@ public class UdpSend extends BaseSend {
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
-    @Override
     public void startsend() {
         if (packetsendPush != null) {
             buffvoice.clear();
@@ -72,12 +77,10 @@ public class UdpSend extends BaseSend {
         }
     }
 
-    @Override
     public void stopsend() {
         PUBLISH_STATUS = PUBLISH_STATUS_STOP;
     }
 
-    @Override
     public void destroy() {
         stopsend();
         if (ismysocket) {
@@ -89,23 +92,28 @@ public class UdpSend extends BaseSend {
         }
     }
 
-    @Override
     public void addVideo(byte[] video) {
         if (PUBLISH_STATUS == PUBLISH_STATUS_START) {
             writeVideo(video);
         }
     }
 
-    @Override
     public void addVoice(byte[] voice) {
         if (PUBLISH_STATUS == PUBLISH_STATUS_START) {
             writeVoice(voice);
         }
     }
 
-    @Override
     public void setWeight(double weight) {
         this.weight = OtherUtil.setWeitht(weight);
+    }
+
+    public void setUdpControl(UdpControlInterface udpControl) {
+        this.udpControl = udpControl;
+    }
+
+    public int getPublishStatus() {
+        return PUBLISH_STATUS;
     }
 
     /**

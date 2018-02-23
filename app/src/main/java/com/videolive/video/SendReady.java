@@ -22,8 +22,6 @@ public class SendReady extends AppCompatActivity {
     private EditText pu_height;
     private EditText pr_width;
     private EditText pr_height;
-    private EditText c_width;
-    private EditText c_height;
     private EditText collectionbitrate_vc;
     private EditText publishbitrate_vc;
     private RadioGroup videoCode;
@@ -44,9 +42,7 @@ public class SendReady extends AppCompatActivity {
         publishbitrate = findViewById(R.id.publishbitrate);
         collectionbitrate = findViewById(R.id.collectionbitrate);
         pr_width = findViewById(R.id.pr_width);
-        c_width = findViewById(R.id.c_width);
         pr_height = findViewById(R.id.pr_height);
-        c_height = findViewById(R.id.c_height);
         collectionbitrate_vc = findViewById(R.id.collectionbitrate_vc);
         publishbitrate_vc = findViewById(R.id.publishbitrate_vc);
         pu_width = findViewById(R.id.pu_width);
@@ -78,8 +74,6 @@ public class SendReady extends AppCompatActivity {
         bundle.putInt("pu_height", Integer.parseInt(pu_height.getText().toString()));
         bundle.putInt("pr_width", Integer.parseInt(pr_width.getText().toString()));
         bundle.putInt("pr_height", Integer.parseInt(pr_height.getText().toString()));
-        bundle.putInt("c_height", Integer.parseInt(c_height.getText().toString()));
-        bundle.putInt("c_width", Integer.parseInt(c_width.getText().toString()));
 
         if (videoCode.getCheckedRadioButtonId() == R.id.sh264) {
             bundle.putString("videoCode", VDEncoder.H264);

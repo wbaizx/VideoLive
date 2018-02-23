@@ -1,9 +1,8 @@
-package com.library.live.stream.upd;
+package com.library.live.stream;
 
 import android.os.Handler;
 import android.os.HandlerThread;
 
-import com.library.live.stream.IsInBuffer;
 import com.library.util.OtherUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;

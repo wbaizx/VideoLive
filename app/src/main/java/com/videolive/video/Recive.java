@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.library.live.Player;
-import com.library.live.stream.upd.UdpRecive;
+import com.library.live.stream.UdpRecive;
 import com.library.live.view.PlayerView;
 import com.videolive.R;
 
