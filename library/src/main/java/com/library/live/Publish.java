@@ -391,8 +391,9 @@ public class Publish implements TextureView.SurfaceTextureListener {
     private void saveImage(byte[] bytes) {
         OtherUtil.CreateDirFile(map.getPicturedirpath());
         BufferedOutputStream output;
+        String path = map.getPicturedirpath() + File.separator + System.currentTimeMillis() + ".jpg";
         try {
-            output = new BufferedOutputStream(new FileOutputStream(map.getPicturedirpath() + File.separator + System.currentTimeMillis() + ".jpg"));
+            output = new BufferedOutputStream(new FileOutputStream(path));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             return;
@@ -419,7 +420,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
         OtherUtil.close(output);
         if (pictureCallback != null) {
-            pictureCallback.Success(map.getPicturedirpath() + File.separator + System.currentTimeMillis() + ".jpg");
+            pictureCallback.Success(path);
         }
     }
 
