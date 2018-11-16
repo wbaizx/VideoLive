@@ -50,8 +50,8 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         holder.setKeepScreenOn(true);
     }
 
-    /*
-    回调包含解码器配置信息的byte，比如h264的sps,pps等（后面还包部分视频数据）
+    /**
+     * 回调包含解码器配置信息的byte，比如h264的sps,pps等（后面还包部分视频数据）
      */
     @Override
     public void Information(byte[] important) {
@@ -86,7 +86,8 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
         if (isSurfaceCreated && information != null) {
             isSurfaceCreated = false;
             if (mediaFormat == null) {
-                mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, 0, 0);//分辨率等信息由sps提供，这里可以随便设置
+                //分辨率等信息由sps提供，这里可以随便设置
+                mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, 0, 0);
             }
             if (MIME_TYPE.equals(H264)) {
                 mediaFormat.setByteBuffer("csd-0", getH264SPS());
@@ -188,7 +189,7 @@ public class VDDecoder implements SurfaceHolder.Callback, VideoInformationInterf
 
     private MediaCodec.BufferInfo debufferInfo = new MediaCodec.BufferInfo();
 
-    public void decoder(byte[] video) {
+    private void decoder(byte[] video) {
         try {
             int inputBufferIndex = mCodec.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufferIndex >= 0) {

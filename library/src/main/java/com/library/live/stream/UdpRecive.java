@@ -156,7 +156,8 @@ public class UdpRecive implements CachingStrategyCallback {
                 addudp(voiceList, udpBytes);
 
                 if (voiceList.size() >= udpPacketCacheMin) {
-                    if (achieveVideoUdpPacketMin) {//音频达到条件后重置视频条件
+                    if (achieveVideoUdpPacketMin) {
+                        //音频达到条件后重置视频条件
                         achieveVideoUdpPacketMin = false;
                         videoUdpPacketMin = videoList.size() + 5;
                     }
@@ -171,14 +172,14 @@ public class UdpRecive implements CachingStrategyCallback {
     private ByteBuffer frameBuffer = ByteBuffer.allocate(1024 * 80);
 
 
-    /*
-     将链表数据拼接成帧
+    /**
+     * 将链表数据拼接成帧
      */
     private void mosaicVideoFrame(UdpBytes udpBytes) {
         if (udpBytes.getFrameTag() == (byte) 0x00) {//帧头
             frameBuffer.clear();
             //将帧头（480字节）信息回调给解码器，提取例如SPS，PPS之类的信息
-            CheckInformation(udpBytes.getData());
+            checkInformation(udpBytes.getData());
             frameBuffer.put(udpBytes.getData());
             oneFrame = udpBytes.getTime();
         } else if (udpBytes.getFrameTag() == (byte) 0x01) {//帧中间
@@ -202,10 +203,10 @@ public class UdpRecive implements CachingStrategyCallback {
         }
     }
 
-    /*
-    检测关键帧，回调配置信息
+    /**
+     * 检测关键帧，回调配置信息
      */
-    private void CheckInformation(byte[] frame) {
+    private void checkInformation(byte[] frame) {
 //        HEVC 00 00 00 01 40 01 0c 01 ff ff 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f ac 59 00 00 00 01 42 01 01 01 60 00 00 03 00 b0 00 00 03 00 00 03 00 3f a0 0a 08 07 85 96 bb 93 24 bb 94 82 81 01 01 76 85 09 40 00 00 00 01 44 01 c0 f1 80 04 20 后面 00 00 00 01 26 为帧数据开始，普通帧为 00 00 00 01 02
 //        AVC 00 00 00 01 67 42 80 15 da 05 03 da 52 0a 04 04 0d a1 42 6a 00 00 00 01 68 ce 06 e2 后面 00 00 00 01 65 为帧数据开始，普通帧为 41
         if (frame[4] == (byte) 0x67 || frame[4] == (byte) 0x40) {
@@ -215,8 +216,8 @@ public class UdpRecive implements CachingStrategyCallback {
         }
     }
 
-    /*
-     将链表数据拼接成帧
+    /**
+     * 将链表数据拼接成帧
      */
     private void mosaicVoiceFrame(UdpBytes udpBytes) {
         //从一个包中取出5帧数据
@@ -262,15 +263,15 @@ public class UdpRecive implements CachingStrategyCallback {
         this.udpPacketCacheMin = udpPacketCacheMin;
     }
 
-    /*
-    可以通过这个方法获得一些策略参数，根据需要决定是否需要,
+    /**
+     * 可以通过这个方法获得一些策略参数，根据需要决定是否需要
      */
     public void setOther(int videoFrameCacheMin) {
         strategy.setVideoFrameCacheMin(videoFrameCacheMin);
     }
 
-    /*
-    缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
+    /**
+     * 缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
      */
     public void setIsInBuffer(IsInBuffer isInBuffer) {
         strategy.setIsInBuffer(isInBuffer);

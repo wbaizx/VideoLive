@@ -52,9 +52,9 @@ public class RecordEncoderVC {
         mediaCodec.stop();
     }
 
-    /*
-   音频数据编码，音频数据处理较少，直接编码
-    */
+    /**
+     * 音频数据编码，音频数据处理较少，直接编码
+     */
     public void encode(byte[] result, int length) {
         if (isCanEncoder) {
             try {

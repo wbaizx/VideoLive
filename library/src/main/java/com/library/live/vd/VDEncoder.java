@@ -73,16 +73,18 @@ public class VDEncoder {
     视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
-        OtherUtil.addQueue(YUVQueue, bytes);
+        if (isRuning) {
+            OtherUtil.addQueue(YUVQueue, bytes);
+        }
     }
 
     public void start() {
         YUVQueue.clear();
         isRuning = true;
-        StartEncoderThread();
+        startEncoderThread();
     }
 
-    public void StartEncoderThread() {
+    private void startEncoderThread() {
         singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -90,7 +92,8 @@ public class VDEncoder {
                 byte[] input = new byte[pWidth * pHeight * 3 / 2];
                 byte[] outData;
                 byte[] take;
-                boolean isScale = (cWidth != pWidth) || (cHeight != pHeight);//是否需要缩放
+                //是否需要缩放
+                boolean isScale = (cWidth != pWidth) || (cHeight != pHeight);
                 ByteBuffer outputBuffer;
                 int outputBufferIndex;
                 MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();

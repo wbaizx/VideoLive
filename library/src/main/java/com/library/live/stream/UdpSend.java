@@ -119,7 +119,7 @@ public class UdpSend {
     /**
      * 发送视频
      */
-    public void writeVideo(byte[] video) {
+    private void writeVideo(byte[] video) {
         //当前截取位置
         int nowPosition = 0;
         //是否首次进入
@@ -172,7 +172,7 @@ public class UdpSend {
     /**
      * 发送音频
      */
-    public void writeVoice(byte[] voice) {
+    private void writeVoice(byte[] voice) {
         if (voiceSendNum == 0) {
             //添加udp头
             buffvoice.put((byte) 0);//音频TAG

@@ -60,7 +60,7 @@ public class VCDecoder implements VoiceCallback {
     private MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
     private int outputBufferIndex;
 
-    public void decoder(byte[] voice) {
+    private void decoder(byte[] voice) {
         try {
             int inputBufIndex = mDecoder.dequeueInputBuffer(OtherUtil.waitTime);
             if (inputBufIndex >= 0) {
@@ -95,7 +95,7 @@ public class VCDecoder implements VoiceCallback {
         isdecoder = true;
     }
 
-    /*
+    /**
      * 释放资源
      */
     public void stop() {

@@ -44,7 +44,8 @@ public class Strategy {
 
     public void addVideo(int time, byte[] video) {
         OtherUtil.addQueue(videoframes, new FramesObject(time, video));
-        if (videoObservation && videoframes.size() >= videomin) {//允许观察并且达到播放条件唤醒
+        if (videoObservation && videoframes.size() >= videomin) {
+            //允许观察并且达到播放条件唤醒
             videoObservation = false;
             VideoHandler.post(videoRunnable);
         }
@@ -52,7 +53,8 @@ public class Strategy {
 
     public void addVoice(int time, byte[] voice) {
         OtherUtil.addQueue(voiceframes, new FramesObject(time, voice));
-        if (voiceObservation && isVideoStart) {//允许观察并且视频达到播放条件唤醒
+        if (voiceObservation && isVideoStart) {
+            //允许观察并且视频达到播放条件唤醒
             voiceObservation = false;
             VoiceHandler.post(voiceRunnable);
         }
@@ -180,8 +182,8 @@ public class Strategy {
         videomin = videoFrameCacheMin;
     }
 
-    /*
-     缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
+    /**
+     * 缓冲接口，用于PlayerView判断是否正在缓冲，根据需要决定是否需要使用
      */
     public void setIsInBuffer(IsInBuffer isInBuffer) {
         this.isInBuffer = isInBuffer;
@@ -192,7 +194,7 @@ public class Strategy {
         private int time;
         private byte[] data;
 
-        public FramesObject(int time, byte[] data) {
+        private FramesObject(int time, byte[] data) {
             this.time = time;
             this.data = data;
         }

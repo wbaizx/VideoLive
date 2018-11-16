@@ -52,8 +52,8 @@ public class RecordEncoderVD {
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
-    /*
-    视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
+    /**
+     * 视频数据队列，等待编码，视频数据处理比较耗时，所以存放队列另起线程等待编码
      */
     public void addFrame(byte[] bytes) {
         if (isRuning) {
@@ -66,7 +66,7 @@ public class RecordEncoderVD {
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mediaCodec.start();
         isRuning = true;
-        StartEncoderThread();
+        startEncoderThread();
     }
 
     public void stop() {
@@ -74,7 +74,7 @@ public class RecordEncoderVD {
         mediaCodec.stop();
     }
 
-    public void StartEncoderThread() {
+    private void startEncoderThread() {
         singleThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {

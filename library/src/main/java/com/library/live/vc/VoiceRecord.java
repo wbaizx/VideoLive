@@ -39,7 +39,7 @@ public class VoiceRecord {
         singleThreadExecutor = new SingleThreadExecutor();
     }
 
-    /*
+    /**
      * 得到语音原始数据
      */
     public void start() {

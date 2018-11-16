@@ -278,7 +278,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
             // 第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
             cameraDevice.createCaptureSession(surfaces, new CameraCaptureSession.StateCallback() {
                 @Override
-                public void onConfigured(CameraCaptureSession session) {
+                public void onConfigured(@NonNull CameraCaptureSession session) {
                     Publish.this.session = session;
                     //设置反复捕获数据的请求，这样预览界面就会一直有数据显示
                     try {
@@ -290,7 +290,7 @@ public class Publish implements TextureView.SurfaceTextureListener {
                 }
 
                 @Override
-                public void onConfigureFailed(CameraCaptureSession session) {
+                public void onConfigureFailed(@NonNull CameraCaptureSession session) {
 
                 }
             }, camearHandler);
@@ -299,8 +299,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
     }
 
-    /*
-    获取textureView的Surface
+    /**
+     * 获取textureView的Surface
      */
     private Surface getTextureSurface() {
         SurfaceTexture mSurfaceTexture = map.getPublishView().getSurfaceTexture();
@@ -308,8 +308,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         return new Surface(mSurfaceTexture);
     }
 
-    /*
-    创建预览ImageReader回调监听（在这里获取每一帧数据）并返回Surface
+    /**
+     * 创建预览ImageReader回调监听（在这里获取每一帧数据）并返回Surface
      */
     private Surface getPreviewImageReaderSurface() {
         //最后一个参数代表每次最多获取几帧数据
@@ -339,7 +339,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         frameHandler.post(new Runnable() {
             @Override
             public void run() {
-                frameHandler.postDelayed(this, 1000 / map.getFrameRate());//帧率控制时间
+                //帧率控制时间
+                frameHandler.postDelayed(this, 1000 / map.getFrameRate());
                 if (!frameRateControlQueue.isEmpty()) {
                     //耗时检测
 //                    long time = System.currentTimeMillis();
@@ -369,8 +370,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         });
     }
 
-    /*
-    创建拍照ImageReader回调监听（在这里获取拍照数据）并返回Surface
+    /**
+     * 创建拍照ImageReader回调监听（在这里获取拍照数据）并返回Surface
      */
     private Surface getPictureImageReaderSurface() {
         pictureImageReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.JPEG, frameMax);
@@ -572,7 +573,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Buider setFrameRate(int frameRate) {
-            map.setFrameRate(Math.max(8, frameRate));//限制最小8帧
+            //限制最小8帧
+            map.setFrameRate(Math.max(8, frameRate));
             return this;
         }
 
@@ -592,7 +594,8 @@ public class Publish implements TextureView.SurfaceTextureListener {
         }
 
         public Buider setPublishBitrateVC(int publishbitrate_vc) {
-            map.setPublishbitrate_vc(Math.min(48 * 1024, publishbitrate_vc));//限制最大48，因为发送会合并5个包，过大会导致溢出
+            //限制最大48，因为发送会合并5个包，过大会导致溢出
+            map.setPublishbitrate_vc(Math.min(48 * 1024, publishbitrate_vc));
             return this;
         }
 
